@@ -114,3 +114,30 @@ def run_with_collectors(stream, strategy, seeds, tier, logs, rho=50, beta=10, mo
     hooks = Collectors(tier, logs, stream, strategy, MetricsConfig(tier=tier, rho=rho, beta=beta),
                        TrainConfig(epochs=epochs, batch_size=32), OptimConfig(lr=0.1))
     return train_on(stream, strategy, seeds, epochs=epochs, model=model, hooks=hooks)
+
+
+def fake_log(tmp_path, R, B=None, cost=None):
+    from contilab.metrics.rawlog import RawLog
+
+    log = RawLog(tmp_path)
+    if B is not None:
+        log.append("init_acc", {"accs": list(B)})
+    for i, row in enumerate(R):
+        log.append("acc_matrix", {"task": i, "accs": list(row)})
+    for rec in cost or []:
+        log.append("cost", rec)
+    return log
+
+
+def values(out: dict) -> dict:
+    return {k: v["value"] for k, v in out.items()}
+
+
+def mctx(T: int, scenario: str = "class", joint_acc=None, cpt: int = 2, **cfg):
+    from contilab.core.config import MetricsConfig
+    from contilab.metrics.registry import MetricContext
+
+    table = torch.zeros(T, T * cpt, dtype=torch.bool)
+    for t in range(T):
+        table[t, t * cpt:(t + 1) * cpt] = True
+    return MetricContext(scenario=scenario, class_table=table, joint_acc=joint_acc, cfg=MetricsConfig(**cfg))
