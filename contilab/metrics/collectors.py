@@ -227,6 +227,11 @@ class Collectors:
         for e, log in enumerate(self.logs):
             fn(e, log)
 
+    def resume(self, ctx: RunContext) -> None:
+        """Re-arm per-run state after loading a checkpoint taken at the end of ctx.task_idx."""
+        if "barrier_curve" in self.keys:
+            self._prev_params = {k: v.detach().clone() for k, v in ctx.ens.params.items()}
+
     # --- hooks ---------------------------------------------------------------
     def on_run_start(self, ctx: RunContext) -> None:
         if "init_acc" in self.keys:

@@ -171,3 +171,53 @@ def run_consolidation_for_test(stream, method, seeds, log, experts_lora=False, t
     ctx = make_ctx(stream, seeds)
     run_consolidation(stream, cfg, seeds, hooks, ctx)
     return ctx
+
+
+def tiny_experiment(methods, tier="core", seeds=(0, 1), name="tiny"):
+    from pathlib import Path
+
+    import yaml
+
+    from contilab.runner.config import LoadedExperiment
+
+    prof = yaml.safe_load((Path(__file__).parent.parent / "configs/profiles/smoke.yaml").read_text())
+    return LoadedExperiment(name=name, profile="smoke", matrix={"preset": ["syn_class"], "method.name": list(methods),
+                                                               "seed": list(seeds)},
+                            overrides={}, sweep={}, workers=1, defaults=prof["defaults"], presets=prof["presets"],
+                            cli={"metrics.tier": tier})
+
+
+def statuses(exp_dir) -> dict:
+    import json
+
+    out: dict = {}
+    for d in sorted(p for p in exp_dir.iterdir() if (p / "status.json").exists()):
+        st = json.loads((d / "status.json").read_text())
+        out.setdefault(d.name.split("-")[1], set()).add(st["status"])
+    return out
+
+
+def read_status(exp_dir, method) -> dict:
+    import json
+
+    d = next(p for p in sorted(exp_dir.iterdir()) if p.name.split("-")[1:2] == [method])
+    return json.loads((d / "status.json").read_text())
+
+
+def acc_matrix(exp_dir) -> dict:
+    from contilab.metrics.rawlog import RawLog
+
+    return {d.name: RawLog(d).records("acc_matrix") for d in sorted(exp_dir.iterdir()) if (d / "status.json").exists()}
+
+
+def mtimes(exp_dir) -> dict:
+    return {str(p): p.stat().st_mtime_ns for d in exp_dir.iterdir() if (d / "status.json").exists()
+            for p in [d / "status.json", *sorted((d / "raw").glob("*"))]}
+
+
+def crash_after_task(t, monkeypatch):
+    monkeypatch.setenv("CONTILAB_TEST_CRASH_AFTER", str(t))
+
+
+def clear_crash(monkeypatch):
+    monkeypatch.delenv("CONTILAB_TEST_CRASH_AFTER", raising=False)
