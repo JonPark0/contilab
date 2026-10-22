@@ -1,6 +1,7 @@
 # In-session CPU empirical study (§4.1 cpu column).
 defaults:
-  engine: {device: auto, compile: auto, precision: auto, max_E: 8}
+  # bench (4 CPUs): MLP eager vmap E=8 is 3.8x E=1 and beats compile; ResNet gains nothing from vmap, compile gives 1.3x
+  engine: {device: auto, compile: "off", precision: auto, max_E: 8}
   model: {name: mlp, hidden: 400, depth: 2}
   optim: {name: sgd, lr: 0.03}
   train: {epochs: 1, batch_size: 32, eval_batch_size: 512}
@@ -17,10 +18,12 @@ presets:
   split_cifar10_class:
     benchmark: {name: split_cifar10, scenario: class}
     model: {name: resnet18r, nf: 20}
-    train: {epochs: 3}
+    train: {epochs: 2}  # 3 in the spec; lowered to fit the 6 h CPU budget (A-GEM ≈ 1 h/seed at 3 epochs)
+    engine: {compile: "on", max_E: 1}
   text5_class:
     benchmark: {name: text5, scenario: class, n_train: 2000, n_test: 500, max_len: 128, tokenizer: EleutherAI/pythia-70m}
     model: {name: hf, hf_name: EleutherAI/pythia-70m}
     optim: {name: adamw, lr: 0.0001}
     train: {batch_size: 16, eval_batch_size: 64}
+    engine: {max_E: 1}
     consolidate: {M: 200}

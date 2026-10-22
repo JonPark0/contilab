@@ -36,14 +36,15 @@ def test_run_id_stable_and_seed_sensitive():
 
 
 def test_cpu_profile_presets():
-    runs = expand(load_experiment(CPU, []))
+    all5 = "matrix.preset=[split_mnist_class, split_mnist_task, permuted_mnist, split_cifar10_class, text5_class]"
+    runs = expand(load_experiment(CPU, [all5]))
     assert len(runs) == 5 * 11 * 3
     full = {r.preset for r in runs if r.metrics.tier == "full"}
     assert full == {"split_mnist_class"}
     t = next(r for r in runs if r.preset == "text5_class")
     assert t.model.hf_name == "EleutherAI/pythia-70m" and t.optim.name == "adamw" and t.train.batch_size == 16
     c = next(r for r in runs if r.preset == "split_cifar10_class")
-    assert c.model.name == "resnet18r" and c.train.epochs == 3
+    assert c.model.name == "resnet18r" and c.train.epochs == 2 and c.engine.max_E == 1
 
 
 def test_sweep_expands_grid(tmp_path):
