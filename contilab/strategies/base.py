@@ -64,8 +64,8 @@ class Strategy:
     def after_task(self, ctx: RunContext, task: Task) -> None:
         pass
 
-    def eval_setup(self, ctx: RunContext, task_eval: int) -> None:
-        pass
+    def eval_setup(self, ctx: RunContext, task_eval: int | None) -> None:
+        """Called before evaluating task `task_eval`; None restores the training configuration."""
 
     def transform_grad(self, grads: dict[str, Tensor], ref_grads: dict[str, Tensor] | None) -> dict[str, Tensor]:
         return grads
