@@ -35,7 +35,7 @@ class RawLog:
         return [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
 
     def put_tensor(self, key: str, name: str, t: Tensor) -> None:
-        self._pending.setdefault(key, {})[name] = t.detach().cpu().contiguous()
+        self._pending.setdefault(key, {})[name] = t.detach().cpu().clone().contiguous()
 
     def flush(self) -> None:
         if not self._pending:
