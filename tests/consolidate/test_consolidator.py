@@ -54,3 +54,23 @@ def test_consolidation_marks_stream_metrics_not_applicable(tmp_path, monkeypatch
     log = RawLog(tmp_path / "r")
     run_consolidation_for_test(s, "consolidate:ta", [0], log, tier="extended")
     assert log.records("stream_acc") == [{"task": 0, "not_applicable": True}]
+
+
+def test_expert_groups_respect_max_E_and_equal_sizes():
+    from contilab.consolidate.experts import plan_expert_groups
+
+    groups = plan_expert_groups([10, 10, 10, 5], [0, 1], max_E=3)
+    assert all(len(g) <= 3 for g in groups)
+    assert sorted(m for g in groups for m in g) == sorted((t, s) for t in range(4) for s in (0, 1))
+    sizes = [10, 10, 10, 5]
+    assert all(len({sizes[t] for t, _ in g}) == 1 for g in groups)
+
+
+def test_experts_split_by_max_E_match_grouped(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTILAB_CACHE", str(tmp_path))
+    s = build_synthetic(n_tasks=3)
+    grouped = train_experts(s, smoke_cfg(), [0, 1])
+    monkeypatch.setenv("CONTILAB_CACHE", str(tmp_path / "other"))
+    split = train_experts(s, smoke_cfg(**{"engine.max_E": 1}), [0, 1])
+    for t in range(3):
+        assert torch.allclose(grouped.tuned[t]["layers.0.weight"], split.tuned[t]["layers.0.weight"], atol=1e-5)

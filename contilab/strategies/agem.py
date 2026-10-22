@@ -22,7 +22,8 @@ def project_agem(g: dict[str, Tensor], g_ref: dict[str, Tensor]) -> dict[str, Te
 @register_strategy("agem")
 class AGEM(ReplayStrategy):
     uses_ref_grad = True
-    DEFAULTS = {"vision": {"M": 500, "ref_batch": 256}, "text": {"M": 200, "ref_batch": 256}}
+    # text: a 256-sample reference gradient per step is ~17× a training step on a 70M LM (CPU budget)
+    DEFAULTS = {"vision": {"M": 500, "ref_batch": 256}, "text": {"M": 200, "ref_batch": 64}}
 
     def __init__(self, M: int = 500, ref_batch: int = 256):
         super().__init__(M, replay_batch_size=ref_batch)

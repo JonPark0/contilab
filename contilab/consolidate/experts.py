@@ -68,9 +68,21 @@ def _expert_key(stream: Stream, cfg: RunConfig, seeds: list[int]) -> dict:
             "lora": cfg.consolidate.experts_lora}
 
 
-def _train_group(stream: Stream, pool: TrainPool, tasks: list[int], seeds: list[int], cfg: RunConfig, device) -> tuple[Ensemble, int]:
+def plan_expert_groups(task_sizes: list[int], seeds: list[int], max_E: int) -> list[list[tuple[int, int]]]:
+    """(task, seed) members trained together: equal-size tasks only (same steps per epoch), at most max_E per group."""
+    by_size: dict[int, list[int]] = {}
+    for t, n in enumerate(task_sizes):
+        by_size.setdefault(n, []).append(t)
+    groups = []
+    for tasks in by_size.values():
+        members = [(t, s) for t in tasks for s in seeds]
+        groups.extend(members[i : i + max_E] for i in range(0, len(members), max(1, max_E)))
+    return groups
+
+
+def _train_group(stream: Stream, pool: TrainPool, members: list[tuple[int, int]], cfg: RunConfig, device) -> tuple[Ensemble, int]:
+    """Returns the trained ensemble and the total FLOPs of all its members."""
     fac, holder = expert_factory(stream, cfg)
-    members = [(t, s) for t in tasks for s in seeds]
     E = len(members)
     ens = Ensemble(fac, [cfg.consolidate.init_seed] * E, device)
     if holder.get("modules"):
@@ -83,7 +95,7 @@ def _train_group(stream: Stream, pool: TrainPool, tasks: list[int], seeds: list[
     step.count_flops = True
     step.set_task(0)
     table = stream.class_table().to(pool.x.device)
-    n = pool.task_size(tasks[0])
+    n = pool.task_size(members[0][0])
     flops = 0
     for _ in range(cfg.train.epochs):
         perms = epoch_perms(n, gens).to(pool.x.device) + pool.offsets.to(pool.x.device)[task_of][:, None]
@@ -91,7 +103,7 @@ def _train_group(stream: Stream, pool: TrainPool, tasks: list[int], seeds: list[
             b: Batch = pool.gather(perms[:, i : i + cfg.train.batch_size])
             b.mask = torch.ones_like(table[b.task_id]) if stream.scenario == "domain" else table[b.task_id]
             step(b, None, ctx)
-            flops += (step.flops_per_step or 0) * len(tasks)  # per seed: one member per task in the group
+            flops += (step.flops_per_step or 0) * E
     return ens, flops
 
 
@@ -113,16 +125,18 @@ def train_experts(stream: Stream, cfg: RunConfig, seeds: list[int]) -> Experts:
     t0 = time.perf_counter()
     base_ens = Ensemble(fac, [cfg.consolidate.init_seed] * S, device)
     base = {k: v.detach().cpu().clone() for k, v in base_ens.params.items()}
-    groups: dict[int, list[int]] = {}
-    for t in range(len(stream.tasks)):
-        groups.setdefault(pool.task_size(t), []).append(t)
-    tuned: list[dict[str, Tensor]] = [None] * len(stream.tasks)
+    per_member: dict[tuple[int, int], dict[str, Tensor]] = {}
     flops = 0
-    for tasks in groups.values():
-        ens, f = _train_group(s_stream, pool, tasks, seeds, cfg, device)
+    sizes = [pool.task_size(t) for t in range(len(stream.tasks))]
+    for members in plan_expert_groups(sizes, seeds, cfg.engine.max_E):
+        ens, f = _train_group(s_stream, pool, members, cfg, device)
         flops += f
-        for gi, t in enumerate(tasks):
-            tuned[t] = {k: v[gi * S : (gi + 1) * S].detach().cpu().clone() for k, v in ens.params.items()}
+        for i, m in enumerate(members):
+            per_member[m] = {k: v[i].detach().cpu().clone() for k, v in ens.params.items()}
+        del ens
+    tuned = [{k: torch.stack([per_member[(t, s)][k] for s in seeds]) for k in per_member[(t, seeds[0])]}
+             for t in range(len(stream.tasks))]
+    flops //= S  # per seed
     wall = time.perf_counter() - t0
     ex = Experts(base, tuned, holder.get("modules"), wall, flops)
     d.mkdir(parents=True, exist_ok=True)

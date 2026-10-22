@@ -1,8 +1,7 @@
 name: cpu_main
 profile: cpu
 matrix:
-  # text5_class needs pretrained LM weights from the HF CDN; add it back where that host is reachable
-  preset: [split_mnist_class, split_mnist_task, permuted_mnist, split_cifar10_class]
+  preset: [split_mnist_class, split_mnist_task, permuted_mnist, split_cifar10_class, text5_class]
   method.name: [naive, joint, ewc, lwf, er, derpp, agem, lora_per_task, 'consolidate:ta', 'consolidate:ties', 'consolidate:distill']
   seed: [0, 1, 2]
 workers: 2

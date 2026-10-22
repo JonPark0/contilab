@@ -23,9 +23,11 @@ presets:
     engine: {compile: "on", precision: auto, max_E: 1}
     metrics: {rho: 50}  # ResNet evaluation is expensive; Δ ≈ 56 steps at 2 epochs
   text5_class:
-    benchmark: {name: text5, scenario: class, n_train: 2000, n_test: 500, max_len: 128, tokenizer: EleutherAI/pythia-70m}
+    # n_train 2000 in the spec; 1000 per the plan's budget rule (pythia-70m ≈ 1 s/step on 4 CPU threads)
+    benchmark: {name: text5, scenario: class, n_train: 1000, n_test: 500, max_len: 128, tokenizer: EleutherAI/pythia-70m}
     model: {name: hf, hf_name: EleutherAI/pythia-70m}
     optim: {name: adamw, lr: 0.0001}
     train: {batch_size: 16, eval_batch_size: 64}
     engine: {max_E: 1}
+    metrics: {rho: 50, stream_subset: 100}
     consolidate: {M: 200}
