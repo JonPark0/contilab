@@ -2,7 +2,7 @@
 defaults:
   engine: {device: cpu, compile: "off", precision: fp32, max_E: 8}
   model: {name: mlp, hidden: 16}
-  optim: {name: sgd, lr: 0.1}
+  optim: {name: sgd, lr: 0.05}  # 0.1 makes EWC(λ=100) diverge on the synthetic MLP
   train: {epochs: 1, batch_size: 32, eval_batch_size: 256}
   metrics: {tier: full, rho: 10, beta: 3, recovery_steps: 5, probe_size: 64, stream_subset: 50}
   consolidate: {M: 60, epochs: 1}
