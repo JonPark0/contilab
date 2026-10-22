@@ -64,6 +64,8 @@ class TrainStep:
         self._first_call = self.compile_decision["used"]
         self.trainable: list[str] = []
         self.opt: torch.optim.Optimizer | None = None
+        self.count_flops = False
+        self.flops_per_step: int | None = None
 
     # --- hot path ----------------------------------------------------------
     def _member_loss(self, p, b, s, bt, rt):
@@ -113,8 +115,23 @@ class TrainStep:
             ref = self._grads(ref_vec)
         return loss_vec, logits, grads, ref
 
+    def measure_flops(self, bt, rt, state) -> int:
+        """FLOPs of one eager forward+backward (all members, incl. reference gradients); no update."""
+        from torch.utils.flop_counter import FlopCounterMode
+
+        fwd, ref = self._fwd, self._ref
+        self._fwd, self._ref = self._eager
+        try:
+            with FlopCounterMode(display=False) as fc:
+                self._compute(bt, rt, state)
+        finally:
+            self._fwd, self._ref = fwd, ref
+        return int(fc.get_total_flops())
+
     def __call__(self, batch: Batch, replay: Batch | None, ctx: RunContext) -> StepOutput:
         bt, rt, state = batch_tree(batch), batch_tree(replay), self.strategy.state()
+        if self.count_flops and self.flops_per_step is None:
+            self.flops_per_step = self.measure_flops(bt, rt, state)
         if self._first_call:
             self._first_call = False
             try:

@@ -105,3 +105,12 @@ def per_task_final_acc(stream, strategy, seeds, epochs=1) -> list[float]:
 def final_acc(stream, strategy, seeds, epochs=1) -> float:
     accs = per_task_final_acc(stream, strategy, seeds, epochs)
     return sum(accs) / len(accs)
+
+
+def run_with_collectors(stream, strategy, seeds, tier, logs, rho=50, beta=10, model="mlp", epochs=1):
+    from contilab.core.config import MetricsConfig, OptimConfig, TrainConfig
+    from contilab.metrics.collectors import Collectors
+
+    hooks = Collectors(tier, logs, stream, strategy, MetricsConfig(tier=tier, rho=rho, beta=beta),
+                       TrainConfig(epochs=epochs, batch_size=32), OptimConfig(lr=0.1))
+    return train_on(stream, strategy, seeds, epochs=epochs, model=model, hooks=hooks)

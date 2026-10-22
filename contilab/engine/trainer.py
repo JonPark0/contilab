@@ -56,6 +56,8 @@ def train_stream(ens: Ensemble, strategy: Strategy, stream: Stream, train_cfg: T
     if ctx.pool is None:
         ctx.pool = TrainPool.from_stream(stream)
     step = TrainStep(ens, strategy, stream, engine_cfg, optim_cfg)
+    if hasattr(hooks, "attach_step"):
+        hooks.attach_step(step)
     guard = DivergenceGuard()
     end = len(stream.tasks) if end_task is None else end_task
     ctx.task_idx = start_task
