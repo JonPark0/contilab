@@ -1,0 +1,7 @@
+name: smoke_all
+profile: smoke
+matrix:
+  preset: [syn_class, syn_task, syn_text]
+  method.name: [naive, joint, ewc, lwf, er, derpp, agem, lora_per_task, 'consolidate:ta', 'consolidate:ties', 'consolidate:distill']
+  seed: [0, 1]
+workers: 1

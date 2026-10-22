@@ -1,0 +1,18 @@
+# Seconds-scale synthetic runs covering every method, consolidation path and metric tier.
+defaults:
+  engine: {device: cpu, compile: "off", precision: fp32, max_E: 8}
+  model: {name: mlp, hidden: 16}
+  optim: {name: sgd, lr: 0.1}
+  train: {epochs: 1, batch_size: 32, eval_batch_size: 256}
+  metrics: {tier: full, rho: 10, beta: 3, recovery_steps: 5, probe_size: 64, stream_subset: 50}
+  consolidate: {M: 60, epochs: 1}
+presets:
+  syn_class:
+    benchmark: {name: synthetic, scenario: class, n_tasks: 3}
+  syn_task:
+    benchmark: {name: synthetic, scenario: task, n_tasks: 3}
+  syn_text:
+    benchmark: {name: synthetic_text, scenario: class, n_tasks: 3}
+    model: {name: hf, hf_name: tiny-gptneox}
+    optim: {name: adamw, lr: 0.001}
+    train: {batch_size: 16}

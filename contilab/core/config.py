@@ -23,6 +23,7 @@ class LoRAConfig:
     r: int = 8
     alpha: int = 16
     targets: list[str] | None = None
+    lr: float | None = 1e-3  # optimizer lr whenever only LoRA adapters (+ head) are trained (§5.3)
 
 
 @dataclass

@@ -1,0 +1,30 @@
+# Full-scale runs on one GPU (§4.1 gpu column).
+defaults:
+  engine: {device: auto, compile: auto, precision: auto, max_E: 8}
+  model: {name: mlp, hidden: 400, depth: 2}
+  optim: {name: sgd, lr: 0.03}
+  train: {epochs: 1, batch_size: 32, eval_batch_size: 1024}
+  metrics: {tier: extended}
+  consolidate: {M: 500}
+presets:
+  split_mnist_class:
+    benchmark: {name: split_mnist, scenario: class}
+    metrics: {tier: full}
+  split_mnist_task:
+    benchmark: {name: split_mnist, scenario: task}
+  permuted_mnist:
+    benchmark: {name: permuted_mnist, scenario: domain, n_tasks: 10}
+  split_cifar10_class:
+    benchmark: {name: split_cifar10, scenario: class}
+    model: {name: resnet18r, nf: 20}
+    train: {epochs: 3}
+  split_cifar100_class:
+    benchmark: {name: split_cifar100, scenario: class}
+    model: {name: resnet18r, nf: 20}
+    train: {epochs: 3}
+  text5_class:
+    benchmark: {name: text5, scenario: class, n_train: null, n_test: null, max_len: 128, tokenizer: Qwen/Qwen2.5-1.5B}
+    model: {name: hf, hf_name: Qwen/Qwen2.5-1.5B}
+    optim: {name: adamw, lr: 0.00002}
+    train: {batch_size: 16, eval_batch_size: 64}
+    consolidate: {M: 200}
