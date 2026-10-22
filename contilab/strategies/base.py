@@ -111,5 +111,10 @@ def build_strategy(name: str, params: dict[str, Any], modality: str) -> Strategy
     return cls(**{**cls.DEFAULTS.get(modality, {}), **params})
 
 
+def derived_gens(ctx: RunContext, salt: int) -> list[torch.Generator]:
+    """Per-member generators independent of the data-order generators (so strategies never perturb data order)."""
+    return [torch.Generator().manual_seed((g.initial_seed() * 1_000_003 + salt) % (2**63)) for g in ctx.gens]
+
+
 def cross_entropy(logits: Tensor, y: Tensor) -> Tensor:
     return torch.nn.functional.cross_entropy(logits, y)

@@ -17,19 +17,22 @@ def build_synthetic(
     seed: int = 0,
     scenario: str = "class",
 ) -> Stream:
-    """Gaussian clusters. Domain scenario: classes shared, cluster centres differ per task."""
+    """Gaussian clusters. Class/task scenarios: fresh centres per task. Domain scenario: shared centres
+    seen through a per-task feature permutation (task 0 = identity), a small Permuted-MNIST analogue."""
     g = torch.Generator().manual_seed(seed)
     domain = scenario == "domain"
     C = classes_per_task if domain else n_tasks * classes_per_task
+    shared = torch.randn(classes_per_task, dim, generator=g) * 2.0
     tasks = []
     for t in range(n_tasks):
         local = list(range(classes_per_task))
         glob = local if domain else [t * classes_per_task + c for c in local]
-        centers = torch.randn(classes_per_task, dim, generator=g) * 3.0
+        centers = shared if domain else torch.randn(classes_per_task, dim, generator=g) * 3.0
+        perm = torch.randperm(dim, generator=g) if (domain and t > 0) else torch.arange(dim)
 
         def draw(n: int) -> TensorSplit:
             lab = torch.arange(n) % classes_per_task
-            x = centers[lab] + torch.randn(n, dim, generator=g)
+            x = (centers[lab] + torch.randn(n, dim, generator=g))[:, perm]
             return TensorSplit(x, torch.tensor(glob)[lab])
 
         train, val = train_val_split(draw(n_train), 0.1, seed=t)
