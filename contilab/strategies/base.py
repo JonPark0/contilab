@@ -9,10 +9,10 @@ import torch
 from torch import Tensor
 from torch.func import functional_call
 
+from contilab.core.scenario import MASK_FILL
 from contilab.core.types import Batch, RunContext, Stream, Task
 from contilab.models.base import CLModel
 
-MASK_FILL = -1e9
 
 
 class MemberFns:

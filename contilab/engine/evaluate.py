@@ -8,7 +8,7 @@ from torch import Tensor
 from contilab.core.types import TensorSplit
 from contilab.data.batching import eval_batches
 from contilab.engine.ensemble import Ensemble
-from contilab.strategies.base import MASK_FILL
+from contilab.core.scenario import MASK_FILL
 
 
 @dataclass

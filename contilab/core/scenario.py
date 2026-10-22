@@ -7,6 +7,8 @@ from torch import Tensor
 
 from contilab.core.types import Stream
 
+MASK_FILL = -1e9  # finite stand-in for -inf on disallowed logits (stable CE/KL)
+
 
 def sample_mask(stream: Stream, task_ids: Tensor, current_task: int) -> Tensor:
     """Bool[*task_ids.shape, C] of classes each sample may predict."""
