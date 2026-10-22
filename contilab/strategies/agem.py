@@ -5,6 +5,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
+from contilab.core.scenario import sample_mask
 from contilab.strategies.base import cross_entropy, register_strategy
 from contilab.strategies.er import ReplayStrategy
 
@@ -25,6 +26,19 @@ class AGEM(ReplayStrategy):
 
     def __init__(self, M: int = 500, ref_batch: int = 256):
         super().__init__(M, replay_batch_size=ref_batch)
+
+    def replay_batch(self, ctx):
+        """Reference batch from the episodic memory of *previous* tasks only (Chaudhry et al. 2019)."""
+        if self.M == 0 or self.buffer is None:
+            return None
+        gidx = self.buffer.tensors["gidx"]
+        valid = ctx.pool.task_id[gidx.clamp(min=0)] < ctx.task_idx
+        slots = self.buffer.sample(self.replay_batch_size, self._gens, valid)
+        if slots is None:
+            return None
+        b = ctx.pool.gather(self.buffer.gather(slots))
+        b.mask = sample_mask(ctx.stream, b.task_id, ctx.task_idx)
+        return b
 
     def loss(self, p, s, batch, replay, f):
         z = f.logits(p, batch.x, batch.attn_mask, batch.mask)

@@ -47,6 +47,8 @@ def bwt(log, mctx):
 
 @metric("fwt", ("acc_matrix", "init_acc"), "core")
 def fwt(log, mctx):
+    if mctx.scenario == "class":
+        raise MetricUnavailable("FWT is undefined in Class-IL: a task's classes are masked out until it is learned")
     R, b = _square(log, 2), init_acc_of(log)
     return float(np.mean([R[j - 1, j] - b[j] for j in range(1, len(R))]))
 

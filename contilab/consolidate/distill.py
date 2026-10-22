@@ -17,6 +17,11 @@ from contilab.models.lora import set_active
 from contilab.strategies.base import Strategy
 
 
+def transfer_gens(seeds: list[int], upto: int) -> list[torch.Generator]:
+    """Per-run generators for transfer sampling and batch order, keyed by seed (never by ensemble slot)."""
+    return [torch.Generator().manual_seed((s * 1_000_003 + 10_007 * (upto + 1)) % (2**63)) for s in seeds]
+
+
 def mix_teachers(logits: Tensor, class_table: Tensor, routing: str, T: float, task_of: Tensor | None = None) -> Tensor:
     """logits [K, N, C] from K teachers → target distribution [N, C]. Teacher k only speaks for its own classes."""
     table = class_table[: logits.shape[0]].to(logits.device)  # [K, C]
@@ -76,7 +81,7 @@ class DistillConsolidator(Consolidator):
         dev = next(iter(ens.params.values())).device
         S = ens.E
         pool = TrainPool.from_stream(stream)
-        gens = [torch.Generator().manual_seed(10_007 * (upto + 1) + e) for e in range(S)]
+        gens = transfer_gens(cctx.seeds, upto)
         tr: TransferSet = build_transfer(stream, pool, upto, self.cfg.transfer, self.cfg.M, gens,
                                          cfg.benchmark.tokenizer, cfg.benchmark.max_len)
         table = stream.class_table().to(dev)
@@ -108,6 +113,7 @@ class DistillConsolidator(Consolidator):
 
         ens.load_params({k: v.to(dev) for k, v in self._init(experts, upto, cctx).items()})
         step = TrainStep(ens, DistillStrategy(self.cfg.temperature), stream, cfg.engine, cfg.optim)
+        step.count_flops = True
         step.set_task(upto)
         ctx = RunContext(task_idx=upto, step=0, device=dev, E=S, gens=gens, stream=stream,
                          active=torch.ones(S, dtype=torch.bool), ens=ens)
@@ -121,4 +127,5 @@ class DistillConsolidator(Consolidator):
                               attn_mask=None if am is None else am[rows, idx], mask=masks[rows, idx],
                               extra={"target": targets[rows, idx]})
                 step(batch, None, ctx)
+                self.flops += step.flops_per_step or 0
         return ens.snapshot()

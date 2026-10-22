@@ -5,7 +5,7 @@ defaults:
   model: {name: mlp, hidden: 400, depth: 2}
   optim: {name: sgd, lr: 0.03}
   train: {epochs: 1, batch_size: 32, eval_batch_size: 512}
-  metrics: {tier: extended}
+  metrics: {tier: extended, rho: 20}  # ρ ≤ WF window Δ (10% of a ~300-step MNIST task)
   consolidate: {M: 500}
 presets:
   split_mnist_class:
@@ -20,6 +20,7 @@ presets:
     model: {name: resnet18r, nf: 20}
     train: {epochs: 2}  # 3 in the spec; lowered to fit the 6 h CPU budget (A-GEM ≈ 1 h/seed at 3 epochs)
     engine: {compile: "on", max_E: 1}
+    metrics: {rho: 50}  # ResNet evaluation is expensive; Δ ≈ 56 steps at 2 epochs
   text5_class:
     benchmark: {name: text5, scenario: class, n_train: 2000, n_test: 500, max_len: 128, tokenizer: EleutherAI/pythia-70m}
     model: {name: hf, hf_name: EleutherAI/pythia-70m}

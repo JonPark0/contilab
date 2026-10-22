@@ -81,6 +81,8 @@ def windowed_forgetting(log, mctx):
     ends = _task_end_steps(rows)
     starts = [0] + [ends[t] for t in range(T - 1)]
     window = mctx.cfg.window_frac * np.mean([ends[t] - starts[t] for t in range(T)])
+    if window < mctx.cfg.rho:
+        raise MetricUnavailable(f"window Δ={window:.0f} steps is shorter than the evaluation spacing ρ={mctx.cfg.rho}")
     out = []
     for k in range(T - 1):
         pts = _after(rows, k)

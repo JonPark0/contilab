@@ -30,6 +30,7 @@ def test_class_il_eval_merges_adapters_and_restores_training_mode():
     ens, ctx = train_on(s, strat, [0])
     strat.eval_setup(ctx, 0)
     mods = [m for m in ens.template.modules() if isinstance(m, _LoRABase)]
-    assert mods[0].active == [0, 1, 2] and mods[0].scale == strat.meta["lam"]
+    scale = ens.buffers[f"{strat.lora_modules[0]}.member_scale"]
+    assert mods[0].active == [0, 1, 2] and scale.tolist() == strat.meta["lam"]
     strat.eval_setup(ctx, None)
-    assert mods[0].active == [2] and mods[0].scale == 1.0
+    assert mods[0].active == [2] and scale.tolist() == [1.0]

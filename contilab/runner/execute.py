@@ -16,7 +16,7 @@ from contilab.core.types import RunContext, Stream
 from contilab.data.batching import TrainPool
 from contilab.data.registry import build_stream
 from contilab.data.transforms import make_joint_stream
-from contilab.engine.device import select_device, select_precision
+from contilab.engine.device import reset_peak_memory, select_device, select_precision
 from contilab.engine.ensemble import Ensemble
 from contilab.engine.trainer import train_stream
 from contilab.metrics.collectors import Collectors
@@ -43,7 +43,18 @@ def _stream_info(stream: Stream) -> dict:
 
 
 def _lora_optim(cfg: RunConfig):
-    return replace(cfg.optim, lr=cfg.model.lora.lr) if cfg.model.lora.lr is not None else cfg.optim
+    """LoRA's own lr (§5.3: 1e-3) is an Adam-style rate; SGD keeps the run's lr."""
+    if cfg.model.lora.lr is not None and cfg.optim.name == "adamw":
+        return replace(cfg.optim, lr=cfg.model.lora.lr)
+    return cfg.optim
+
+
+def _clear_raw(rdirs: list[RunDir]) -> None:
+    """A run that starts from scratch must not append to records of an earlier, abandoned attempt."""
+    for rd in rdirs:
+        shutil.rmtree(rd.path / "raw", ignore_errors=True)
+        (rd.path / "metrics.json").unlink(missing_ok=True)
+        rd.log = type(rd.log)(rd.path)
 
 
 def _save_ckpt(path: Path, t: int, ens: Ensemble, strategy, ctx: RunContext) -> None:
@@ -78,13 +89,15 @@ def _run_training(cfgs: list[RunConfig], rdirs: list[RunDir], exp_dir: Path, str
         return strategy.prepare_model(build_model(cfg.model, train_s), train_s)
 
     ens = Ensemble(factory, seeds, device)
+    ck_dir = _ckpt_dir(exp_dir, cfgs)
+    ck = _load_ckpt(ck_dir)
+    if ck is None:
+        _clear_raw(rdirs)
     hooks = Collectors(cfg.metrics.tier, [rd.log for rd in rdirs], train_s, strategy, cfg.metrics, cfg.train, optim,
                        eval_stream=stream if joint else None)
     ctx = RunContext(task_idx=0, step=0, device=device, E=len(seeds), gens=[torch.Generator().manual_seed(s) for s in seeds],
                      stream=train_s, active=torch.ones(len(seeds), dtype=torch.bool), pool=TrainPool.from_stream(train_s), ens=ens)
-    ck_dir = _ckpt_dir(exp_dir, cfgs)
     start = 0
-    ck = _load_ckpt(ck_dir)
     if ck is not None:
         ens.load_params(ck["params"])
         for k, v in ck["buffers"].items():
@@ -123,6 +136,7 @@ def _run_consolidation(cfgs: list[RunConfig], rdirs: list[RunDir], stream: Strea
     if cfg.consolidate.experts_lora:
         cfg = replace(cfg, optim=_lora_optim(cfg))
     seeds = [c.seed for c in cfgs]
+    _clear_raw(rdirs)
     hooks = Collectors(cfg.metrics.tier, [rd.log for rd in rdirs], stream, None, cfg.metrics, cfg.train, cfg.optim)
     ctx = RunContext(task_idx=0, step=0, device=device, E=len(seeds), gens=[torch.Generator().manual_seed(s) for s in seeds],
                      stream=stream, active=torch.ones(len(seeds), dtype=torch.bool), pool=TrainPool.from_stream(stream))
@@ -150,6 +164,7 @@ def execute_group(cfgs: list[RunConfig], exp_dir: Path) -> None:
     try:
         cfg = cfgs[0]
         device = select_device(cfg.engine.device)
+        reset_peak_memory(device)
         stream = build_stream(cfg.benchmark).to(device)
         for rd in rdirs:
             rd.write_json("stream.json", _stream_info(stream))

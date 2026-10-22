@@ -65,7 +65,8 @@ class TrainStep:
         self.trainable: list[str] = []
         self.opt: torch.optim.Optimizer | None = None
         self.count_flops = False
-        self.flops_per_step: int | None = None
+        self.flops_per_step: int | None = None  # per member; max over the step structures seen so far
+        self._flops_seen: set = set()
 
     # --- hot path ----------------------------------------------------------
     def _member_loss(self, p, b, s, bt, rt):
@@ -130,8 +131,12 @@ class TrainStep:
 
     def __call__(self, batch: Batch, replay: Batch | None, ctx: RunContext) -> StepOutput:
         bt, rt, state = batch_tree(batch), batch_tree(replay), self.strategy.state()
-        if self.count_flops and self.flops_per_step is None:
-            self.flops_per_step = self.measure_flops(bt, rt, state)
+        if self.count_flops:
+            sig = (tuple(sorted(bt)), None if rt is None else tuple(sorted(rt)), tuple(sorted(state)))
+            if sig not in self._flops_seen:  # e.g. replay appears at step 1, LwF/EWC state at task 1
+                self._flops_seen.add(sig)
+                per_member = self.measure_flops(bt, rt, state) // self.ens.E
+                self.flops_per_step = max(self.flops_per_step or 0, per_member)
         if self._first_call:
             self._first_call = False
             try:

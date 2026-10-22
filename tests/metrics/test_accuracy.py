@@ -7,7 +7,7 @@ from helpers import fake_log, mctx, values
 
 R = [[0.9, 0.1, 0.0], [0.6, 0.8, 0.2], [0.5, 0.7, 0.9]]
 B = [0.1, 0.1, 0.1]
-MCTX = mctx(3)
+MCTX = mctx(3, scenario="task")  # FWT is only defined outside Class-IL
 MCTX1 = mctx(1)
 
 

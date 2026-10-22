@@ -27,9 +27,19 @@ LOWER_IS_BETTER = {"forgetting", "relative_forgetting", "stability_gap", "window
                    "model_bytes", "total_flops"}
 
 
+def with_labels(df: pd.DataFrame) -> pd.DataFrame:
+    """`label` = method, plus its variant (extra matrix axes / sweep values) when there is one."""
+    variant = df["variant"].fillna("").astype(str) if "variant" in df.columns else pd.Series("", index=df.index)
+    return df.assign(label=[m if not v else f"{m} [{v}]" for m, v in zip(df["method"], variant)])
+
+
 def methods_in(df: pd.DataFrame) -> list[str]:
-    present = list(dict.fromkeys(df["method"]))
-    return [m for m in METHOD_ORDER if m in present] + [m for m in present if m not in METHOD_ORDER]
+    """Labels in canonical method order (variants of a method stay together)."""
+    col = "label" if "label" in df.columns else "method"
+    present = list(dict.fromkeys(df[col]))
+    rank = {m: i for i, m in enumerate(METHOD_ORDER)}
+    base = dict(zip(df[col], df["method"]))
+    return sorted(present, key=lambda l: (rank.get(base[l], len(METHOD_ORDER)), present.index(l)))
 
 
 def _fmt(metric: str, v: float) -> str:
@@ -42,26 +52,32 @@ def _fmt(metric: str, v: float) -> str:
     return f"{v:.3f}"
 
 
-def _cell(df: pd.DataFrame, method: str, metric: str, base: pd.DataFrame | None) -> str:
+def _cell(df: pd.DataFrame, label: str, metric: str, base: pd.DataFrame | None) -> str:
     if metric not in df.columns:
         return "—"
-    sub = df[(df.method == method) & df[metric].notna()]
+    sub = df[(df.label == label) & df[metric].notna()]
     if sub.empty:
         return "—"
     s = summarize(sub[metric].tolist())
     txt = _fmt(metric, s["mean"]) + (f" ± {_fmt(metric, s['std'])}" if s["n"] > 1 else "")
-    if base is not None and method != base.method.iloc[0] and metric in base.columns:
+    if base is not None and label != base.label.iloc[0] and metric in base.columns:
         pairs = sub.merge(base[["seed", metric]], on="seed", suffixes=("", "_b")).dropna(subset=[metric, f"{metric}_b"])
         if len(pairs) >= 2 and paired_test(pairs[metric], pairs[f"{metric}_b"])["p"] < 0.05:
             txt += " *"
     return txt
 
 
+def _row_name(d: pd.DataFrame, label: str) -> str:
+    st = d[d.label == label].status
+    n_div = int((st == "diverged").sum())
+    return f"{label} (diverged {n_div}/{len(st)})" if n_div else label
+
+
 def _table(df: pd.DataFrame, preset: str, metrics: list[str], baseline: str) -> str:
-    d = df[(df.preset == preset) & df.status.isin(["done", "diverged"])]
-    base = d[d.method == baseline] if baseline in set(d.method) else None
+    d = with_labels(df[(df.preset == preset) & df.status.isin(["done", "diverged"])])
+    base = d[d.label == baseline] if baseline in set(d.label) else None
     head = "| method | " + " | ".join(metrics) + " |\n|---|" + "---|" * len(metrics) + "\n"
-    rows = [f"| {m} | " + " | ".join(_cell(d, m, k, base) for k in metrics) + " |" for m in methods_in(d)]
+    rows = [f"| {_row_name(d, m)} | " + " | ".join(_cell(d, m, k, base) for k in metrics) + " |" for m in methods_in(d)]
     return head + "\n".join(rows) + "\n"
 
 
@@ -80,8 +96,8 @@ def axis_tables(df: pd.DataFrame, preset: str, baseline: str = "naive") -> dict[
 
 
 def rank_table(df: pd.DataFrame, metric: str = "acc") -> tuple[str, dict]:
-    d = df[df.status.isin(["done", "diverged"])]
-    piv = d.groupby(["preset", "method"])[metric].mean().unstack("method")
+    d = with_labels(df[df.status.isin(["done", "diverged"])])
+    piv = d.groupby(["preset", "label"])[metric].mean().unstack("label")
     piv = piv.dropna(axis=1)
     methods = [m for m in methods_in(d) if m in piv.columns]
     if piv.empty or not methods:

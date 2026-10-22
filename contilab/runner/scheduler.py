@@ -17,6 +17,7 @@ from contilab.runner.finalize import finalize_experiment
 from contilab.runner.storage import RunDir
 
 TEXT_BENCHMARKS = {"text5", "synthetic_text"}
+TERMINAL = {"done", "diverged"}  # a diverged run is a result, not a failure: never re-run it
 
 
 def group_runs(cfgs: list[RunConfig], max_E: int) -> list[list[RunConfig]]:
@@ -60,7 +61,7 @@ def run_experiment(exp: LoadedExperiment, root: Path) -> Path:
     (exp_dir / "experiment.yaml").write_text(yaml.safe_dump(
         {k: v for k, v in asdict(exp).items() if k not in ("defaults", "presets")}, sort_keys=True))
     cfgs = expand(exp)
-    pending = [c for c in cfgs if RunDir(exp_dir / run_id(c)).status() != "done"]
+    pending = [c for c in cfgs if RunDir(exp_dir / run_id(c)).status() not in TERMINAL]
     groups: list[list[RunConfig]] = []
     by_E: dict[int, list[RunConfig]] = {}
     for c in pending:

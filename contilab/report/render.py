@@ -13,7 +13,7 @@ import yaml
 
 from contilab.metrics.stats import low_power_warning
 from contilab.report import figures
-from contilab.report.tables import axis_tables, main_table, methods_in, rank_table
+from contilab.report.tables import axis_tables, main_table, methods_in, rank_table, with_labels
 
 AXIS_TITLES = {"stability": "안정성", "plasticity": "가소성", "representation": "표현", "plasticity_loss": "가소성 손실",
                "bias_calibration": "편향·신뢰도", "recovery": "복구성·지형", "efficiency": "효율"}
@@ -26,11 +26,21 @@ LIMITATIONS = [
 
 def _representatives(exp_dir: Path, df: pd.DataFrame, preset: str) -> dict[str, Path]:
     out = {}
-    d = df[(df.preset == preset) & df.status.isin(["done", "diverged"])]
+    d = with_labels(df[(df.preset == preset) & df.status.isin(["done", "diverged"])])
     for m in methods_in(d):
-        r = d[d.method == m].sort_values("seed").iloc[0]
+        r = d[d.label == m].sort_values("seed").iloc[0]
         out[m] = exp_dir / r["run_id"]
     return out
+
+
+def _eval_settings(exp_dir: Path, df: pd.DataFrame, preset: str) -> list[str]:
+    run = df[df.preset == preset].run_id.iloc[0]
+    p = exp_dir / run / "config.yaml"
+    if not p.exists():
+        return []
+    m = yaml.safe_load(p.read_text())["metrics"]
+    return [f"연속 평가 간격 ρ={m['rho']} 스텝, LCA β={m['beta']}, WF 창 Δ=태스크 길이×{m['window_frac']} "
+            f"(Δ<ρ이면 WF는 미정의로 표시), 지표 티어 `{m['tier']}`", ""]
 
 
 def _env_summary(exp_dir: Path) -> list[str]:
@@ -66,7 +76,7 @@ def build_report(exp_dir: Path) -> tuple[Path, Path]:
     if len(failed):
         md += ["## 실패한 run", ""] + [f"- `{r}`" for r in failed.run_id] + [""]
     for preset in list(dict.fromkeys(df.preset)):
-        md += [f"## {preset}", "", "### 주요 지표", "", main_table(df, preset, baseline)]
+        md += [f"## {preset}", ""] + _eval_settings(exp_dir, df, preset) + ["### 주요 지표", "", main_table(df, preset, baseline)]
         for axis, tab in axis_tables(df, preset, baseline).items():
             md += [f"### {AXIS_TITLES.get(axis, axis)}", "", tab]
         runs = _representatives(exp_dir, df, preset)

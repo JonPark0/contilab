@@ -40,8 +40,25 @@ def select_precision(pref: str, device: torch.device) -> tuple[torch.dtype | Non
     return None, f"auto: no native bf16 on {device.type} ({torch.backends.cpu.get_cpu_capability()})"
 
 
+def reset_peak_memory(device: torch.device) -> None:
+    """Start a fresh peak-memory window (per run group, so in-process groups don't inherit earlier peaks)."""
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+        return
+    try:  # Linux: "5" resets the VmHWM high-water mark of this process
+        Path("/proc/self/clear_refs").write_text("5")
+    except OSError:
+        pass
+
+
 def peak_memory_bytes(device: torch.device) -> int:
     if device.type == "cuda":
         return int(torch.cuda.max_memory_allocated(device))
-    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    try:
+        for line in Path("/proc/self/status").read_text().splitlines():
+            if line.startswith("VmHWM:"):
+                return int(line.split()[1]) * 1024
+    except OSError:
+        pass
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss  # process-lifetime fallback
     return int(rss if sys.platform == "darwin" else rss * 1024)

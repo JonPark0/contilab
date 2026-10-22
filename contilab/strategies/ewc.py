@@ -10,6 +10,11 @@ from contilab.core.scenario import sample_mask
 from contilab.strategies.base import MemberFns, Strategy, cross_entropy, derived_gens, register_strategy
 
 FISHER_CHUNK = 128
+FISHER_BUDGET_BYTES = 2**30  # per-sample gradients held at once (fp32)
+
+
+def fisher_chunk(n_params: int, budget_bytes: int = FISHER_BUDGET_BYTES) -> int:
+    return max(1, min(FISHER_CHUNK, budget_bytes // (4 * n_params)))
 
 
 @register_strategy("ewc")
@@ -62,10 +67,12 @@ class EWC(Strategy):
         am_dim = None if am is None else 0
         per_sample = vmap(sample_sq_grad, in_dims=(None, None, None, 0, am_dim, 0, 0))
 
+        chunk = fisher_chunk(sum(ens.params[k][0].numel() for k in names))
+
         def member_fisher(p_train, p_rest, b, xs, ams, ys, ms):
             tot = {k: torch.zeros_like(v) for k, v in p_train.items()}
-            for i in range(0, xs.shape[0], FISHER_CHUNK):
-                sl = slice(i, i + FISHER_CHUNK)
+            for i in range(0, xs.shape[0], chunk):
+                sl = slice(i, i + chunk)
                 g = per_sample(p_train, p_rest, b, xs[sl], None if ams is None else ams[sl], ys[sl], ms[sl])
                 for k in tot:
                     tot[k] = tot[k] + g[k].sum(0)

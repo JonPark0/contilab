@@ -27,12 +27,12 @@ def test_stream_metrics(tmp_path):
     assert v["wc_acc"] == pytest.approx(0.5 * 0.9 + 0.5 * 0.4)
     assert v["stability_gap"] == pytest.approx(0.9 - 0.4)
     assert v["aaa"] == pytest.approx(np.mean([0.0, 0.6, 0.9, 0.45, 0.8]))
-    # window = 10% of mean task length (10 steps) → 1 step: no pair of records within 1 step → 0
-    assert v["windowed_forgetting"] == pytest.approx(0.0)
+    # window = 10% of mean task length (10 steps) = 1 step < ρ: undefined rather than a fake 0
+    assert v["windowed_forgetting"] is None
 
 
 def test_windowed_forgetting_wide_window(tmp_path):
-    v = values(compute_metrics(stream_log(tmp_path), mctx(2, window_frac=1.0), "extended", only=["windowed_forgetting"]))
+    v = values(compute_metrics(stream_log(tmp_path), mctx(2, window_frac=1.0, rho=5), "extended", only=["windowed_forgetting"]))
     assert v["windowed_forgetting"] == pytest.approx(0.9 - 0.4)
 
 

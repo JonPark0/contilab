@@ -40,30 +40,45 @@ class LoRAPerTask(Strategy):
         z = f.logits(p, batch.x, batch.attn_mask, batch.mask)
         return cross_entropy(z, batch.y), z
 
+    def _set_member_scales(self, ens, lams) -> None:
+        lam = torch.as_tensor(lams, dtype=torch.float32)
+        for m in self.lora_modules:
+            buf = ens.buffers[f"{m}.member_scale" if m else "member_scale"]
+            buf.copy_(lam.to(buf.device, buf.dtype))
+
     @torch.no_grad()
     def after_task(self, ctx, task):
+        """Pick λ* per member on the seen tasks' validation sets (ties → smaller λ)."""
         if ctx.stream.scenario == "task":
             return
         t, ens = ctx.task_idx, ctx.ens
-        best, best_lam = -1.0, 1.0
-        for lam in self.lam_grid:
-            set_active(ens.template, list(range(t + 1)), scale=lam)
+        set_active(ens.template, list(range(t + 1)))
+        best = torch.full((ens.E,), -1.0)
+        best_lam = torch.ones(ens.E)
+        for lam in sorted(self.lam_grid):
+            self._set_member_scales(ens, [lam] * ens.E)
             accs = []
             for j in range(t + 1):
-                val = ctx.stream.tasks[j].val
                 mask = sample_mask(ctx.stream, torch.tensor(j), t)
-                accs.append(evaluate_split(ens, ens.params, val, mask, 256).correct[0].float().mean().item())
-            score = sum(accs) / len(accs)
-            if score > best + 1e-12:
-                best, best_lam = score, lam
-        self.meta["lam"] = best_lam
+                accs.append(evaluate_split(ens, ens.params, ctx.stream.tasks[j].val, mask, 256).correct.float().mean(1).cpu())
+            score = torch.stack(accs, 1).mean(1)
+            better = score > best + 1e-12
+            best = torch.where(better, score, best)
+            best_lam = torch.where(better, torch.full_like(best_lam, lam), best_lam)
+        self.meta["lam"] = best_lam.tolist()
+        self._set_member_scales(ens, [1.0] * ens.E)
         set_active(ens.template, [t])
 
     def eval_setup(self, ctx, task_eval):
-        tpl = ctx.ens.template
+        ens = ctx.ens
+        tpl = ens.template
+        lams = self.meta["lam"] if isinstance(self.meta["lam"], list) else [self.meta["lam"]] * ens.E
         if task_eval is None:  # back to training configuration
             set_active(tpl, [ctx.task_idx])
+            self._set_member_scales(ens, [1.0] * ens.E)
         elif ctx.stream.scenario == "task":
             set_active(tpl, [task_eval])
+            self._set_member_scales(ens, [1.0] * ens.E)
         else:
-            set_active(tpl, list(range(ctx.task_idx + 1)), scale=self.meta["lam"])
+            set_active(tpl, list(range(ctx.task_idx + 1)))
+            self._set_member_scales(ens, lams)

@@ -173,7 +173,7 @@ def run_consolidation_for_test(stream, method, seeds, log, experts_lora=False, t
     return ctx
 
 
-def tiny_experiment(methods, tier="core", seeds=(0, 1), name="tiny"):
+def tiny_experiment(methods, tier="core", seeds=(0, 1), name="tiny", cli=None, sweep=None):
     from pathlib import Path
 
     import yaml
@@ -183,8 +183,8 @@ def tiny_experiment(methods, tier="core", seeds=(0, 1), name="tiny"):
     prof = yaml.safe_load((Path(__file__).parent.parent / "configs/profiles/smoke.yaml").read_text())
     return LoadedExperiment(name=name, profile="smoke", matrix={"preset": ["syn_class"], "method.name": list(methods),
                                                                "seed": list(seeds)},
-                            overrides={}, sweep={}, workers=1, defaults=prof["defaults"], presets=prof["presets"],
-                            cli={"metrics.tier": tier})
+                            overrides={}, sweep=sweep or {}, workers=1, defaults=prof["defaults"], presets=prof["presets"],
+                            cli={"metrics.tier": tier, **(cli or {})})
 
 
 def statuses(exp_dir) -> dict:

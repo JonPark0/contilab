@@ -27,12 +27,14 @@ class ConsolidationContext:
     ens: Ensemble
     cfg: RunConfig
     val_score: Callable[[dict[str, Tensor], int], Tensor]  # (params, upto) → mean val acc [S]
+    seeds: list[int]
 
 
 class Consolidator:
     def __init__(self, cfg: ConsolidateConfig, student_factory=None):
         self.cfg = cfg
         self.student_factory = student_factory  # extension point: teacher→student continual distillation (§5.6)
+        self.flops = 0  # per member, training done inside consolidate() (distillation)
 
     def on_new_expert(self, expert: dict[str, Tensor], ctx: RunContext) -> None:
         pass
@@ -105,7 +107,7 @@ def run_consolidation(stream: Stream, cfg: RunConfig, seeds: list[int], hooks, c
     ctx.ens = ens
     if ctx.pool is None:
         ctx.pool = TrainPool.from_stream(stream)
-    cctx = ConsolidationContext(stream, ens, cfg, make_val_score(stream, ens, cfg.train.eval_batch_size))
+    cctx = ConsolidationContext(stream, ens, cfg, make_val_score(stream, ens, cfg.train.eval_batch_size), list(seeds))
     consolidator = build_consolidator(cfg.method.name, cfg.consolidate)
     if hasattr(hooks, "consolidation"):
         hooks.consolidation = True
@@ -117,6 +119,6 @@ def run_consolidation(stream: Stream, cfg: RunConfig, seeds: list[int], hooks, c
         ens.load_params(consolidator.consolidate(experts, t, cctx))
         hooks.on_task_end(ctx)
     if hasattr(hooks, "extra_cost"):
-        hooks.extra_cost.update(expert_wall_s=experts.wall_s, expert_flops=experts.flops,
+        hooks.extra_cost.update(expert_wall_s=experts.wall_s, expert_flops=experts.flops + consolidator.flops,
                                 stored_experts_bytes=experts.nbytes())
     hooks.on_run_end(ctx)

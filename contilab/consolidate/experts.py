@@ -91,7 +91,7 @@ def _train_group(stream: Stream, pool: TrainPool, tasks: list[int], seeds: list[
             b: Batch = pool.gather(perms[:, i : i + cfg.train.batch_size])
             b.mask = torch.ones_like(table[b.task_id]) if stream.scenario == "domain" else table[b.task_id]
             step(b, None, ctx)
-            flops += step.flops_per_step or 0
+            flops += (step.flops_per_step or 0) * len(tasks)  # per seed: one member per task in the group
     return ens, flops
 
 

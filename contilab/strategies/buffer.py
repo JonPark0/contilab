@@ -34,14 +34,22 @@ class ReservoirBuffer:
                 self.tensors["logits"][e, slot] = logits[e, src].float()
             self.seen[e] += B
 
-    def sample(self, n: int, gens: list[torch.Generator]) -> Tensor | None:
-        """Slot indices [E, n'] (n' = min(n, filled)); filled count is equal across members."""
-        k = min(self.seen[0], self.M)
-        if k == 0:
+    def sample(self, n: int, gens: list[torch.Generator], valid: Tensor | None = None) -> Tensor | None:
+        """Slot indices [E, n'] drawn without replacement from filled (and `valid`) slots;
+        n' = min(n, smallest eligible count over members)."""
+        ok = self.tensors["gidx"] >= 0
+        if valid is not None:
+            ok = ok & valid
+        counts = ok.sum(1)
+        n = min(n, int(counts.min()))
+        if n == 0:
             return None
-        n = min(n, k)
         dev = self.tensors["gidx"].device
-        return torch.stack([torch.randperm(k, generator=g)[:n] for g in gens]).to(dev)
+        rows = []
+        for e, g in enumerate(gens):
+            slots = torch.nonzero(ok[e]).flatten().cpu()
+            rows.append(slots[torch.randperm(len(slots), generator=g)[:n]])
+        return torch.stack(rows).to(dev)
 
     def gather(self, slots: Tensor, key: str = "gidx") -> Tensor:
         return torch.gather(self.tensors[key], 1, slots) if key == "gidx" else \

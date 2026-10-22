@@ -27,6 +27,8 @@ class _LoRABase(nn.Module):
             self.lora_B[f"t{i}"] = nn.Parameter(torch.zeros(fan_out, r))
         self.active: list[int] = []
         self.scale = 1.0
+        # per-member multiplier (stacked by the Ensemble), lets each member merge adapters with its own λ
+        self.register_buffer("member_scale", torch.ones(()))
 
     def delta(self, t: int) -> Tensor:
         return (self.alpha / self.r) * self.lora_B[f"t{t}"] @ self.lora_A[f"t{t}"]
@@ -42,7 +44,7 @@ class LoRALinear(_LoRABase):
         y = self.base(x)
         for t in self.active:
             a, b = self.lora_A[f"t{t}"], self.lora_B[f"t{t}"]
-            y = y + (self.scale * self.alpha / self.r) * F.linear(F.linear(x, a), b)
+            y = y + (self.scale * self.member_scale * self.alpha / self.r) * F.linear(F.linear(x, a), b)
         return y
 
 
@@ -60,7 +62,7 @@ class LoRAConv2d(_LoRABase):
         if self.active:
             dw = sum(self.delta(t) for t in self.active).view_as(self.base.weight)
             c = self.base
-            y = y + self.scale * F.conv2d(x, dw, None, c.stride, c.padding, c.dilation)
+            y = y + (self.scale * self.member_scale) * F.conv2d(x, dw, None, c.stride, c.padding, c.dilation)
         return y
 
 
