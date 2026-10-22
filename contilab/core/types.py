@@ -10,6 +10,7 @@ from torch import Tensor
 
 if TYPE_CHECKING:
     from contilab.data.batching import TrainPool
+    from contilab.engine.ensemble import Ensemble
 
 Scenario = Literal["task", "class", "domain"]
 Modality = Literal["vision", "text"]
@@ -90,3 +91,4 @@ class RunContext:
     active: Tensor  # Bool[E]
     diverged: set[int] = field(default_factory=set)
     pool: TrainPool | None = None
+    ens: Ensemble | None = None
