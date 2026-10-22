@@ -141,3 +141,33 @@ def mctx(T: int, scenario: str = "class", joint_acc=None, cpt: int = 2, **cfg):
     for t in range(T):
         table[t, t * cpt:(t + 1) * cpt] = True
     return MetricContext(scenario=scenario, class_table=table, joint_acc=joint_acc, cfg=MetricsConfig(**cfg))
+
+
+def smoke_cfg(**over):
+    from contilab.core.config import (BenchmarkConfig, ConsolidateConfig, EngineConfig, MethodConfig, ModelConfig,
+                                      OptimConfig, RunConfig, TrainConfig)
+
+    cfg = RunConfig(benchmark=BenchmarkConfig(name="synthetic"), model=ModelConfig(name="mlp", hidden=16),
+                    optim=OptimConfig(lr=0.1), train=TrainConfig(epochs=2, batch_size=32),
+                    engine=EngineConfig(device="cpu", compile="off", precision="fp32"),
+                    method=MethodConfig(name="consolidate:ta"), consolidate=ConsolidateConfig(M=60))
+    for k, v in over.items():
+        obj = cfg
+        *path, leaf = k.split(".")
+        for p in path:
+            obj = getattr(obj, p)
+        setattr(obj, leaf, v)
+    return cfg
+
+
+def run_consolidation_for_test(stream, method, seeds, log, experts_lora=False, transfer="buffer", tier="core"):
+    from contilab.consolidate.consolidator import run_consolidation
+    from contilab.core.config import MetricsConfig
+    from contilab.metrics.collectors import Collectors
+
+    cfg = smoke_cfg(**{"method.name": method, "consolidate.experts_lora": experts_lora, "consolidate.transfer": transfer})
+    hooks = Collectors(tier, [log] if not isinstance(log, list) else log, stream, None, MetricsConfig(tier=tier),
+                       cfg.train, cfg.optim)
+    ctx = make_ctx(stream, seeds)
+    run_consolidation(stream, cfg, seeds, hooks, ctx)
+    return ctx

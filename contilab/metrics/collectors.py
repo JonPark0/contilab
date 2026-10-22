@@ -33,8 +33,13 @@ class Collectors:
                  train_cfg: TrainConfig, optim_cfg: OptimConfig | None = None, eval_stream: Stream | None = None):
         if tier not in RAW_KEYS_BY_TIER:
             raise ValueError(f"unknown metrics tier: {tier}")
+        if strategy is None:
+            from contilab.strategies.naive import Naive
+
+            strategy = Naive()
         self.keys = RAW_KEYS_BY_TIER[tier]
         self.logs, self.stream, self.strategy = logs, stream, strategy
+        self.consolidation = False  # set by run_consolidation: no training stream to evaluate continually
         self.cfg, self.train_cfg = metrics_cfg, train_cfg
         self.optim_cfg = optim_cfg or OptimConfig()
         self.eval_stream = eval_stream or stream
@@ -231,12 +236,16 @@ class Collectors:
             self._record_ppl(ctx, -1)
         if "barrier_curve" in self.keys:
             self._prev_params = None
+        if self.consolidation:
+            for key in ("stream_acc", "lca_curve"):
+                if key in self.keys:
+                    self._per_member(lambda e, log, key=key: log.append(key, {"task": 0, "not_applicable": True}))
 
     def on_task_start(self, ctx: RunContext) -> None:
         self._task_steps = 0
-        if "stream_acc" in self.keys and ctx.step == 0:
+        if "stream_acc" in self.keys and ctx.step == 0 and not self.consolidation:
             self._record_stream_acc(ctx)
-        if "lca_curve" in self.keys:
+        if "lca_curve" in self.keys and not self.consolidation:
             self._record_lca(ctx, 0)
         self._task_t0 = time.perf_counter()
         self._samples = 0
@@ -269,7 +278,7 @@ class Collectors:
         if "cost" in self.keys:
             rec = self._cost_record(ctx, t, wall)
             self._per_member(lambda e, log: log.append("cost", rec))
-        if "stream_acc" in self.keys:
+        if "stream_acc" in self.keys and not self.consolidation:
             self._record_stream_acc(ctx)
         if "features" in self.keys or "activations" in self.keys:
             self._record_features(ctx)
