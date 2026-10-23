@@ -4,10 +4,10 @@
 contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류·병합, 30+ 지표). CPU 완주, 설정으로 GPU 확장. 공개 리포·위키·Pages.
 
 ## 완료
-- 구현 Task 1–27 (`docs/design/`의 스펙·계획): 전략 8종 + TA/TIES/다중 교사 증류, vmap 시드 앙상블, 러너·재개·리포트·CLI
+- Task 1–27(`docs/design/` 스펙·계획): 전략 8종, TA/TIES/증류, vmap 앙상블, 러너·리포트·CLI
 - 테스트 146 통과, 5 skip(네트워크)
 - CPU 연구 165런(159 done, EWC 6 발산), EWC λ 스윕 → `docs/wiki/Results.md`
-- README, CITATION.cff, MIT, 위키 동기화 워크플로, Pages
+- README, CITATION.cff, MIT, 위키 동기화, Pages
 
 ## 남은 작업
 - M1 `engine/trainer.py` `DivergenceGuard` 기준값을 `runner/execute.py` `_save_ckpt`/`_load_ckpt`에 저장
@@ -33,7 +33,7 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 ## 검증
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
-.venv/bin/pytest tests -q                # --run-network: 다운로드 테스트
+.venv/bin/pytest tests -q  # --run-network: 다운로드 포함
 .venv/bin/contilab run configs/experiments/smoke_all.yaml && .venv/bin/contilab report runs/smoke_all
 .venv/bin/contilab run configs/experiments/cpu_main.yaml   # 4코어 약 16시간, 재개 가능
 ```
