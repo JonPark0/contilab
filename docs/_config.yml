@@ -1,0 +1,18 @@
+# GitHub Pages (Settings → Pages → Deploy from branch: main, folder /docs)
+title: contilab
+description: >-
+  Continual learning benchmark and research framework for PyTorch — EWC, LwF, experience replay, DER++, A-GEM,
+  LoRA, model merging (Task Arithmetic, TIES) and knowledge distillation, with 30+ metrics (forgetting, stability
+  gap, CKA, plasticity loss, calibration) for vision and language models.
+url: https://jonpark0.github.io
+baseurl: /contilab
+theme: jekyll-theme-cayman
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: false
+exclude:
+  - design/2026-10-22-implementation-plan.md
