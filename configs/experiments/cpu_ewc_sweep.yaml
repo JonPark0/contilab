@@ -1,0 +1,10 @@
+# Supplement: EWC strength on Permuted MNIST, where the literature default λ = 100 diverged for every seed.
+name: cpu_ewc_sweep
+profile: cpu
+matrix:
+  preset: [permuted_mnist]
+  method.name: [ewc]
+  seed: [0, 1, 2]
+sweep:
+  method.params.lam: [1.0, 10.0, 30.0]
+workers: 1

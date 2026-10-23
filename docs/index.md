@@ -24,7 +24,7 @@ distillation**.
 
 [Getting Started](wiki/Getting-Started.md) · [Architecture](wiki/Architecture.md) · [Methods](wiki/Methods.md) ·
 [Consolidation](wiki/Consolidation.md) · [Metrics](wiki/Metrics.md) · [Benchmarks](wiki/Benchmarks.md) ·
-[Performance](wiki/Performance.md) · [Configuration](wiki/Configuration.md) ·
+[Performance](wiki/Performance.md) · [Results](wiki/Results.md) · [Configuration](wiki/Configuration.md) ·
 [Running Experiments](wiki/Running-Experiments.md) · [Extending](wiki/Extending.md) ·
 [Reproducibility](wiki/Reproducibility.md) · [FAQ](wiki/FAQ.md) · [Citing](wiki/Citing.md)
 
