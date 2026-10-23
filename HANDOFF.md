@@ -35,7 +35,7 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/pytest tests -q  # --run-network: 다운로드 포함
 .venv/bin/contilab run configs/experiments/smoke_all.yaml && .venv/bin/contilab report runs/smoke_all
-.venv/bin/contilab run configs/experiments/cpu_main.yaml   # 4코어 약 16시간, 재개 가능
+.venv/bin/contilab run configs/experiments/cpu_main.yaml   # 4코어 ~16시간, 재개 가능
 ```
 
 ## 주의
