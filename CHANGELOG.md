@@ -22,8 +22,12 @@
 - Checkpoints, caches, raw logs and run files are written atomically. An expert cache without its metadata file is
   rebuilt.
 - Expert training and distillation are checked for divergence, and affected seeds are marked as diverged.
+- `contilab run exp.yaml --root runs key=value` works on Python < 3.12. Before, argparse left the override
+  unparsed and the command exited.
 
 ### Changed
+- Multi-teacher distillation defaults (`consolidate.init: ties`, `routing: routed`, `epochs: 10`), chosen on
+  validation accuracy in `cpu_tuned`. The v0.1 defaults (`base`, `entropy`, 1 epoch) under-trained the student.
 - Run ids hash the full resolved configuration, so runs made with v0.1 defaults are not reused when defaults
   change.
 
