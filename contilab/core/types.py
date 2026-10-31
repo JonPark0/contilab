@@ -92,3 +92,4 @@ class RunContext:
     diverged: set[int] = field(default_factory=set)
     pool: TrainPool | None = None
     ens: Ensemble | None = None
+    loss_baseline: Tensor | None = None  # first loss per member (divergence reference; checkpointed)

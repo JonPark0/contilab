@@ -13,6 +13,7 @@ from contilab.core.scenario import MASK_FILL
 from contilab.core.types import Batch, RunContext
 from contilab.data.batching import TrainPool, epoch_perms
 from contilab.engine.step import TrainStep
+from contilab.engine.trainer import DivergenceGuard
 from contilab.models.lora import set_active
 from contilab.strategies.base import Strategy
 
@@ -120,6 +121,7 @@ class DistillConsolidator(Consolidator):
                          active=torch.ones(S, dtype=torch.bool), ens=ens)
         N = len(tr)
         rows = torch.arange(S, device=dev)[:, None]
+        guard = DivergenceGuard(floor=1.0)  # KL from a merged init can start near 0
         for _ in range(self.cfg.epochs):
             perm = epoch_perms(N, gens).to(dev)
             for i in range(0, N, cfg.train.batch_size):
@@ -127,6 +129,8 @@ class DistillConsolidator(Consolidator):
                 batch = Batch(x=x[rows, idx], y=torch.zeros_like(idx), task_id=torch.zeros_like(idx),
                               attn_mask=None if am is None else am[rows, idx], mask=masks[rows, idx],
                               extra={"target": targets[rows, idx]})
-                step(batch, None, ctx)
+                out = step(batch, None, ctx)
+                guard.check(ctx, out.loss)
                 self.flops += step.flops_per_step or 0
+        self.diverged |= ctx.diverged
         return ens.snapshot()

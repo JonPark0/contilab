@@ -1,5 +1,6 @@
 # contilab — Continual Learning Benchmark, Distillation & Model-Merging Framework (PyTorch)
 
+[![tests](https://github.com/JonPark0/contilab/actions/workflows/tests.yml/badge.svg)](https://github.com/JonPark0/contilab/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org)

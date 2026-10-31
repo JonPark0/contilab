@@ -12,6 +12,7 @@ from pathlib import Path
 import torch
 
 from contilab.core.config import RunConfig
+from contilab.core.io import atomic_write
 from contilab.core.types import RunContext, Stream
 from contilab.data.batching import TrainPool
 from contilab.data.registry import build_stream
@@ -59,10 +60,11 @@ def _clear_raw(rdirs: list[RunDir]) -> None:
 
 def _save_ckpt(path: Path, t: int, ens: Ensemble, strategy, ctx: RunContext) -> None:
     path.mkdir(parents=True, exist_ok=True)
-    torch.save({"task": t, "params": {k: v.detach().cpu() for k, v in ens.params.items()},
-                "buffers": {k: v.cpu() for k, v in ens.buffers.items()}, "strategy": strategy.state_dict(),
-                "gens": [g.get_state() for g in ctx.gens], "step": ctx.step, "active": ctx.active.clone(),
-                "diverged": sorted(ctx.diverged)}, path / f"task_{t}.pt")
+    ck = {"task": t, "params": {k: v.detach().cpu() for k, v in ens.params.items()},
+          "buffers": {k: v.cpu() for k, v in ens.buffers.items()}, "strategy": strategy.state_dict(),
+          "gens": [g.get_state() for g in ctx.gens], "step": ctx.step, "active": ctx.active.clone(),
+          "diverged": sorted(ctx.diverged), "loss_baseline": ctx.loss_baseline}
+    atomic_write(path / f"task_{t}.pt", lambda p: torch.save(ck, p))
     for old in path.glob("task_*.pt"):
         if old.name != f"task_{t}.pt":
             old.unlink()
@@ -106,6 +108,7 @@ def _run_training(cfgs: list[RunConfig], rdirs: list[RunDir], exp_dir: Path, str
         for g, s in zip(ctx.gens, ck["gens"]):
             g.set_state(s)
         ctx.step, ctx.active, ctx.diverged = ck["step"], ck["active"], set(ck["diverged"])
+        ctx.loss_baseline = ck.get("loss_baseline")
         for rd in rdirs:
             rd.log.truncate_after_task(ck["task"])
         start = ck["task"] + 1
@@ -143,7 +146,7 @@ def _run_consolidation(cfgs: list[RunConfig], rdirs: list[RunDir], stream: Strea
     run_consolidation(stream, cfg, seeds, hooks, ctx)
     _, reason = select_precision(cfg.engine.precision, device)
     return {"compile": {"requested": cfg.engine.compile, "used": False, "reason": "consolidation (eager)"},
-            "precision": reason, "diverged": []}
+            "precision": reason, "diverged": sorted(ctx.diverged)}
 
 
 def execute_group(cfgs: list[RunConfig], exp_dir: Path) -> None:

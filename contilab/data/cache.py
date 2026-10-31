@@ -11,6 +11,8 @@ from typing import Callable
 from safetensors.torch import load_file, save_file
 from torch import Tensor
 
+from contilab.core.io import atomic_write, atomic_write_text
+
 
 def cache_dir() -> Path:
     return Path(os.environ.get("CONTILAB_CACHE", Path.home() / ".cache" / "contilab"))
@@ -28,8 +30,6 @@ def cached_tensors(namespace: str, key: dict, builder: Callable[[], dict[str, Te
         return load_file(str(path))
     tensors = builder()
     d.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    save_file({k: v.contiguous().cpu() for k, v in tensors.items()}, str(tmp))
-    tmp.replace(path)
-    (d / f"{key_hash(key)}.json").write_text(json.dumps(key, sort_keys=True, default=str))
+    atomic_write(path, lambda p: save_file({k: v.contiguous().cpu() for k, v in tensors.items()}, str(p)))
+    atomic_write_text(d / f"{key_hash(key)}.json", json.dumps(key, sort_keys=True, default=str))
     return tensors

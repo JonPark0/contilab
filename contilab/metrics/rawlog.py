@@ -9,6 +9,8 @@ from pathlib import Path
 from safetensors.torch import load_file, save_file
 from torch import Tensor
 
+from contilab.core.io import atomic_write, atomic_write_text
+
 _TASK_KEY = re.compile(r"^t(\d+)\.")
 
 
@@ -43,7 +45,7 @@ class RawLog:
         self.dir.mkdir(parents=True, exist_ok=True)
         for key, new in self._pending.items():
             merged = {**self.tensors(key), **new}
-            save_file(merged, str(self._st(key)))
+            atomic_write(self._st(key), lambda p, m=merged: save_file(m, str(p)))
         self._pending = {}
 
     def tensors(self, key: str) -> dict[str, Tensor]:
@@ -67,10 +69,10 @@ class RawLog:
             return
         for p in self.dir.glob("*.jsonl"):
             keep = [r for r in self.records(p.stem) if r.get("task", -1) <= t]
-            p.write_text("".join(json.dumps(r) + "\n" for r in keep))
+            atomic_write_text(p, "".join(json.dumps(r) + "\n" for r in keep))
         for p in self.dir.glob("*.safetensors"):
             kept = {k: v for k, v in load_file(str(p)).items() if not (_TASK_KEY.match(k) and int(_TASK_KEY.match(k).group(1)) > t)}
             if kept:
-                save_file(kept, str(p))
+                atomic_write(p, lambda q, k=kept: save_file(k, str(q)))
             else:
                 p.unlink()

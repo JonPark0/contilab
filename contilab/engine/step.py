@@ -137,15 +137,19 @@ class TrainStep:
                 self._flops_seen.add(sig)
                 per_member = self.measure_flops(bt, rt, state) // self.ens.E
                 self.flops_per_step = max(self.flops_per_step or 0, per_member)
-        if self._first_call:
-            self._first_call = False
+        if self.compile_decision["used"]:
+            # compile failures fall back to eager (§7.5) — at the first call or at any later recompilation
+            # (new replay / state structure); a genuine bug re-raises from the eager retry
             try:
                 out = self._compute(bt, rt, state)
-                self.compile_decision["reason"] = "compiled"
-            except Exception as e:  # compile failures fall back to eager (§7.5)
+                if self._first_call:
+                    self.compile_decision["reason"] = "compiled"
+            except Exception as e:
                 self._fwd, self._ref = self._eager
-                self.compile_decision.update(used=False, reason=f"fallback to eager: {type(e).__name__}: {str(e)[:300]}")
+                self.compile_decision.update(used=False, reason=f"fallback to eager at step {ctx.step}: "
+                                                                f"{type(e).__name__}: {str(e)[:300]}")
                 out = self._compute(bt, rt, state)
+            self._first_call = False
         else:
             out = self._compute(bt, rt, state)
         loss_vec, logits, grads, ref = out

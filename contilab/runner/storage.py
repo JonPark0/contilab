@@ -13,6 +13,7 @@ import torch
 import yaml
 
 from contilab.core.config import RunConfig
+from contilab.core.io import atomic_write_text
 from contilab.metrics.rawlog import RawLog
 
 
@@ -27,18 +28,18 @@ class RunDir:
 
     def set_status(self, status: str, error: str | None = None) -> None:
         self.path.mkdir(parents=True, exist_ok=True)
-        (self.path / "status.json").write_text(json.dumps({"status": status, "error": error, "time": time.time()}))
+        atomic_write_text(self.path / "status.json", json.dumps({"status": status, "error": error, "time": time.time()}))
 
     def write_config(self, cfg: RunConfig) -> None:
         self.path.mkdir(parents=True, exist_ok=True)
-        (self.path / "config.yaml").write_text(yaml.safe_dump(asdict(cfg), sort_keys=True))
+        atomic_write_text(self.path / "config.yaml", yaml.safe_dump(asdict(cfg), sort_keys=True))
 
     def read_config(self) -> dict:
         return yaml.safe_load((self.path / "config.yaml").read_text())
 
     def write_json(self, name: str, data: dict) -> None:
         self.path.mkdir(parents=True, exist_ok=True)
-        (self.path / name).write_text(json.dumps(data, indent=1, default=str))
+        atomic_write_text(self.path / name, json.dumps(data, indent=1, default=str))
 
     def read_json(self, name: str) -> dict:
         return json.loads((self.path / name).read_text())

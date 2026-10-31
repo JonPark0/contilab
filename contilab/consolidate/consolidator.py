@@ -36,6 +36,7 @@ class Consolidator:
         self.student_factory = student_factory  # extension point: teacher→student continual distillation (§5.6)
         self.flops = 0  # per member, training done inside consolidate() (distillation)
         self.stored_samples = 0  # stream samples kept for consolidation (counted as buffer memory)
+        self.diverged: set[int] = set()  # members whose consolidation training diverged
 
     def on_new_expert(self, expert: dict[str, Tensor], ctx: RunContext) -> None:
         pass
@@ -123,4 +124,5 @@ def run_consolidation(stream: Stream, cfg: RunConfig, seeds: list[int], hooks, c
         hooks.extra_cost.update(expert_wall_s=experts.wall_s, expert_flops=experts.flops + consolidator.flops,
                                 stored_experts_bytes=experts.nbytes(),
                                 transfer_bytes=consolidator.stored_samples * ctx.pool.sample_bytes())
+    ctx.diverged |= set(experts.diverged) | consolidator.diverged
     hooks.on_run_end(ctx)
