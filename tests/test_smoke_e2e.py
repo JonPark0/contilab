@@ -40,3 +40,10 @@ def test_bench_reports_speedup(tmp_path):
 def test_cli_rejects_unknown_override(tmp_path, capsys):
     assert main(["run", "configs/experiments/smoke_all.yaml", "--root", str(tmp_path), "train.epoch=2"]) == 2
     assert "unknown config key" in capsys.readouterr().err
+
+
+def test_overrides_after_options_parse_on_every_python():
+    from contilab.runner.cli import _parse
+
+    a = _parse(["run", "x.yaml", "--root", "r", "a.b=1", "c=[2]"])
+    assert a.root == "r" and a.overrides == ["a.b=1", "c=[2]"]
