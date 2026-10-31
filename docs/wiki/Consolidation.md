@@ -39,12 +39,38 @@ all metrics are defined exactly as for sequential methods.
   - `proxy`: unlabelled data from another source (CIFAR-10 for MNIST, CIFAR-100 ↔ CIFAR-10, WikiText for text)
 - Teacher logits are computed once per consolidation step and reused for every distillation epoch.
 
+## Teacher → student continual distillation
+
+`consolidate:continual_distill` treats the experts as **teachers that arrive one per task** and are dropped once
+used, so no expert is stored:
+
+- At task *t* the student trains for `train.epochs` passes on task *t*'s training data plus a replay buffer of
+  earlier tasks (`consolidate.M` samples in total, split evenly).
+- Each sample's target comes from its owner: the new teacher for task *t*'s samples (knowledge distillation), and a
+  frozen copy of the student from task *t − 1* for buffered samples (LwF-style self-distillation, Li & Hoiem 2017).
+- Loss, temperature and target renormalisation are those of multi-teacher distillation.
+
+Compared with multi-teacher distillation, it never needs more than one teacher at a time and stores only the
+student and the buffer. It answers whether a stream of task-specialised teachers can be compressed into one
+model online.
+
+## Smaller students
+
+Both distillation methods accept a student architecture different from the teachers:
+
+```yaml
+method:
+  name: consolidate:continual_distill
+  params:
+    student: {hidden: 100}   # ModelConfig overrides; the experts keep `model`
+```
+
+The student starts from its own fixed initialisation (`consolidate.init_seed`), so `consolidate.init` must be
+`base`. Merging methods (TA, TIES) reject a different student because they average expert weights.
+`configs/experiments/cpu_student.yaml` compresses the 2×400 MNIST MLP into a 2×100 student.
+
 ## Cost accounting
 
-The cost of a consolidation method includes training all experts and the distillation steps; model bytes include
-the stored experts.
-
-## Extension point
-
-`Consolidator(student_factory=...)` and `on_new_expert(...)` are reserved for teacher → student continual
-distillation into a different architecture.
+The cost of a consolidation method includes training all experts and the distillation steps. Model bytes include
+the stored experts (none for continual distillation). Buffer bytes count the stream samples kept for
+distillation (`buffer` and `full` transfer, and the continual-distillation replay buffer).

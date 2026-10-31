@@ -10,7 +10,7 @@ import pandas as pd
 from contilab.metrics.stats import friedman_nemenyi, paired_test, summarize
 
 METHOD_ORDER = ["naive", "joint", "ewc", "lwf", "er", "derpp", "agem", "lora_per_task",
-                "consolidate:ta", "consolidate:ties", "consolidate:distill"]
+                "consolidate:ta", "consolidate:ties", "consolidate:distill", "consolidate:continual_distill"]
 MAIN_METRICS = ["acc", "aia", "bwt", "fwt", "forgetting", "learning_acc", "min_acc", "wc_acc", "wall_time", "peak_mem"]
 AXES = {
     "stability": ["bwt", "forgetting", "relative_forgetting", "min_acc", "wc_acc", "stability_gap", "windowed_forgetting"],
