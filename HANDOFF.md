@@ -15,7 +15,7 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - M11 성능 개선: 배치마다 class_table 계산, LwF forward 3회, distill의 TrainPool 재생성, probe 행렬 3중 계산
 - M12 `runner/execute.py`: `vmappable=False` 순차 폴백 기록, 메모리 기반 E 분할
 - 미검증: `configs/profiles/gpu.yaml`(GPU 없음), Split CIFAR-100
-- 배포: v0.2.0 태그·릴리스, Zenodo DOI, `release/v0.2` → main PR
+- 배포: v0.2.0 릴리스(Actions → Release → Run workflow, tag `v0.2.0`), Zenodo DOI
 
 ## 실패한 시도와 원인
 - HF Xet CDN 403 → 원본 미러(GCS MNIST, fast.ai S3)

@@ -1,0 +1,60 @@
+name: Release
+
+# Pushing a tag vX.Y.Z publishes a GitHub release for it. "Run workflow" with a tag does the same for a tag that
+# does not exist yet: it is created on the selected branch's head. The tag must match the pyproject version, and
+# the notes come from that version's CHANGELOG section. Re-running for an existing release replaces its assets.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release, e.g. v0.2.0"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Check tag against the package version
+        id: v
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          PKG=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "$TAG" != "v$PKG" ]; then
+            echo "::error::tag $TAG does not match pyproject version $PKG"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Release notes from CHANGELOG
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: python scripts/release_notes.py "$VERSION" > notes.md
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.v.outputs.tag }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "contilab $TAG" --notes-file notes.md
+          fi

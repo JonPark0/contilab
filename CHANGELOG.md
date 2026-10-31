@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Release workflow: pushing a tag `vX.Y.Z` (or running the workflow with a tag) builds the sdist and wheel and
+  publishes a GitHub release with that version's CHANGELOG section as notes.
+
 ## 0.2.0 — 2026-10-31
 
 ### Added
