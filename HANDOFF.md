@@ -5,22 +5,17 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 
 ## 완료
 - Task 1–27(`docs/design/` 스펙·계획): 전략 8종, TA/TIES/증류, vmap 앙상블, 러너·리포트·CLI
-- 테스트 146 통과, 5 skip(네트워크)
-- CPU 연구 165런(159 done, EWC 6 발산), EWC λ 스윕 → `docs/wiki/Results.md`
+- v0.2(`dev/v0.2`): 지표 수정(M4/M6/M8/M13), 견고성(M1/M2/M5/M14), CI, 검증 기반 sweep 선택, `method_sweep`, 연속 증류, 작은 학생 모델
+- 테스트 176 통과, 5 skip(네트워크)
+- CPU 연구: `cpu_main` 180런, `cpu_tuned` 228런, `cpu_student` 12런 → `docs/wiki/Results.md`
 - README, CITATION.cff, MIT, 위키 동기화, Pages
 
 ## 남은 작업
-- M1 `engine/trainer.py` `DivergenceGuard` 기준값을 `runner/execute.py` `_save_ckpt`/`_load_ckpt`에 저장
-- M2 `engine/step.py` `maybe_compile`: 첫 호출 이후 재컴파일 실패도 eager 폴백
-- M4 `metrics/representation.py` `cka_final`: j=T−1 자기항 제외
-- M5 `_save_ckpt`, `consolidate/experts.py` `train_experts` 캐시, `data/cache.py` `cached_tensors`: tmp+`os.replace` 원자 쓰기
-- M6 `metrics/collectors.py` buffer_bytes를 실제 샘플 바이트로
-- M8 `metrics/recovery.py` `recovery`: 런의 옵티마이저 사용
-- M12 `runner/execute.py` `VmapFallback` 기록, 메모리 기반 E 분할
-- M13 `metrics/continual.py` `aaa` 등 Joint가 태스크 0만 추적
-- M14 `train_experts`, `consolidate/distill.py` `DistillConsolidator`에 발산 감지
-- 스윕 자동 선택: `runner/finalize.py` `finalize_experiment`
+- M10 `runner/bench.py`: bf16 처리량 측정을 기본 프로필 정밀도와 맞추기
+- M11 성능 개선: 배치마다 class_table 계산, LwF forward 3회, distill의 TrainPool 재생성, probe 행렬 3중 계산
+- M12 `runner/execute.py`: `vmappable=False` 순차 폴백 기록, 메모리 기반 E 분할
 - 미검증: `configs/profiles/gpu.yaml`(GPU 없음), Split CIFAR-100
+- 배포: v0.2.0 태그·릴리스, Zenodo DOI, `dev/v0.2` → main PR
 
 ## 실패한 시도와 원인
 - HF Xet CDN 403 → 원본 미러(GCS MNIST, fast.ai S3)
@@ -28,7 +23,7 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - 전문가 학습이 `max_E` 무시 → LM OOM, `plan_expert_groups`로 수정
 - CPU 과다구독 → text5 6배 저하, text 그룹 단독 실행
 - EWC λ=100: Permuted MNIST·CIFAR 전 시드 발산(λ 10–30 안정)
-- 증류 기본값 학습 부족(LA 0.10–0.46)
+- 증류 v0.1 기본값(base·entropy·1 epoch)은 학습 부족 → 튜닝으로 ties·routed·10 epoch
 
 ## 검증
 ```bash

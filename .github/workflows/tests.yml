@@ -38,4 +38,11 @@ jobs:
       - name: Run tests
         env:
           CONTILAB_SMOKE_BUDGET_S: "300"
-        run: pytest tests -q
+        run: |
+          set -o pipefail
+          pytest tests -q -rfE 2>&1 | tee pytest.log
+      - name: Annotate failures
+        if: failure()
+        run: |
+          grep -E "^(FAILED|ERROR) " pytest.log | head -10 | sed 's/^/::error title=pytest::/' || true
+          grep -E "^E  " pytest.log | head -10 | sed 's/^/::error title=assert::/' || true
