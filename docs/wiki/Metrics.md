@@ -27,6 +27,7 @@ initial model on task $j$.
 | `relative_forgetting` | mean of $f_j / \max_l R_{l,j}$ | — |
 | `learning_acc` | $\frac{1}{T}\sum_j R_{j,j}$ (plasticity) | Riemer et al. 2019 |
 | `intransigence` | $\frac{1}{T}\sum_j(a^*_j-R_{j,j})$ with $a^*$ from the Joint run of the same preset and seed | Chaudhry et al. 2018 |
+| `val_acc` | final average accuracy on the validation splits (10 % of each task's training data): the score for selecting sweep variants, never a reported result | — |
 
 ## Continual evaluation (`extended`)
 
@@ -47,7 +48,7 @@ $A(k,n)$ = accuracy on task $k$ at step $n$, sampled every ρ steps on a fixed s
 |---|---|---|
 | `probe_acc` | matrix $P_{i,j}$ of linear-probe accuracy on frozen features | Davari et al. 2022 |
 | `repr_forgetting` / `head_forgetting` | probe drop $P_{j,j}-P_{T-1,j}$, and the rest of the accuracy drop attributed to the classifier head | Davari et al. 2022 |
-| `cka_final`, `cka_matrix` | linear CKA between features of the same samples at different times | Kornblith et al. 2019 |
+| `cka_final`, `cka_matrix` | linear CKA between features of the same samples at different times; `cka_final` averages $\mathrm{CKA}(F_{j,j}, F_{T-1,j})$ over $j<T-1$ (undefined for a single task, e.g. Joint) | Kornblith et al. 2019 |
 | `feature_drift` | mean normalised L2 movement of a task's features from when it was learned to the end | Ramasesh et al. 2021 |
 
 ## Plasticity loss (`extended`, `full`)
@@ -80,9 +81,15 @@ Structural plasticity diagnostics are symptoms rather than guarantees; report th
 
 ## Cost (`core`)
 
-`wall_time`, `samples_per_s`, `peak_mem` (per run group), `trainable_params`, `buffer_bytes`, `model_bytes`,
-`total_flops` (measured with `FlopCounterMode` per member, including replay, reference gradients, experts and
-distillation).
+`wall_time`, `samples_per_s`, `peak_mem` (per run group), `trainable_params`, `buffer_bytes`, `state_bytes`,
+`model_bytes`, `total_flops` (measured with `FlopCounterMode` per member, including replay, reference gradients,
+experts and distillation).
+
+- `buffer_bytes` is the memory a buffer of stored samples would take: items × (input + label + attention mask
+  bytes, plus per-item extras such as DER++ logits). contilab stores only dataset indices internally, so index
+  bytes are not counted. The transfer set of `buffer` / `full` distillation is counted too.
+- `state_bytes` is the extra strategy state kept between tasks, e.g. the EWC Fisher diagonal and anchor
+  parameters or the LwF teacher copy.
 
 ## Statistics
 

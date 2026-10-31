@@ -98,7 +98,8 @@ def load_experiment(path: Path | str, cli_overrides: list[str]) -> LoadedExperim
             run_cli[k] = v
     _build(RunConfig, _dotted(run_cli))  # validate CLI keys early
     exp = LoadedExperiment(name=raw["name"], profile=raw["profile"], matrix=matrix, overrides=raw.get("overrides", {}),
-                           sweep=raw.get("sweep", {}), workers=raw.get("workers", 1),
+                           sweep=raw.get("sweep", {}), method_sweep=raw.get("method_sweep", {}),
+                           workers=raw.get("workers", 1),
                            threads_per_worker=raw.get("threads_per_worker"), baseline=raw.get("baseline", "naive"),
                            defaults=prof.get("defaults", {}), presets=prof.get("presets", {}), cli=run_cli)
     for name in exp.matrix.get("preset", []):
@@ -118,9 +119,12 @@ def expand(exp: LoadedExperiment) -> list[RunConfig]:
             d = deep_merge(exp.defaults, exp.presets.get(preset, {}))
             d = deep_merge(d, _dotted(exp.overrides))
             d = deep_merge(d, _dotted(dict(zip(grid_keys, combo))))
-            d = deep_merge(d, _dotted(exp.cli))
-            d.update(experiment=exp.name, preset=preset)
-            runs.append(_build(RunConfig, d))
+            msweep = exp.method_sweep.get((d.get("method") or {}).get("name", "naive"), {})
+            for mcombo in itertools.product(*msweep.values()) if msweep else [()]:
+                dm = deep_merge(d, _dotted(dict(zip(msweep, mcombo))))
+                dm = deep_merge(dm, _dotted(exp.cli))
+                dm.update(experiment=exp.name, preset=preset)
+                runs.append(_build(RunConfig, dm))
     return runs
 
 

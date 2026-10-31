@@ -29,22 +29,53 @@ all metrics are defined exactly as for sequential methods.
 
 `consolidate:distill` trains a student with `T² · KL(target ‖ softmax(z/T))`:
 
-- **Student initialisation** `consolidate.init`: `base` (θ₀), `ta` or `ties`.
-- **Targets**: teacher *k* only speaks for its own classes. With `routing: routed` each sample uses its own
-  task's teacher (always the case in Task-IL); with `routing: entropy` teachers are mixed by `softmax(−H)` of
-  their prediction entropy. Targets are renormalised onto the classes the student may predict.
+- **Student initialisation** `consolidate.init`: `base` (θ₀), `ta` or `ties` (default).
+- **Targets**: teacher *k* only speaks for its own classes. With `routing: routed` (default) each sample uses
+  its own task's teacher (always the case in Task-IL); with `routing: entropy` teachers are mixed by `softmax(−H)`
+  of their prediction entropy, which proxy data (no task identity) always uses. Targets are renormalised onto
+  the classes the student may predict.
+- **Epochs** `consolidate.epochs` (default 10) passes over the transfer set per consolidation step.
+
+The defaults come from the validation-tuned study ([Results](Results.md#tuned-comparison)). The v0.1 defaults
+(`base`, `entropy`, 1 epoch) under-trained the student: 16 SGD steps per task on the 500-sample buffer.
 - **Transfer data** (`consolidate.transfer`), three levels of data availability:
   - `full`: all training data of the tasks seen so far (reference upper bound)
   - `buffer`: M samples in total, split evenly over tasks (same budget as replay)
   - `proxy`: unlabelled data from another source (CIFAR-10 for MNIST, CIFAR-100 ↔ CIFAR-10, WikiText for text)
 - Teacher logits are computed once per consolidation step and reused for every distillation epoch.
 
+## Teacher → student continual distillation
+
+`consolidate:continual_distill` treats the experts as **teachers that arrive one per task** and are dropped once
+used, so no expert is stored:
+
+- At task *t* the student trains for `train.epochs` passes on task *t*'s training data plus a replay buffer of
+  earlier tasks (`consolidate.M` samples in total, split evenly).
+- Each sample's target comes from its owner: the new teacher for task *t*'s samples (knowledge distillation), and a
+  frozen copy of the student from task *t − 1* for buffered samples (LwF-style self-distillation, Li & Hoiem 2017).
+- Loss, temperature and target renormalisation are those of multi-teacher distillation.
+
+Compared with multi-teacher distillation, it never needs more than one teacher at a time and stores only the
+student and the buffer. It answers whether a stream of task-specialised teachers can be compressed into one
+model online.
+
+## Smaller students
+
+Both distillation methods accept a student architecture different from the teachers:
+
+```yaml
+method:
+  name: consolidate:continual_distill
+  params:
+    student: {hidden: 100}   # ModelConfig overrides; the experts keep `model`
+```
+
+The student starts from its own fixed initialisation (`consolidate.init_seed`), so `consolidate.init` must be
+`base`. Merging methods (TA, TIES) reject a different student because they average expert weights.
+`configs/experiments/cpu_student.yaml` compresses the 2×400 MNIST MLP into a 2×100 student.
+
 ## Cost accounting
 
-The cost of a consolidation method includes training all experts and the distillation steps; model bytes include
-the stored experts.
-
-## Extension point
-
-`Consolidator(student_factory=...)` and `on_new_expert(...)` are reserved for teacher → student continual
-distillation into a different architecture.
+The cost of a consolidation method includes training all experts and the distillation steps. Model bytes include
+the stored experts (none for continual distillation). Buffer bytes count the stream samples kept for
+distillation (`buffer` and `full` transfer, and the continual-distillation replay buffer).

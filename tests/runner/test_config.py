@@ -38,7 +38,7 @@ def test_run_id_stable_and_seed_sensitive():
 def test_cpu_profile_presets():
     all5 = "matrix.preset=[split_mnist_class, split_mnist_task, permuted_mnist, split_cifar10_class, text5_class]"
     runs = expand(load_experiment(CPU, [all5]))
-    assert len(runs) == 5 * 11 * 3
+    assert len(runs) == 5 * 12 * 3
     full = {r.preset for r in runs if r.metrics.tier == "full"}
     assert full == {"split_mnist_class"}
     t = next(r for r in runs if r.preset == "text5_class")
@@ -55,3 +55,18 @@ def test_sweep_expands_grid(tmp_path):
     p.write_text("name: s\nprofile: p\nmatrix: {preset: [a], method.name: [ewc]}\nsweep: {method.params.lam: [1, 10]}\n")
     runs = expand(load_experiment(p, []))
     assert sorted(r.method.params["lam"] for r in runs) == [1, 10]
+
+
+def test_method_sweep_expands_per_method(tmp_path):
+    p = tmp_path / "experiments" / "s.yaml"
+    p.parent.mkdir()
+    (tmp_path / "profiles").mkdir()
+    (tmp_path / "profiles" / "p.yaml").write_text("defaults: {}\npresets: {a: {benchmark: {name: synthetic}}}\n")
+    p.write_text("name: s\nprofile: p\nmatrix: {preset: [a], method.name: [naive, ewc, derpp]}\n"
+                 "method_sweep:\n  ewc: {method.params.lam: [1, 10]}\n"
+                 "  derpp: {method.params.alpha: [0.1, 0.3], method.params.beta: [0.5, 1.0]}\n")
+    runs = expand(load_experiment(p, []))
+    by = {}
+    for r in runs:
+        by.setdefault(r.method.name, []).append(r.method.params)
+    assert by["naive"] == [{}] and sorted(d["lam"] for d in by["ewc"]) == [1, 10] and len(by["derpp"]) == 4

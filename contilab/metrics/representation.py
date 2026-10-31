@@ -83,7 +83,9 @@ def head_forgetting(log, mctx):
 @metric("cka_final", ("features",), "extended")
 def cka_final(log, mctx):
     feats, _, T = _features(log)
-    return float(np.mean([linear_cka(feats[(j, j)], feats[(T - 1, j)]) for j in range(T)]))
+    if T < 2:
+        raise MetricUnavailable("needs at least 2 tasks")
+    return float(np.mean([linear_cka(feats[(j, j)], feats[(T - 1, j)]) for j in range(T - 1)]))
 
 
 @metric("cka_matrix", ("features",), "extended")

@@ -62,7 +62,7 @@ def _cmd_data(a) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def _parse(argv: list[str] | None) -> argparse.Namespace:
     p = argparse.ArgumentParser(prog="contilab", description="Performance-first continual learning framework")
     sub = p.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="run an experiment matrix")
@@ -92,7 +92,17 @@ def main(argv: list[str] | None = None) -> int:
     dp.add_argument("benchmark")
     dp.add_argument("--tokenizer", default="EleutherAI/pythia-70m")
     dp.set_defaults(fn=_cmd_data)
-    a = p.parse_args(argv)
+    a, extra = p.parse_known_args(argv)
+    # before Python 3.12, argparse leaves positionals that follow an option (`run exp.yaml --root r k=v`) unparsed
+    if extra and a.cmd == "run" and all("=" in e and not e.startswith("-") for e in extra):
+        a.overrides = [*a.overrides, *extra]
+    elif extra:
+        p.error(f"unrecognized arguments: {' '.join(extra)}")
+    return a
+
+
+def main(argv: list[str] | None = None) -> int:
+    a = _parse(argv)
     return a.fn(a)
 
 

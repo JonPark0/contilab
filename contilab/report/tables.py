@@ -10,7 +10,7 @@ import pandas as pd
 from contilab.metrics.stats import friedman_nemenyi, paired_test, summarize
 
 METHOD_ORDER = ["naive", "joint", "ewc", "lwf", "er", "derpp", "agem", "lora_per_task",
-                "consolidate:ta", "consolidate:ties", "consolidate:distill"]
+                "consolidate:ta", "consolidate:ties", "consolidate:distill", "consolidate:continual_distill"]
 MAIN_METRICS = ["acc", "aia", "bwt", "fwt", "forgetting", "learning_acc", "min_acc", "wc_acc", "wall_time", "peak_mem"]
 AXES = {
     "stability": ["bwt", "forgetting", "relative_forgetting", "min_acc", "wc_acc", "stability_gap", "windowed_forgetting"],
@@ -28,9 +28,23 @@ LOWER_IS_BETTER = {"forgetting", "relative_forgetting", "stability_gap", "window
 
 
 def with_labels(df: pd.DataFrame) -> pd.DataFrame:
-    """`label` = method, plus its variant (extra matrix axes / sweep values) when there is one."""
+    """`label` = method, plus its variant (extra matrix axes / sweep values) when there is one; ✓ marks the
+    variant chosen on validation accuracy (§5.3)."""
     variant = df["variant"].fillna("").astype(str) if "variant" in df.columns else pd.Series("", index=df.index)
-    return df.assign(label=[m if not v else f"{m} [{v}]" for m, v in zip(df["method"], variant)])
+    sel = _selected(df)
+    return df.assign(label=[(m if not v else f"{m} [{v}]") + (" ✓" if s is True else "")
+                            for m, v, s in zip(df["method"], variant, sel)])
+
+
+def _selected(df: pd.DataFrame) -> list:
+    if "selected" not in df.columns:
+        return [None] * len(df)
+    return [True if str(s) == "True" else False if str(s) == "False" else None for s in df["selected"]]
+
+
+def only_selected(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop the sweep variants that lost the validation selection (cells without a sweep are kept)."""
+    return df[[s is not False for s in _selected(df)]]
 
 
 def methods_in(df: pd.DataFrame) -> list[str]:
@@ -95,8 +109,16 @@ def axis_tables(df: pd.DataFrame, preset: str, baseline: str = "naive") -> dict[
     return out
 
 
+def _rank_labels(d: pd.DataFrame) -> pd.DataFrame:
+    """A tuned method keeps one label across benchmarks even when the selected variant differs between them."""
+    cell = d["cell"].fillna("").astype(str) if "cell" in d.columns else pd.Series("", index=d.index)
+    labels = [f"{m}{f' [{c}]' if c else ''} (tuned)" if s is True else lab
+              for m, c, s, lab in zip(d["method"], cell, _selected(d), d["label"])]
+    return d.assign(label=labels)
+
+
 def rank_table(df: pd.DataFrame, metric: str = "acc") -> tuple[str, dict]:
-    d = with_labels(df[df.status.isin(["done", "diverged"])])
+    d = _rank_labels(with_labels(only_selected(df[df.status.isin(["done", "diverged"])])))
     piv = d.groupby(["preset", "label"])[metric].mean().unstack("label")
     piv = piv.dropna(axis=1)
     methods = [m for m in methods_in(d) if m in piv.columns]

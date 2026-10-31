@@ -1,0 +1,19 @@
+# Tuned comparison on the two MNIST presets: every method with hyperparameters gets a small grid, and the variant
+# with the best mean validation accuracy over seeds is selected (spec §5.3; diverged seeds score 0).
+# Fixed by the fairness rules (§5.3) and not tuned: optimiser and lr, epochs, batch size, memory budget M.
+name: cpu_tuned
+profile: cpu
+matrix:
+  preset: [split_mnist_class, permuted_mnist]
+  method.name: [naive, joint, ewc, lwf, er, derpp, agem, lora_per_task,
+                'consolidate:ta', 'consolidate:ties', 'consolidate:distill', 'consolidate:continual_distill']
+  seed: [0, 1, 2]
+method_sweep:
+  ewc: {method.params.lam: [1.0, 3.0, 10.0, 30.0, 100.0, 300.0]}
+  lwf: {method.params.alpha: [0.5, 1.0, 2.0, 4.0]}
+  derpp: {method.params.alpha: [0.1, 0.3, 1.0], method.params.beta: [0.5, 1.0]}
+  'consolidate:ties': {consolidate.ties_k: [0.1, 0.2, 0.5]}
+  'consolidate:distill': {consolidate.routing: [entropy, routed], consolidate.epochs: [1, 10, 30],
+                          consolidate.init: [base, ties]}
+workers: 2
+threads_per_worker: 2

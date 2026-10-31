@@ -23,7 +23,7 @@ runs/<experiment>/
     raw/*.jsonl, raw/*.safetensors
     metrics.json
   _ckpt/                   # per-group checkpoints of unfinished runs
-  results.csv              # one row per run, one column per scalar metric
+  results.csv              # one row per run: ids, variant, selected (sweeps), one column per scalar metric
   report.md, report.html, figs/
 ```
 
@@ -35,11 +35,15 @@ runs/<experiment>/
 - A run that restarts from scratch clears its old raw records first.
 - An exception marks the run `failed` with its traceback; other runs continue. A group that fails before its first
   optimisation step (for example a vmap-incompatible operation) is retried member by member.
-- A member whose loss becomes NaN or exceeds 1000 × its first loss is marked `diverged` and kept in the results.
+- A member whose loss becomes NaN or exceeds 1000 × its first loss of the run is marked `diverged` and kept in the
+  results. The reference loss is checkpointed, and expert training and distillation are checked too.
+- Checkpoints, caches, raw logs and status files are written atomically, so an interrupted write never leaves a
+  half-written file behind.
 
 ## Reports
 
 `report.md` / `report.html` contain, per benchmark: the main table (mean ± std, `*` = significant against the
 baseline), per-axis tables (stability, plasticity, representation, plasticity loss, bias and calibration,
 recovery, efficiency), figures of a representative seed, evaluation settings (ρ, β, Δ), cross-benchmark ranks with
-a critical-difference diagram, the throughput chart and a limitations section.
+a critical-difference diagram, the throughput chart and a limitations section. In experiments with sweeps, the
+variant selected on validation accuracy is marked ✓ and the ranking uses selected variants only.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 
 import torch
 from safetensors.torch import load_file, save_file
@@ -13,10 +13,12 @@ from torch import Tensor
 from contilab.core.config import RunConfig
 from contilab.core.types import Batch, RunContext, Stream
 from contilab.data.batching import TrainPool, epoch_perms
+from contilab.core.io import atomic_write, atomic_write_text
 from contilab.data.cache import cache_dir, key_hash
 from contilab.engine.device import select_device
 from contilab.engine.ensemble import Ensemble
 from contilab.engine.step import TrainStep
+from contilab.engine.trainer import DivergenceGuard
 from contilab.models.lora import inject_lora, set_active
 from contilab.models.registry import build_model
 from contilab.strategies.naive import Naive
@@ -29,6 +31,7 @@ class Experts:
     lora_modules: list[str] | None
     wall_s: float = 0.0
     flops: int = 0
+    diverged: list[int] = field(default_factory=list)  # seed positions with at least one diverged expert
 
     def nbytes(self) -> int:
         return sum(v.numel() * v.element_size() for d in self.tuned for v in d.values()) // max(1, next(iter(self.base.values())).shape[0])
@@ -80,8 +83,9 @@ def plan_expert_groups(task_sizes: list[int], seeds: list[int], max_E: int) -> l
     return groups
 
 
-def _train_group(stream: Stream, pool: TrainPool, members: list[tuple[int, int]], cfg: RunConfig, device) -> tuple[Ensemble, int]:
-    """Returns the trained ensemble and the total FLOPs of all its members."""
+def _train_group(stream: Stream, pool: TrainPool, members: list[tuple[int, int]], cfg: RunConfig,
+                 device) -> tuple[Ensemble, int, set[int]]:
+    """Returns the trained ensemble, the total FLOPs of all its members and the diverged member positions."""
     fac, holder = expert_factory(stream, cfg)
     E = len(members)
     ens = Ensemble(fac, [cfg.consolidate.init_seed] * E, device)
@@ -97,26 +101,28 @@ def _train_group(stream: Stream, pool: TrainPool, members: list[tuple[int, int]]
     table = stream.class_table().to(pool.x.device)
     n = pool.task_size(members[0][0])
     flops = 0
+    guard = DivergenceGuard()
     for _ in range(cfg.train.epochs):
         perms = epoch_perms(n, gens).to(pool.x.device) + pool.offsets.to(pool.x.device)[task_of][:, None]
         for i in range(0, n, cfg.train.batch_size):
             b: Batch = pool.gather(perms[:, i : i + cfg.train.batch_size])
             b.mask = torch.ones_like(table[b.task_id]) if stream.scenario == "domain" else table[b.task_id]
-            step(b, None, ctx)
+            out = step(b, None, ctx)
+            guard.check(ctx, out.loss)
             flops += (step.flops_per_step or 0) * E
-    return ens, flops
+    return ens, flops, ctx.diverged
 
 
 def train_experts(stream: Stream, cfg: RunConfig, seeds: list[int]) -> Experts:
     key = _expert_key(stream, cfg, seeds)
     d = cache_dir() / "experts" / key_hash(key)
     fac, holder = expert_factory(stream, cfg)
-    if (d / "experts.safetensors").exists():
+    if (d / "meta.json").exists():  # written last: a cache without it is incomplete and is rebuilt
         t = load_file(str(d / "experts.safetensors"))
         meta = json.loads((d / "meta.json").read_text())
         base = {k[5:]: v for k, v in t.items() if k.startswith("base.")}
         tuned = [{k[len(f"t{i}."):]: v for k, v in t.items() if k.startswith(f"t{i}.")} for i in range(len(stream.tasks))]
-        return Experts(base, tuned, meta["lora_modules"], meta["wall_s"], meta["flops"])
+        return Experts(base, tuned, meta["lora_modules"], meta["wall_s"], meta["flops"], meta.get("diverged", []))
 
     device = select_device(cfg.engine.device)
     s_stream = stream.to(device)
@@ -127,10 +133,12 @@ def train_experts(stream: Stream, cfg: RunConfig, seeds: list[int]) -> Experts:
     base = {k: v.detach().cpu().clone() for k, v in base_ens.params.items()}
     per_member: dict[tuple[int, int], dict[str, Tensor]] = {}
     flops = 0
+    diverged: set[int] = set()
     sizes = [pool.task_size(t) for t in range(len(stream.tasks))]
     for members in plan_expert_groups(sizes, seeds, cfg.engine.max_E):
-        ens, f = _train_group(s_stream, pool, members, cfg, device)
+        ens, f, bad = _train_group(s_stream, pool, members, cfg, device)
         flops += f
+        diverged |= {seeds.index(members[i][1]) for i in bad}
         for i, m in enumerate(members):
             per_member[m] = {k: v[i].detach().cpu().clone() for k, v in ens.params.items()}
         del ens
@@ -138,11 +146,12 @@ def train_experts(stream: Stream, cfg: RunConfig, seeds: list[int]) -> Experts:
              for t in range(len(stream.tasks))]
     flops //= S  # per seed
     wall = time.perf_counter() - t0
-    ex = Experts(base, tuned, holder.get("modules"), wall, flops)
+    ex = Experts(base, tuned, holder.get("modules"), wall, flops, sorted(diverged))
     d.mkdir(parents=True, exist_ok=True)
     flat = {f"base.{k}": v.contiguous() for k, v in base.items()}
     for i, p in enumerate(tuned):
         flat.update({f"t{i}.{k}": v.contiguous() for k, v in p.items()})
-    save_file(flat, str(d / "experts.safetensors"))
-    (d / "meta.json").write_text(json.dumps({"lora_modules": ex.lora_modules, "wall_s": wall, "flops": flops, "key": key}, default=str))
+    atomic_write(d / "experts.safetensors", lambda p: save_file(flat, str(p)))
+    atomic_write_text(d / "meta.json", json.dumps({"lora_modules": ex.lora_modules, "wall_s": wall, "flops": flops,
+                                                   "key": key, "diverged": ex.diverged}, default=str))
     return ex

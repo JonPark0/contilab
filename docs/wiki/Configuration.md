@@ -50,6 +50,26 @@ sweep:
 
 Any extra matrix axis or sweep key becomes a `variant` column in `results.csv` and its own row in report tables.
 
+Methods usually have different hyperparameters, so `method_sweep` gives each method its own grid; methods without
+an entry run once:
+
+```yaml
+method_sweep:
+  ewc: {method.params.lam: [1, 3, 10, 30, 100, 300]}
+  derpp: {method.params.alpha: [0.1, 0.3, 1.0], method.params.beta: [0.5, 1.0]}
+  'consolidate:ties': {consolidate.ties_k: [0.1, 0.2, 0.5]}
+```
+
+### Validation-based selection
+
+Every run records the final model's accuracy on each task's validation split (10 % of its training data, never
+used for training) as `val_acc`. For each (preset, method) with several variants, `results.csv` marks the variant
+with the best mean `val_acc` over seeds in a `selected` column. Diverged seeds score 0, so unstable settings lose.
+Only hyperparameters (`sweep`, `method_sweep`) are selected. Extra matrix axes such as `consolidate.transfer`
+are comparison axes, so selection runs separately for each of their values. Reports tag the selected variant
+with ✓. The cross-benchmark ranking uses only selected variants, labelled `<method> (tuned)`, so a method keeps
+one row even when its best setting differs between benchmarks. Test-set metrics never influence the choice.
+
 ## Main keys
 
 | Section | Keys (default) |
@@ -60,5 +80,5 @@ Any extra matrix axis or sweep key becomes a `variant` column in `results.csv` a
 | `train` | `epochs` (1), `batch_size` (32), `eval_batch_size` (256) |
 | `engine` | `device` (auto), `compile` (auto), `precision` (auto), `max_E` (8) |
 | `method` | `name`, `params` (strategy-specific, merged over per-modality defaults) |
-| `consolidate` | `lam_grid` (0.1…1.0), `ties_k` (0.2), `init` (base), `routing` (entropy), `transfer` (buffer), `M` (500), `temperature` (2), `epochs` (1), `experts_lora` (false), `init_seed` (0) |
+| `consolidate` | `lam_grid` (0.1…1.0), `ties_k` (0.2), `init` (ties), `routing` (routed), `transfer` (buffer), `M` (500), `temperature` (2), `epochs` (10), `experts_lora` (false), `init_seed` (0) |
 | `metrics` | `tier` (core \| extended \| full), `rho` (50), `stream_subset` (200), `beta` (10), `probe_size` (256), `recovery_n` (50), `recovery_steps` (20), `window_frac` (0.1), `ece_bins` (15), `dormant_tau` (0.025), `srank_delta` (0.01), `ppl_n` (200), `barrier_points` (11) |

@@ -1,3 +1,4 @@
+import os
 import time
 
 import pandas as pd
@@ -13,7 +14,8 @@ def test_smoke_all_under_60s(tmp_path, monkeypatch):
     elapsed = time.perf_counter() - t0
     df = pd.read_csv(tmp_path / "smoke_all" / "results.csv")
     assert len(df) == 66 and set(df.status) == {"done"}, df[df.status != "done"][["run_id", "status"]]
-    assert elapsed < 60, elapsed
+    # 60 s on a 4-core workstation (spec §1.5); shared CI runners set a looser budget
+    assert elapsed < float(os.environ.get("CONTILAB_SMOKE_BUDGET_S", 60)), elapsed
     assert main(["report", str(tmp_path / "smoke_all")]) == 0
     assert (tmp_path / "smoke_all" / "report.html").exists()
 
@@ -38,3 +40,10 @@ def test_bench_reports_speedup(tmp_path):
 def test_cli_rejects_unknown_override(tmp_path, capsys):
     assert main(["run", "configs/experiments/smoke_all.yaml", "--root", str(tmp_path), "train.epoch=2"]) == 2
     assert "unknown config key" in capsys.readouterr().err
+
+
+def test_overrides_after_options_parse_on_every_python():
+    from contilab.runner.cli import _parse
+
+    a = _parse(["run", "x.yaml", "--root", "r", "a.b=1", "c=[2]"])
+    assert a.root == "r" and a.overrides == ["a.b=1", "c=[2]"]

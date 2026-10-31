@@ -34,16 +34,20 @@ class NullHooks:
 
 
 class DivergenceGuard:
-    """Marks members whose loss is non-finite or exceeds 1e3 × their first loss (§7.5)."""
+    """Marks members whose loss is non-finite or exceeds 1e3 × their first loss of the run (§7.5).
 
-    def __init__(self) -> None:
-        self.first: torch.Tensor | None = None
+    The reference lives on ctx.loss_baseline so a resumed run keeps the threshold of the uninterrupted one.
+    `floor` bounds the reference from below (losses that start near zero, e.g. distillation from a merged init).
+    """
+
+    def __init__(self, floor: float = 1e-8) -> None:
+        self.floor = floor
 
     def check(self, ctx: RunContext, loss: torch.Tensor) -> None:
         loss = loss.detach().cpu()
-        if self.first is None:
-            self.first = torch.where(torch.isfinite(loss), loss.abs(), torch.full_like(loss, float("inf")))
-        bad = ~torch.isfinite(loss) | (loss > DIVERGENCE_FACTOR * self.first.clamp(min=1e-8))
+        if ctx.loss_baseline is None:
+            ctx.loss_baseline = torch.where(torch.isfinite(loss), loss.abs(), torch.full_like(loss, float("inf")))
+        bad = ~torch.isfinite(loss) | (loss > DIVERGENCE_FACTOR * ctx.loss_baseline.clamp(min=self.floor))
         for e in torch.nonzero(bad & ctx.active.cpu()).flatten().tolist():
             ctx.active[e] = False
             ctx.diverged.add(e)
