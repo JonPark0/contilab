@@ -65,8 +65,10 @@ method_sweep:
 Every run records the final model's accuracy on each task's validation split (10 % of its training data, never
 used for training) as `val_acc`. For each (preset, method) with several variants, `results.csv` marks the variant
 with the best mean `val_acc` over seeds in a `selected` column. Diverged seeds score 0, so unstable settings lose.
-Reports tag the selected variant with ✓, and the cross-benchmark ranking uses only selected variants. Test-set
-metrics never influence the choice.
+Only hyperparameters (`sweep`, `method_sweep`) are selected. Extra matrix axes such as `consolidate.transfer`
+are comparison axes, so selection runs separately for each of their values. Reports tag the selected variant
+with ✓. The cross-benchmark ranking uses only selected variants, labelled `<method> (tuned)`, so a method keeps
+one row even when its best setting differs between benchmarks. Test-set metrics never influence the choice.
 
 ## Main keys
 

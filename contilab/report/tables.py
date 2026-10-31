@@ -109,8 +109,16 @@ def axis_tables(df: pd.DataFrame, preset: str, baseline: str = "naive") -> dict[
     return out
 
 
+def _rank_labels(d: pd.DataFrame) -> pd.DataFrame:
+    """A tuned method keeps one label across benchmarks even when the selected variant differs between them."""
+    cell = d["cell"].fillna("").astype(str) if "cell" in d.columns else pd.Series("", index=d.index)
+    labels = [f"{m}{f' [{c}]' if c else ''} (tuned)" if s is True else lab
+              for m, c, s, lab in zip(d["method"], cell, _selected(d), d["label"])]
+    return d.assign(label=labels)
+
+
 def rank_table(df: pd.DataFrame, metric: str = "acc") -> tuple[str, dict]:
-    d = with_labels(only_selected(df[df.status.isin(["done", "diverged"])]))
+    d = _rank_labels(with_labels(only_selected(df[df.status.isin(["done", "diverged"])])))
     piv = d.groupby(["preset", "label"])[metric].mean().unstack("label")
     piv = piv.dropna(axis=1)
     methods = [m for m in methods_in(d) if m in piv.columns]

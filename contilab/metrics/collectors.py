@@ -320,7 +320,7 @@ class Collectors:
         items, per_item = 0, 0
         if buf is not None:
             items = int(buf.size()[0])
-            extras = sum(v[0, 0].numel() * v.element_size() for k, v in buf.tensors.items() if k != "gidx")
+            extras = sum(math.prod(v.shape[2:]) * v.element_size() for k, v in buf.tensors.items() if k != "gidx")
             per_item = ctx.pool.sample_bytes() + extras
         return {
             "task": t,

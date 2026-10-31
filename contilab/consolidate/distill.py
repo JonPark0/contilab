@@ -187,8 +187,8 @@ class ContinualDistillConsolidator(DistillConsolidator):
         ens, stream, cfg = cctx.ens, cctx.stream, cctx.cfg
         dev = next(iter(ens.params.values())).device
         S = ens.E
-        if self._prev is None:
-            self._prev = self._init(experts, 0, cctx) if cctx.teacher is not None else \
+        if self._prev is None:  # θ₀, or the student's own initialisation (consolidate.init is not used here)
+            self._prev = cctx.ens.snapshot() if cctx.teacher is not None else \
                 {k: v.clone() for k, v in experts.base.items()}
         pool = TrainPool.from_stream(stream)
         gens = transfer_gens(cctx.seeds, upto)
@@ -200,7 +200,7 @@ class ContinualDistillConsolidator(DistillConsolidator):
             old = [torch.randperm(pool.task_size(t), generator=g)[:per] + int(pool.offsets[t]) for t in range(upto)]
             rows.append(torch.cat([cur, *old]))
         gidx = torch.stack(rows).to(pool.x.device)
-        self.stored_samples = per * upto
+        self.stored_samples = gidx.shape[1] - len(cur)  # an earlier task smaller than its share keeps all it has
         b = pool.gather(gidx)
         table = stream.class_table().to(dev)
         teacher = self._teacher_logits(experts, [upto], b.x, b.attn_mask, False, cctx)[0]  # [S, N, C]

@@ -42,7 +42,7 @@ def test_sweep_selects_best_validation_variant(tmp_path):
         assert sel.variant.iloc[0] == scores.idxmax() == "optim.lr=0.05"
     assert "naive [optim.lr=0.05] ✓" in main_table(df, "syn_class")
     _, st = rank_table(df)
-    assert set(st["avg_ranks"]) == {"naive [optim.lr=0.05] ✓", "ewc [optim.lr=0.05] ✓"}
+    assert set(st["avg_ranks"]) == {"naive (tuned)", "ewc (tuned)"}
 
 
 def test_diverged_seeds_count_against_a_variant(tmp_path):
@@ -63,3 +63,28 @@ def test_method_sweep_variants_are_per_method(tmp_path):
     assert set(df[df.method == "naive"].variant.fillna("")) == {""}
     assert sorted(df[df.method == "ewc"].variant) == ["method.params.lam=1.0", "method.params.lam=10.0"]
     assert df[df.method == "ewc"].selected.sum() == 1 and df[df.method == "naive"].selected.isna().all()
+
+
+def test_ranking_keeps_a_method_whose_winner_differs_between_benchmarks():
+    from contilab.report.tables import rank_table
+
+    rows = []
+    for preset, best in [("a", "lam=1"), ("b", "lam=10")]:
+        for m, variants in [("naive", [""]), ("er", [""]), ("ewc", ["lam=1", "lam=10"])]:
+            for v in variants:
+                sel = None if m != "ewc" else v == best
+                acc = {"naive": 0.2, "er": 0.8, "ewc": 0.5}[m]
+                rows += [{"run_id": f"{preset}-{m}-{v}-{s}", "preset": preset, "method": m, "variant": v, "cell": "",
+                          "selected": sel, "seed": s, "status": "done", "acc": acc} for s in (0, 1)]
+    _, st = rank_table(pd.DataFrame(rows))
+    assert set(st["avg_ranks"]) == {"naive", "er", "ewc (tuned)"}
+
+
+def test_comparison_axes_are_not_selected_away():
+    from contilab.runner.finalize import select_variants
+
+    rows = [{"preset": "p", "method": "m", "variant": f"transfer={t}, lam={l}", "_cell": f"transfer={t}",
+             "status": "done", "val_acc": v} for t, l, v in [("full", 1, 0.9), ("full", 10, 0.8),
+                                                             ("buffer", 1, 0.5), ("buffer", 10, 0.6)]]
+    select_variants(rows)
+    assert [r["selected"] for r in rows] == [True, False, False, True]

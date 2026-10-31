@@ -17,20 +17,21 @@ ID_COLS = ["run_id", "preset", "method", "variant", "seed", "status"]
 FIXED_AXES = {"preset", "method.name", "seed"}
 
 
-def _variant_keys(exp_dir: Path) -> dict[str | None, list[str]]:
-    """Config paths that vary inside one (preset, method) cell: extra matrix axes, sweep keys and that method's
-    method_sweep keys. Key None holds the keys shared by every method."""
+def _variant_keys(exp_dir: Path) -> tuple[list[str], dict[str | None, list[str]]]:
+    """Config paths that vary inside one (preset, method): extra matrix axes (comparison axes, never selected
+    away) and hyperparameter keys (sweep + that method's method_sweep; key None = shared by every method)."""
     p = exp_dir / "experiment.yaml"
     if not p.exists():
-        return {None: []}
+        return [], {None: []}
     import yaml
 
     exp = yaml.safe_load(p.read_text()) or {}
-    common = [k for k in (exp.get("matrix") or {}) if k not in FIXED_AXES] + list(exp.get("sweep") or {})
-    out: dict[str | None, list[str]] = {None: sorted(common)}
+    axes = sorted(k for k in (exp.get("matrix") or {}) if k not in FIXED_AXES)
+    sweep = list(exp.get("sweep") or {})
+    hyper: dict[str | None, list[str]] = {None: sorted(sweep)}
     for m, grid in (exp.get("method_sweep") or {}).items():
-        out[m] = sorted(set(common) | set(grid))
-    return out
+        hyper[m] = sorted(set(sweep) | set(grid))
+    return axes, hyper
 
 
 def _get(d: dict, path: str):
@@ -40,11 +41,12 @@ def _get(d: dict, path: str):
 
 
 def select_variants(rows: list[dict]) -> None:
-    """Spec §5.3: per (preset, method) with several sweep variants, mark the variant with the best mean validation
-    accuracy over seeds (`selected`). Diverged or failed seeds score 0; ties keep the first variant."""
+    """Spec §5.3: per (preset, method, comparison-axis values `_cell`) with several hyperparameter variants, mark the
+    variant with the best mean validation accuracy over seeds (`selected`). Diverged or failed seeds score 0;
+    ties keep the first variant."""
     cells: dict[tuple, dict[str, list[dict]]] = {}
     for r in rows:
-        cells.setdefault((r["preset"], r["method"]), {}).setdefault(r["variant"], []).append(r)
+        cells.setdefault((r["preset"], r["method"], r.get("_cell", "")), {}).setdefault(r["variant"], []).append(r)
     for variants in cells.values():
         if len(variants) < 2:
             continue
@@ -79,14 +81,15 @@ def finalize_experiment(exp_dir: Path, add: list[str] | None = None, tier: str |
     exp_dir = Path(exp_dir)
     rds = run_dirs(exp_dir)
     joint = _joint_lookup(rds)
-    vkeys = _variant_keys(exp_dir)
+    axes, hyper = _variant_keys(exp_dir)
     rows = []
     for rd in rds:
         raw_cfg = rd.read_config()
         cfg = run_config_from_dict(raw_cfg)
-        variant = ", ".join(f"{k}={_get(raw_cfg, k)}" for k in vkeys.get(cfg.method.name, vkeys[None]))
+        keys = sorted(set(axes) | set(hyper.get(cfg.method.name, hyper[None])))
+        variant = ", ".join(f"{k}={_get(raw_cfg, k)}" for k in keys)
         row = {"run_id": rd.path.name, "preset": cfg.preset, "method": cfg.method.name, "variant": variant,
-               "seed": cfg.seed, "status": rd.status()}
+               "seed": cfg.seed, "status": rd.status(), "_cell": ", ".join(f"{k}={_get(raw_cfg, k)}" for k in axes)}
         mpath = rd.path / "metrics.json"
         metrics = json.loads(mpath.read_text()) if mpath.exists() else {}
         if row["status"] in ("done", "diverged") and (rd.path / "stream.json").exists():
@@ -103,7 +106,12 @@ def finalize_experiment(exp_dir: Path, add: list[str] | None = None, tier: str |
                 row[k] = v["value"]
         rows.append(row)
     select_variants(rows)
-    ids = ID_COLS + (["selected"] if any("selected" in r for r in rows) else [])
+    tuned = any("selected" in r for r in rows)
+    for r in rows:
+        cell = r.pop("_cell")
+        if tuned:
+            r["cell"] = cell  # comparison-axis part of the variant: the ranking label of a tuned method
+    ids = ID_COLS + (["selected", "cell"] if tuned else [])
     cols = ids + sorted({k for r in rows for k in r} - set(ids))
     out = exp_dir / "results.csv"
     with open(out, "w", newline="") as f:

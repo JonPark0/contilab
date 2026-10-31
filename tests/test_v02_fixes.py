@@ -46,6 +46,14 @@ def _end_task_cost(log):
     return [r for r in log.records("cost") if r["task"] != RUN_END][-1]
 
 
+def test_empty_derpp_buffer_costs_nothing(tmp_path):
+    from contilab.strategies.derpp import DERpp
+
+    log = RawLog(tmp_path)
+    run_with_collectors(build_synthetic(n_tasks=2), DERpp(M=0), [0], tier="core", logs=[log])
+    assert _end_task_cost(log)["buffer_bytes"] == 0
+
+
 @pytest.mark.parametrize("name", ["er", "derpp"])
 def test_buffer_bytes_count_stored_samples(tmp_path, name):
     from contilab.strategies.derpp import DERpp

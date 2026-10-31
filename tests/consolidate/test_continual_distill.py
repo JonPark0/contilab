@@ -39,8 +39,10 @@ def test_student_keeps_old_tasks_better_than_naive(tmp_path):
 
 @pytest.mark.parametrize("method", ["consolidate:continual_distill", "consolidate:distill"])
 def test_smaller_student_architecture(tmp_path, method):
-    # 30 passes over the 60-sample transfer set (the smoke profile trains 2 steps); a smaller student starts from base
-    cli = {"consolidate.init": "base", "consolidate.epochs": 30, "train.epochs": 3}
+    # 30 passes over the 60-sample transfer set (the smoke profile trains 2 steps)
+    cli = {"consolidate.epochs": 30, "train.epochs": 3}
+    if method == "consolidate:distill":
+        cli["consolidate.init"] = "base"  # merged expert weights cannot initialise another architecture
     big = run_experiment(tiny_experiment([method], seeds=[0], cli=cli), tmp_path / "big")
     small = run_experiment(tiny_experiment([method], seeds=[0], cli={**cli, "method.params.student.hidden": 4}),
                            tmp_path / "small")
@@ -53,3 +55,14 @@ def test_merging_rejects_a_different_student(tmp_path):
     out = run_experiment(tiny_experiment(["consolidate:ta"], seeds=[0], cli={"method.params.student.hidden": 4}), tmp_path)
     st = json.loads(next(out.glob("syn_class-consolidate_ta-*/status.json")).read_text())
     assert st["status"] == "failed" and "teacher architecture" in st["error"]
+
+
+def test_stored_samples_capped_by_small_tasks(tmp_path):
+    from contilab.data.batching import TrainPool
+
+    s = build_synthetic(n_tasks=3)
+    log = RawLog(tmp_path)
+    run_consolidation_for_test(s, "consolidate:continual_distill", [0], log, M=1000)  # per-task share > task size
+    end = [r for r in log.records("cost") if r["task"] == RUN_END][-1]
+    pool = TrainPool.from_stream(s)
+    assert end["transfer_bytes"] == (pool.task_size(0) + pool.task_size(1)) * pool.sample_bytes()

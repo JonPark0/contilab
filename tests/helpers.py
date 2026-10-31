@@ -160,12 +160,13 @@ def smoke_cfg(**over):
     return cfg
 
 
-def run_consolidation_for_test(stream, method, seeds, log, experts_lora=False, transfer="buffer", tier="core"):
+def run_consolidation_for_test(stream, method, seeds, log, experts_lora=False, transfer="buffer", tier="core", M=60):
     from contilab.consolidate.consolidator import run_consolidation
     from contilab.core.config import MetricsConfig
     from contilab.metrics.collectors import Collectors
 
-    cfg = smoke_cfg(**{"method.name": method, "consolidate.experts_lora": experts_lora, "consolidate.transfer": transfer})
+    cfg = smoke_cfg(**{"method.name": method, "consolidate.experts_lora": experts_lora, "consolidate.transfer": transfer,
+                       "consolidate.M": M})
     hooks = Collectors(tier, [log] if not isinstance(log, list) else log, stream, None, MetricsConfig(tier=tier),
                        cfg.train, cfg.optim)
     ctx = make_ctx(stream, seeds)
