@@ -78,5 +78,5 @@ metrics never influence the choice.
 | `train` | `epochs` (1), `batch_size` (32), `eval_batch_size` (256) |
 | `engine` | `device` (auto), `compile` (auto), `precision` (auto), `max_E` (8) |
 | `method` | `name`, `params` (strategy-specific, merged over per-modality defaults) |
-| `consolidate` | `lam_grid` (0.1…1.0), `ties_k` (0.2), `init` (base), `routing` (entropy), `transfer` (buffer), `M` (500), `temperature` (2), `epochs` (1), `experts_lora` (false), `init_seed` (0) |
+| `consolidate` | `lam_grid` (0.1…1.0), `ties_k` (0.2), `init` (ties), `routing` (routed), `transfer` (buffer), `M` (500), `temperature` (2), `epochs` (10), `experts_lora` (false), `init_seed` (0) |
 | `metrics` | `tier` (core \| extended \| full), `rho` (50), `stream_subset` (200), `beta` (10), `probe_size` (256), `recovery_n` (50), `recovery_steps` (20), `window_frac` (0.1), `ece_bins` (15), `dormant_tau` (0.025), `srank_delta` (0.01), `ppl_n` (200), `barrier_points` (11) |

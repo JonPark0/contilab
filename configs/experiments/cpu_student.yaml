@@ -8,5 +8,6 @@ matrix:
   seed: [0, 1, 2]
 overrides:
   method.params.student.hidden: 100
+  consolidate.init: base  # a different student cannot start from merged expert weights
 workers: 2
 threads_per_worker: 2

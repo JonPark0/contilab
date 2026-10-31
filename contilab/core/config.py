@@ -70,12 +70,14 @@ class MethodConfig:
 class ConsolidateConfig:
     lam_grid: list[float] = field(default_factory=lambda: [round(0.1 * i, 1) for i in range(1, 11)])
     ties_k: float = 0.2
-    init: str = "base"
-    routing: str = "entropy"
+    # distillation defaults from the validation-tuned study (configs/experiments/cpu_tuned.yaml): a TIES-merged
+    # student, targets routed to each sample's own teacher, 10 passes over the transfer set
+    init: str = "ties"
+    routing: str = "routed"
     transfer: str = "buffer"
     M: int = 500
     temperature: float = 2.0
-    epochs: int = 1
+    epochs: int = 10
     experts_lora: bool = False
     init_seed: int = 0
 

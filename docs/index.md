@@ -11,7 +11,7 @@ vision and language models and compares sequential training with **model merging
 distillation**.
 
 - **Methods:** EWC, LwF, experience replay, DER++, A-GEM, LoRA-per-task, Joint and Naive baselines
-- **Consolidation:** Task Arithmetic, TIES-Merging, multi-teacher distillation
+- **Consolidation:** Task Arithmetic, TIES-Merging, multi-teacher distillation, teacher → student continual distillation
 - **Scenarios:** task-incremental, class-incremental, domain-incremental
 - **Benchmarks:** Split MNIST, Permuted MNIST, Split CIFAR-10/100, text5 (AG News, Yelp, Amazon, DBpedia,
   Yahoo Answers) with Pythia and Qwen language models

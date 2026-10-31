@@ -29,10 +29,15 @@ all metrics are defined exactly as for sequential methods.
 
 `consolidate:distill` trains a student with `T² · KL(target ‖ softmax(z/T))`:
 
-- **Student initialisation** `consolidate.init`: `base` (θ₀), `ta` or `ties`.
-- **Targets**: teacher *k* only speaks for its own classes. With `routing: routed` each sample uses its own
-  task's teacher (always the case in Task-IL); with `routing: entropy` teachers are mixed by `softmax(−H)` of
-  their prediction entropy. Targets are renormalised onto the classes the student may predict.
+- **Student initialisation** `consolidate.init`: `base` (θ₀), `ta` or `ties` (default).
+- **Targets**: teacher *k* only speaks for its own classes. With `routing: routed` (default) each sample uses
+  its own task's teacher (always the case in Task-IL); with `routing: entropy` teachers are mixed by `softmax(−H)`
+  of their prediction entropy, which proxy data (no task identity) always uses. Targets are renormalised onto
+  the classes the student may predict.
+- **Epochs** `consolidate.epochs` (default 10) passes over the transfer set per consolidation step.
+
+The defaults come from the validation-tuned study ([Results](Results.md#tuned-comparison)). The v0.1 defaults
+(`base`, `entropy`, 1 epoch) under-trained the student: 16 SGD steps per task on the 500-sample buffer.
 - **Transfer data** (`consolidate.transfer`), three levels of data availability:
   - `full`: all training data of the tasks seen so far (reference upper bound)
   - `buffer`: M samples in total, split evenly over tasks (same budget as replay)

@@ -39,8 +39,8 @@ def test_student_keeps_old_tasks_better_than_naive(tmp_path):
 
 @pytest.mark.parametrize("method", ["consolidate:continual_distill", "consolidate:distill"])
 def test_smaller_student_architecture(tmp_path, method):
-    # routed targets and 30 passes over the 60-sample transfer set: the multi-teacher smoke default trains 2 steps
-    cli = {"consolidate.routing": "routed", "consolidate.epochs": 30, "train.epochs": 3}
+    # 30 passes over the 60-sample transfer set (the smoke profile trains 2 steps); a smaller student starts from base
+    cli = {"consolidate.init": "base", "consolidate.epochs": 30, "train.epochs": 3}
     big = run_experiment(tiny_experiment([method], seeds=[0], cli=cli), tmp_path / "big")
     small = run_experiment(tiny_experiment([method], seeds=[0], cli={**cli, "method.params.student.hidden": 4}),
                            tmp_path / "small")

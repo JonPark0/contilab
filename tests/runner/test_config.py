@@ -38,7 +38,7 @@ def test_run_id_stable_and_seed_sensitive():
 def test_cpu_profile_presets():
     all5 = "matrix.preset=[split_mnist_class, split_mnist_task, permuted_mnist, split_cifar10_class, text5_class]"
     runs = expand(load_experiment(CPU, [all5]))
-    assert len(runs) == 5 * 11 * 3
+    assert len(runs) == 5 * 12 * 3
     full = {r.preset for r in runs if r.metrics.tier == "full"}
     assert full == {"split_mnist_class"}
     t = next(r for r in runs if r.preset == "text5_class")

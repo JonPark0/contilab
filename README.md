@@ -22,7 +22,8 @@ language (LLM) benchmarks — and is designed around three goals:
    Friedman/Nemenyi critical differences.
 3. **Distillation and consolidation.** Besides sequential training, contilab compares
    *train-then-consolidate* pipelines that merge per-task experts into one model with
-   **Task Arithmetic**, **TIES-Merging** or **multi-teacher knowledge distillation**.
+   **Task Arithmetic**, **TIES-Merging**, **multi-teacher knowledge distillation** or **teacher → student
+   continual distillation** (optionally into a smaller student).
 
 ## Features
 
@@ -30,10 +31,10 @@ language (LLM) benchmarks — and is designed around three goals:
 |---|---|
 | Scenarios | Task-incremental (Task-IL), class-incremental (Class-IL), domain-incremental (Domain-IL) |
 | Methods | Naive fine-tuning, Joint (upper bound), **EWC** (online), **LwF**, **Experience Replay (ER)**, **DER++**, **A-GEM**, **LoRA-per-task** |
-| Consolidation | **Task Arithmetic**, **TIES-Merging** (full weights or LoRA ΔW), **multi-teacher distillation** with full / buffer / proxy transfer data |
+| Consolidation | **Task Arithmetic**, **TIES-Merging** (full weights or LoRA ΔW), **multi-teacher distillation** with full / buffer / proxy transfer data, **teacher → student continual distillation**, smaller student architectures |
 | Benchmarks | Split MNIST, Permuted MNIST, Split CIFAR-10, Split CIFAR-100, **text5** (AG News → Yelp → Amazon → DBpedia → Yahoo Answers) with Hugging Face LMs (e.g. Pythia, Qwen2.5) |
 | Metrics | 30+ quantitative metrics + figures (accuracy heatmaps, stability-gap curves, confusion, CKA, drift, t-SNE/PCA, loss barriers, critical-difference diagrams) |
-| Statistics | Mean ± std over seeds, bootstrap 95 % CI, Wilcoxon / exact permutation tests, Friedman + Nemenyi CD |
+| Statistics | Mean ± std over seeds, bootstrap 95 % CI, Wilcoxon / exact permutation tests, Friedman + Nemenyi CD, validation-based hyperparameter selection for sweeps |
 | Engineering | Seed-parallel `vmap` ensembles, `torch.compile`, bf16, idempotent experiment matrix, per-task checkpoints and resume, failure isolation, divergence detection, Markdown/HTML reports |
 
 ## Quick start
@@ -73,6 +74,7 @@ pretrained language models come from the Hugging Face Hub.
 | Task Arithmetic | model merging | Ilharco et al., *ICLR* 2023 |
 | TIES-Merging | model merging | Yadav et al., *NeurIPS* 2023 |
 | Multi-teacher distillation | consolidation | Hinton et al., 2015 |
+| Teacher → student continual distillation | consolidation (KD + self-distillation on a replay buffer) | Hinton et al., 2015; Li & Hoiem, *TPAMI* 2017 |
 
 ## Metrics (excerpt)
 
