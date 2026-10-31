@@ -69,6 +69,9 @@ def build_report(exp_dir: Path) -> tuple[Path, Path]:
     warn = low_power_warning(n_seeds)
     if warn:
         md += [f"> {warn}", ""]
+    if "selected" in df.columns and df.selected.notna().any():
+        md += ["> ✓ = sweep 변형 중 검증 정확도(`val_acc`, 시드 평균, 발산 시드는 0점)로 선택된 설정 (§5.3). "
+               "벤치마크 간 순위는 선택된 변형만 사용합니다.", ""]
     env = _env_summary(exp_dir)
     if env:
         md += ["## 실행 환경", ""] + env + [""]

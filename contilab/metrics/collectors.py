@@ -18,7 +18,7 @@ from contilab.strategies.base import Strategy
 
 RUN_END = 10**6  # "task" value of run-level records so resume truncation drops them
 
-_CORE = {"init_acc", "acc_matrix", "pred_hist", "cost"}
+_CORE = {"init_acc", "acc_matrix", "pred_hist", "cost", "val_final"}
 _EXTENDED = _CORE | {"stream_acc", "lca_curve", "features", "activations", "general_ppl"}
 _FULL = _EXTENDED | {"param_snapshots", "barrier_curve", "grad_cosine", "recovery"}
 RAW_KEYS_BY_TIER: dict[str, set[str]] = {"core": _CORE, "extended": _EXTENDED, "full": _FULL}
@@ -299,6 +299,10 @@ class Collectors:
         self._per_member(lambda e, log: log.flush())
 
     def on_run_end(self, ctx: RunContext) -> None:
+        if "val_final" in self.keys:  # validation accuracy of the final model: the hyperparameter-selection score
+            accs = torch.stack([self._acc_on(ctx, j, task.val) for j, task in enumerate(self.eval_stream.tasks)], 1)
+            self.strategy.eval_setup(ctx, None)
+            self._per_member(lambda e, log: log.append("val_final", {"task": RUN_END, "accs": accs[e].tolist()}))
         if "recovery" in self.keys:
             self._record_recovery(ctx)
         if "cost" in self.keys:

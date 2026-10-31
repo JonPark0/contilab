@@ -34,6 +34,27 @@ def _get(d: dict, path: str):
     return d
 
 
+def select_variants(rows: list[dict]) -> None:
+    """Spec §5.3: per (preset, method) with several sweep variants, mark the variant with the best mean validation
+    accuracy over seeds (`selected`). Diverged or failed seeds score 0; ties keep the first variant."""
+    cells: dict[tuple, dict[str, list[dict]]] = {}
+    for r in rows:
+        cells.setdefault((r["preset"], r["method"]), {}).setdefault(r["variant"], []).append(r)
+    for variants in cells.values():
+        if len(variants) < 2:
+            continue
+        if any(r["status"] == "done" and "val_acc" not in r for rs in variants.values() for r in rs):
+            continue  # runs recorded before val_final: no selection
+
+        def score(rs: list[dict]) -> float:
+            return sum(r["val_acc"] if r["status"] == "done" else 0.0 for r in rs) / len(rs)
+
+        best = max(variants, key=lambda v: score(variants[v]))
+        for v, rs in variants.items():
+            for r in rs:
+                r["selected"] = v == best
+
+
 def run_dirs(exp_dir: Path) -> list[RunDir]:
     return [RunDir(p) for p in sorted(Path(exp_dir).iterdir()) if (p / "config.yaml").exists()]
 
@@ -76,7 +97,9 @@ def finalize_experiment(exp_dir: Path, add: list[str] | None = None, tier: str |
             if isinstance(v.get("value"), (int, float)) and not isinstance(v.get("value"), bool):
                 row[k] = v["value"]
         rows.append(row)
-    cols = ID_COLS + sorted({k for r in rows for k in r} - set(ID_COLS))
+    select_variants(rows)
+    ids = ID_COLS + (["selected"] if any("selected" in r for r in rows) else [])
+    cols = ids + sorted({k for r in rows for k in r} - set(ids))
     out = exp_dir / "results.csv"
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols)

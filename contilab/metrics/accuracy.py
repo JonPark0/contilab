@@ -32,6 +32,15 @@ def acc(log, mctx):
     return float(acc_matrix_of(log)[-1].mean())
 
 
+@metric("val_acc", ("val_final",), "core")
+def val_acc(log, mctx):
+    """Final average accuracy on the validation splits (10% of training data): the sweep-selection score (§5.3)."""
+    rows = log.records("val_final")
+    if not rows:
+        raise MetricUnavailable("no validation record (run predates val_final)")
+    return float(np.mean(rows[-1]["accs"]))
+
+
 @metric("aia", ("acc_matrix",), "core")
 def aia(log, mctx):
     R = _square(log)
