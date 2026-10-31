@@ -119,6 +119,7 @@ class ExperimentConfig:
     matrix: dict[str, list] = field(default_factory=dict)
     overrides: dict[str, Any] = field(default_factory=dict)
     sweep: dict[str, list] = field(default_factory=dict)
+    method_sweep: dict[str, dict[str, list]] = field(default_factory=dict)  # per-method grids: {ewc: {key: [...]}}
     workers: int = 1
     threads_per_worker: int | None = None
     baseline: str = "naive"

@@ -54,3 +54,12 @@ def test_diverged_seeds_count_against_a_variant(tmp_path):
             {"preset": "p", "method": "m", "variant": "b", "status": "done", "val_acc": 0.6}]
     select_variants(rows)
     assert [r["selected"] for r in rows] == [False, False, True, True]
+
+
+def test_method_sweep_variants_are_per_method(tmp_path):
+    exp = tiny_experiment(["naive", "ewc"], seeds=[0])
+    exp.method_sweep = {"ewc": {"method.params.lam": [1.0, 10.0]}}
+    df = pd.read_csv(run_experiment(exp, tmp_path) / "results.csv")
+    assert set(df[df.method == "naive"].variant.fillna("")) == {""}
+    assert sorted(df[df.method == "ewc"].variant) == ["method.params.lam=1.0", "method.params.lam=10.0"]
+    assert df[df.method == "ewc"].selected.sum() == 1 and df[df.method == "naive"].selected.isna().all()

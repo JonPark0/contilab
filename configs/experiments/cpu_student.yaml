@@ -1,0 +1,12 @@
+# Teacher→student compression on the MNIST presets: the student MLP has 100 instead of 400 hidden units
+# (≈ 6× fewer parameters) while the experts keep the full architecture.
+name: cpu_student
+profile: cpu
+matrix:
+  preset: [split_mnist_class, permuted_mnist]
+  method.name: ['consolidate:distill', 'consolidate:continual_distill']
+  seed: [0, 1, 2]
+overrides:
+  method.params.student.hidden: 100
+workers: 2
+threads_per_worker: 2

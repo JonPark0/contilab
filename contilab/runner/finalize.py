@@ -17,15 +17,20 @@ ID_COLS = ["run_id", "preset", "method", "variant", "seed", "status"]
 FIXED_AXES = {"preset", "method.name", "seed"}
 
 
-def _variant_keys(exp_dir: Path) -> list[str]:
-    """Config paths that vary inside one (preset, method) cell: extra matrix axes and sweep keys."""
+def _variant_keys(exp_dir: Path) -> dict[str | None, list[str]]:
+    """Config paths that vary inside one (preset, method) cell: extra matrix axes, sweep keys and that method's
+    method_sweep keys. Key None holds the keys shared by every method."""
     p = exp_dir / "experiment.yaml"
     if not p.exists():
-        return []
+        return {None: []}
     import yaml
 
     exp = yaml.safe_load(p.read_text()) or {}
-    return sorted([k for k in (exp.get("matrix") or {}) if k not in FIXED_AXES] + list(exp.get("sweep") or {}))
+    common = [k for k in (exp.get("matrix") or {}) if k not in FIXED_AXES] + list(exp.get("sweep") or {})
+    out: dict[str | None, list[str]] = {None: sorted(common)}
+    for m, grid in (exp.get("method_sweep") or {}).items():
+        out[m] = sorted(set(common) | set(grid))
+    return out
 
 
 def _get(d: dict, path: str):
@@ -79,7 +84,7 @@ def finalize_experiment(exp_dir: Path, add: list[str] | None = None, tier: str |
     for rd in rds:
         raw_cfg = rd.read_config()
         cfg = run_config_from_dict(raw_cfg)
-        variant = ", ".join(f"{k}={_get(raw_cfg, k)}" for k in vkeys)
+        variant = ", ".join(f"{k}={_get(raw_cfg, k)}" for k in vkeys.get(cfg.method.name, vkeys[None]))
         row = {"run_id": rd.path.name, "preset": cfg.preset, "method": cfg.method.name, "variant": variant,
                "seed": cfg.seed, "status": rd.status()}
         mpath = rd.path / "metrics.json"
