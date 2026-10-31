@@ -9,15 +9,16 @@ authors:
 repository-code: "https://github.com/JonPark0/contilab"
 url: "https://github.com/JonPark0/contilab/wiki"
 license: MIT
-version: 0.1.0
-date-released: "2026-10-23"
+version: 0.2.0
+date-released: "2026-10-31"
 abstract: >-
   contilab is a PyTorch framework for empirical continual learning research on vision
   and language models. It trains several seeds at once as a stacked-parameter ensemble
   (torch.func.vmap + functional_call, optional torch.compile and bf16), implements
   regularisation, replay and parameter-isolation methods (EWC, LwF, ER, DER++, A-GEM,
   LoRA-per-task), train-then-consolidate pipelines (Task Arithmetic, TIES-Merging,
-  multi-teacher knowledge distillation), and computes 30+ continual-learning metrics
+  multi-teacher knowledge distillation, teacher-to-student continual distillation into
+  smaller students), validation-based hyperparameter selection, and computes 30+ continual-learning metrics
   (accuracy matrix, forgetting, forward/backward transfer, stability gap, worst-case
   accuracy, probing and CKA, plasticity loss, recency bias, calibration, recovery,
   loss barriers, LLM general-ability retention) post hoc from stored raw data, with

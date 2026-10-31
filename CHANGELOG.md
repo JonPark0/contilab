@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-10-31
 
 ### Added
 - `consolidate:continual_distill`: teacher → student continual distillation. Teachers arrive one per task and
