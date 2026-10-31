@@ -23,7 +23,7 @@ flowchart LR
 | `contilab.models` | `MLP`, `ReducedResNet18` (GroupNorm), `HFClassifier` (any Hugging Face causal LM + last-token head), in-house LoRA |
 | `contilab.engine` | `Ensemble` (stacked parameters), `TrainStep` (vmapped / compiled loss, autograd, element-wise update), trainer loop, evaluator, device and precision selection |
 | `contilab.strategies` | CL methods as plugins |
-| `contilab.consolidate` | Expert training and caching, Task Arithmetic, TIES, multi-teacher distillation |
+| `contilab.consolidate` | Expert training and caching, Task Arithmetic, TIES, multi-teacher and teacher → student continual distillation, smaller students |
 | `contilab.metrics` | `RawLog`, collectors, metric registry, metric families, statistics |
 | `contilab.report` | Tables, figures, Markdown/HTML rendering |
 | `contilab.runner` | Config loading and matrix expansion, execution, checkpoint resume, scheduling, CLI, throughput bench |

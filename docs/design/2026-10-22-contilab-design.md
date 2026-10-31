@@ -205,6 +205,9 @@ class Consolidator:
 ### 5.6 확장 지점: Teacher→Student 지속 증류 (후속)
 - `Consolidator.__init__(student_factory=None)`: teacher와 다른 아키텍처의 학생 생성 함수를 받을 수 있음
 - `Consolidator.on_new_expert(expert, ctx)` 훅: 순차적으로 도착하는 teacher를 처리하는 구현을 위해 1차에서 기본 no-op으로 정의
+- v0.2 구현:
+  - `consolidate:continual_distill`: 태스크마다 teacher 1개가 도착하고 사용 후 폐기된다. 학생 학습은 KD와 리플레이 버퍼 위 자기 증류를 결합한다.
+  - 학생 아키텍처는 `student_factory` 인자 대신 `method.params.student`(ModelConfig 덮어쓰기)로 지정한다.
 
 ## 6. 평가 지표 체계
 

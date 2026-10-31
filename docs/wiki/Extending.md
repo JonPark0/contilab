@@ -68,3 +68,14 @@ profile to run it.
 
 Subclass `Consolidator`, implement `consolidate(experts, upto, cctx) -> params`, and register it in
 `build_consolidator` under `consolidate:<name>`.
+
+- `consolidate` is called once per task, with `upto` = the task just finished.
+- `on_new_expert(expert, ctx)` runs just before `consolidate`, so a sequential consolidator can react to each
+  teacher as it arrives.
+- Class attributes and fields that feed the cost metrics and run status:
+  - `supports_student = True` lets `method.params.student` give the consolidated model another architecture. The
+    experts then run on `cctx.teachers`.
+  - `keeps_experts = False` drops the stored-expert bytes.
+  - `stored_samples` counts stream samples kept for consolidation (buffer memory).
+  - `diverged` holds the seed positions whose consolidation training diverged.
+- `method.params` reaches the consolidator as `self.params`.
