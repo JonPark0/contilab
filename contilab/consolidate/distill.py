@@ -84,6 +84,7 @@ class DistillConsolidator(Consolidator):
         gens = transfer_gens(cctx.seeds, upto)
         tr: TransferSet = build_transfer(stream, pool, upto, self.cfg.transfer, self.cfg.M, gens,
                                          cfg.benchmark.tokenizer, cfg.benchmark.max_len)
+        self.stored_samples = len(tr) if tr.gidx is not None else 0
         table = stream.class_table().to(dev)
         seen = table[: upto + 1].any(0)
         if tr.gidx is not None:

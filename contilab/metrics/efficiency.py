@@ -41,7 +41,15 @@ def trainable_params(log, mctx):
 
 @metric("buffer_bytes", ("cost",), "core")
 def buffer_bytes(log, mctx):
-    return _tasks(log)[-1]["buffer_bytes"]
+    """Stored training samples: the replay buffer, or a consolidator's transfer set drawn from the stream."""
+    ends = [r for r in log.records("cost") if r["task"] == RUN_END]
+    return _tasks(log)[-1]["buffer_bytes"] + (ends[-1].get("transfer_bytes", 0) if ends else 0)
+
+
+@metric("state_bytes", ("cost",), "core")
+def state_bytes(log, mctx):
+    """Extra strategy state kept between tasks (e.g. EWC Fisher and anchor, LwF teacher), per member."""
+    return _tasks(log)[-1]["state_bytes"]
 
 
 @metric("model_bytes", ("cost",), "core")

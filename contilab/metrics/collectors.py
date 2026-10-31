@@ -91,7 +91,8 @@ class Collectors:
 
     def _record_stream_acc(self, ctx: RunContext) -> None:
         sub = self._subset("stream", self.cfg.stream_subset)
-        seen = range(min(ctx.task_idx, len(sub) - 1) + 1)
+        # a joint run trains on one merged task, so every evaluation task is "seen" from the start
+        seen = range(len(sub)) if self.eval_stream is not self.stream else range(min(ctx.task_idx, len(sub) - 1) + 1)
         accs = torch.stack([self._acc_on(ctx, j, sub[j]) for j in seen], 1)
         self.strategy.eval_setup(ctx, None)
         t = ctx.task_idx
@@ -203,7 +204,7 @@ class Collectors:
             ens.load_params(snap)
             self.strategy.eval_setup(ctx, j)
             step = TrainStep(ens, Naive(), self.stream, EngineConfig(compile="off", precision="fp32"),
-                             OptimConfig(name="sgd", lr=self.optim_cfg.lr))
+                             self.optim_cfg)
             step.set_task(j)
             g = torch.Generator().manual_seed(2000 + j)
             n = min(self.cfg.recovery_n, ctx.pool.task_size(j))
@@ -311,7 +312,12 @@ class Collectors:
         names = [n for n in self.strategy.trainable_names(list(ens.params), t) if n not in ens.template.frozen_names()]
         sd = self.strategy.state_dict()
         buf = getattr(self.strategy, "buffer", None)
-        buf_bytes = _nbytes(buf.tensors.values()) if buf is not None else 0
+        # a buffer of indices stands in for stored samples: cost = items × (sample + per-item extras such as logits)
+        items, per_item = 0, 0
+        if buf is not None:
+            items = int(buf.size()[0])
+            extras = sum(v[0, 0].numel() * v.element_size() for k, v in buf.tensors.items() if k != "gidx")
+            per_item = ctx.pool.sample_bytes() + extras
         return {
             "task": t,
             "wall_s": wall,
@@ -319,7 +325,8 @@ class Collectors:
             "samples_per_s": self._samples * E / max(wall, 1e-9),
             "peak_mem": peak_memory_bytes(ens.device),
             "trainable_params": sum(ens.params[n][0].numel() for n in names),
-            "buffer_bytes": buf_bytes // E,
+            "buffer_items": items,
+            "buffer_bytes": items * per_item,
             "state_bytes": _nbytes(sd["tensors"].values()) // E,
             "model_bytes": (_nbytes(ens.params.values()) + _nbytes(ens.buffers.values())) // E,
         }

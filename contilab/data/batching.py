@@ -31,6 +31,11 @@ class TrainPool:
         task_id = torch.repeat_interleave(torch.arange(len(tr)), sizes).to(device)
         return cls(torch.cat([s.x for s in tr]), torch.cat([s.y for s in tr]), task_id, am, offsets)
 
+    def sample_bytes(self) -> int:
+        """Bytes one stored sample would occupy (input, label and attention mask)."""
+        parts = [self.x[0], self.y[0]] + ([self.attn_mask[0]] if self.attn_mask is not None else [])
+        return sum(p.numel() * p.element_size() for p in parts)
+
     def task_size(self, t: int) -> int:
         return int(self.offsets[t + 1] - self.offsets[t])
 
