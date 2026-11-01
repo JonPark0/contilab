@@ -16,7 +16,7 @@ evaluation metrics with proper statistics.
 | [Metrics](Metrics.md) | Every metric with its formula and reference, statistics, figures |
 | [Benchmarks](Benchmarks.md) | Split/Permuted MNIST, Split CIFAR, text5, synthetic streams |
 | [Performance](Performance.md) | vmap ensembles, torch.compile, bf16, measured throughput |
-| [Results](Results.md) | CPU study: 11 methods × 5 benchmarks × 3 seeds, rankings, findings |
+| [Results](Results.md) | CPU study: 12 methods × 6 benchmarks (3–6 seeds), tuned comparison, rankings, findings |
 | [Configuration](Configuration.md) | Profiles, presets, experiment matrices, sweeps, overrides |
 | [Running Experiments](Running-Experiments.md) | CLI, run directories, resume, reports, post-hoc metrics |
 | [Extending](Extending.md) | Adding a strategy, metric, benchmark or consolidator |

@@ -5,7 +5,7 @@ writes, copied from the run directories. The raw logs (about 3 GB) are not kept 
 
 | File | Experiment config | Runs |
 |---|---|---|
-| `cpu_main.csv` | `configs/experiments/cpu_main.yaml` | 180 |
+| `cpu_main.csv` | `configs/experiments/cpu_main.yaml` + `cpu_main_seeds.yaml` (seeds 3–5 on MNIST) | 324 |
 | `cpu_tuned.csv` | `configs/experiments/cpu_tuned.yaml` | 228 |
 | `cpu_student.csv` | `configs/experiments/cpu_student.yaml` | 12 |
 

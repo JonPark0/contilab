@@ -22,7 +22,7 @@
 | Split MNIST | full data, MLP 2×400, 1 epoch | same |
 | Permuted MNIST | 10 tasks, 10k train / 2k test per task | full data |
 | Split CIFAR-10 | full data, reduced ResNet-18, 2 epochs | 3 epochs |
-| Split CIFAR-100 | — | full data, reduced ResNet-18 |
+| Split CIFAR-100 | full data, reduced ResNet-18, 2 epochs | 3 epochs |
 | text5 | Pythia-70M, 1,000 train / 200 test per task | Qwen2.5-1.5B, 115k train / 7.6k test per task |
 
 ## Models

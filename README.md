@@ -108,29 +108,34 @@ Each benchmark preset selects its fastest configuration. Details: [Performance](
 
 ## Results
 
-A CPU study of 12 methods on 5 benchmarks (3 seeds each, 180 runs). Final average accuracy (mean over seeds):
+A CPU study of 12 methods on 6 benchmarks (324 runs: 6 seeds on the MNIST benchmarks, 3 on the others). Final
+average accuracy (mean over seeds):
 
-| Method | Split MNIST Class-IL | Split MNIST Task-IL | Permuted MNIST | Split CIFAR-10 Class-IL | text5 + Pythia-70M |
-|---|---|---|---|---|---|
-| Naive | 0.196 | 0.980 | 0.808 | 0.181 | 0.097 |
-| Joint (upper bound) | 0.951 | 0.992 | 0.911 | 0.398 | 0.529 |
-| EWC | 0.198 | 0.983 | diverged (λ = 100) | diverged (λ = 100) | 0.105 |
-| LwF | 0.225 | 0.990 | 0.809 | 0.173 | 0.105 |
-| ER | 0.856 | 0.983 | 0.866 | **0.302** | 0.329 |
-| DER++ | 0.861 | 0.990 | **0.901** | 0.256 | 0.397 |
-| A-GEM | 0.344 | 0.984 | 0.861 | 0.181 | 0.100 |
-| LoRA-per-task | 0.184 | 0.987 | 0.625 | 0.137 | 0.024 |
-| Task Arithmetic | 0.525 | 0.979 | 0.565 | 0.158 | 0.034 |
-| TIES-Merging | 0.552 | 0.983 | 0.675 | 0.166 | 0.033 |
-| Multi-teacher distillation | **0.882** | 0.986 | 0.769 | 0.262 | **0.452** |
-| Teacher → student continual distillation | 0.533 | 0.980 | 0.816 | 0.210 | 0.331 |
+| Method | Split MNIST Class-IL | Split MNIST Task-IL | Permuted MNIST | Split CIFAR-10 Class-IL | Split CIFAR-100 Class-IL | text5 + Pythia-70M |
+|---|---|---|---|---|---|---|
+| Naive | 0.196 | 0.980 | 0.805 | 0.181 | 0.049 | 0.097 |
+| Joint (upper bound) | 0.950 | 0.993 | 0.909 | 0.398 | 0.118 | 0.529 |
+| EWC | 0.197 | 0.983 | diverged (λ = 100) | diverged (λ = 100) | diverged (λ = 100) | 0.105 |
+| LwF | 0.228 | 0.990 | 0.817 | 0.173 | 0.047 | 0.105 |
+| ER | 0.858 | 0.983 | 0.869 | **0.302** | **0.059** | 0.329 |
+| DER++ | **0.871** | **0.991** | **0.902** | 0.256 | **0.059** | 0.397 |
+| A-GEM | 0.335 | 0.984 | 0.864 | 0.181 | 0.048 | 0.100 |
+| LoRA-per-task | 0.184 | 0.986 | 0.619 | 0.137 | 0.015 | 0.024 |
+| Task Arithmetic | 0.531 | 0.979 | 0.570 | 0.158 | 0.011 | 0.034 |
+| TIES-Merging | 0.561 | 0.983 | 0.677 | 0.166 | 0.013 | 0.033 |
+| Multi-teacher distillation | 0.863 | 0.986 | 0.773 | 0.262 | 0.040 | **0.452** |
+| Teacher → student continual distillation | 0.586 | 0.980 | 0.818 | 0.210 | 0.030 | 0.331 |
 
-- **Ranking.** Replay (DER++, ER) and multi-teacher distillation rank best after Joint (average ranks 3.0, 4.2
-  and 4.0; Friedman p = 1.1·10⁻⁴).
+- **Ranking.** Replay (DER++, ER) and multi-teacher distillation rank best after Joint (average ranks 2.7, 4.2
+  and 4.7; Friedman p = 6.6·10⁻⁶). On Split MNIST Class-IL, multi-teacher distillation and DER++ do not differ
+  significantly over 6 seeds.
 - **Distillation needed tuning.** It needed validation-tuned defaults: a TIES-merged student and targets routed
   to each sample's teacher. With the v0.1 defaults it ranked last.
-- **Continual distillation** stores no experts and still beats Naive on every Class- and Domain-IL benchmark.
+- **Continual distillation** stores no experts and still beats Naive on every Class- and Domain-IL benchmark
+  except Split CIFAR-100.
 - **Regularisation** stays at the Naive level in Class-IL even after tuning.
+- **Split CIFAR-100** at 2 CPU epochs is a floor test: Joint reaches only 0.118, and ER and DER++ are the only
+  continual methods above Naive.
 - **Language models.** LoRA-per-task keeps the language model's general ability (perplexity +186 vs +7,481 for
   Naive) but learns little.
 
@@ -179,10 +184,11 @@ If contilab helps your research, please cite it (GitHub's *Cite this repository*
   - 메서드: EWC, LwF, ER, DER++, A-GEM, 태스크별 LoRA
   - 벤치마크: Split/Permuted MNIST, Split CIFAR, text5(AG News·Yelp·Amazon·DBpedia·Yahoo)
 
-- **CPU 실증 결과** (12개 메서드 × 5개 벤치마크 × 3시드, 180회): 자세한 내용은 [Results](docs/wiki/Results.md)를 참고하세요.
+- **CPU 실증 결과** (12개 메서드 × 6개 벤치마크, 324회: MNIST 벤치마크 6시드, 나머지 3시드): 자세한 내용은 [Results](docs/wiki/Results.md)를 참고하세요.
   - Joint 다음으로 리플레이(DER++, ER)와, 검증으로 튜닝한 다중 교사 증류가 가장 우수했습니다.
-  - 교사→학생 연속 증류는 전문가 모델을 저장하지 않고도 Class-IL·Domain-IL 벤치마크 모두에서 Naive보다 높았습니다.
+  - 교사→학생 연속 증류는 전문가 모델을 저장하지 않고도 Split CIFAR-100을 제외한 Class-IL·Domain-IL 벤치마크에서 Naive보다 높았습니다.
   - 정규화 계열(EWC, LwF)은 튜닝 후에도 Class-IL에서 Naive 수준에 머물렀습니다.
+  - Split CIFAR-100(CPU 2 epoch)은 Joint도 0.118에 그쳤고, 연속 학습 방법 중에서는 리플레이(ER, DER++)만 Naive를 넘었습니다.
 
 자세한 문서는 [위키](https://github.com/JonPark0/contilab/wiki)를 참고하세요.
 

@@ -22,6 +22,12 @@ presets:
     train: {epochs: 2}  # 3 in the spec; lowered to fit the 6 h CPU budget (A-GEM ≈ 1 h/seed at 3 epochs)
     engine: {compile: "on", precision: auto, max_E: 1}
     metrics: {rho: 50}  # ResNet evaluation is expensive; Δ ≈ 56 steps at 2 epochs
+  split_cifar100_class:  # 10 tasks × 10 classes; same budget rules as Split CIFAR-10
+    benchmark: {name: split_cifar100, scenario: class}
+    model: {name: resnet18r, nf: 20}
+    train: {epochs: 2}
+    engine: {compile: "on", precision: auto, max_E: 1}
+    metrics: {rho: 50}
   text5_class:
     # n_train 2000 in the spec; 1000 per the plan's budget rule (pythia-70m ≈ 1 s/step on 4 CPU threads)
     # n_test 500 → 200 and ppl_n 100: evaluating 2,500 test texts after every task was 2/3 of a run's time on CPU

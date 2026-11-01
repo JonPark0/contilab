@@ -4,38 +4,36 @@
 contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류·병합, 30+ 지표). CPU 완주, 설정으로 GPU 확장. 공개 리포·위키·Pages.
 
 ## 완료
-- Task 1–27(`docs/design/` 스펙·계획): 전략 8종, TA/TIES/증류, vmap 앙상블, 러너·리포트·CLI
-- v0.2(`release/v0.2`): 지표 수정(M4/M6/M8/M13), 견고성(M1/M2/M5/M14), CI, 검증 기반 sweep 선택, `method_sweep`, 연속 증류, 작은 학생 모델
-- 테스트 178 통과, 5 skip(네트워크); CI는 Python 3.11·3.13
-- CPU 연구: `cpu_main` 180런, `cpu_tuned` 228런, `cpu_student` 12런 → `docs/wiki/Results.md`
-- README, CITATION.cff, MIT, 위키 동기화, Pages
+- v0.1: 전략 8종, TA/TIES/증류, vmap 앙상블, 러너·리포트·CLI
+- v0.2.0 릴리스: 지표 수정, 견고성, CI, 검증 기반 sweep 선택, 연속 증류, 작은 학생 모델
+- 이후 main: M10–M12(bench 정밀도, 반복 계산 제거, vmap 폴백·OOM 분할 기록), 릴리스 워크플로(PyPI job은 변수로 꺼둠)
+- CPU 연구: `cpu_main` 324런(6 벤치마크, MNIST 6시드), `cpu_tuned` 228런, `cpu_student` 12런 → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
+- 테스트 188 통과, 5 skip(네트워크)
 
 ## 남은 작업
-- M10 `runner/bench.py`: bf16 처리량 측정을 기본 프로필 정밀도와 맞추기
-- M11 성능 개선: 배치마다 class_table 계산, LwF forward 3회, distill의 TrainPool 재생성, probe 행렬 3중 계산
-- M12 `runner/execute.py`: `vmappable=False` 순차 폴백 기록, 메모리 기반 E 분할
-- 미검증: `configs/profiles/gpu.yaml`(GPU 없음), Split CIFAR-100
-- 배포: v0.2.0 릴리스(Actions → Release → Run workflow, tag `v0.2.0`), Zenodo DOI
+- 사용자 설정: PyPI pending publisher + 변수 `PUBLISH_PYPI=true`, Zenodo 연동(`RELEASING.md`)
+- 미검증: `configs/profiles/gpu.yaml`(GPU 없음), text5 전체 규모(CPU ~20시간+)
+- main의 옛 작성자 커밋: 이력 재작성은 force push 필요(사용자)
 
 ## 실패한 시도와 원인
 - HF Xet CDN 403 → 원본 미러(GCS MNIST, fast.ai S3)
-- 위키 git push·force push·리포 설정 API가 프록시에서 차단 → 위키는 `.github/workflows/wiki-sync.yml`, 설정은 수동
-- 전문가 학습이 `max_E` 무시 → LM OOM, `plan_expert_groups`로 수정
+- 위키 push·force push·릴리스 API가 프록시에서 차단 → 위키는 `wiki-sync.yml`, 릴리스는 `release.yml`
 - CPU 과다구독 → text5 6배 저하, text 그룹 단독 실행
-- EWC λ=100: Permuted MNIST·CIFAR 전 시드 발산(λ 10–30 안정)
-- 증류 v0.1 기본값(base·entropy·1 epoch)은 학습 부족 → 튜닝으로 ties·routed·10 epoch
+- EWC λ=100: Permuted MNIST·CIFAR-10/100 전 시드 발산(λ 10–30 안정)
+- 증류 v0.1 기본값은 학습 부족 → ties·routed·10 epoch
+- 컨테이너 재시작 시 분리 실행도 종료 → 재실행하면 끝난 런은 건너뜀
 
 ## 검증
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/pytest tests -q  # --run-network: 다운로드 포함
 .venv/bin/contilab run configs/experiments/smoke_all.yaml && .venv/bin/contilab report runs/smoke_all
-.venv/bin/contilab run configs/experiments/cpu_main.yaml   # 4코어 ~16시간, 재개 가능
+.venv/bin/contilab run configs/experiments/cpu_main.yaml   # 4코어 ~22시간, 재개 가능
 ```
 
 ## 주의
-- 커밋 작성자 `JonPark0 <yeochoony@gmail.com>`; Co-Authored-By 등 도구 서명 트레일러 금지
+- 커밋 작성자 `JonPark0 <yeochoony@gmail.com>`; 도구 서명 트레일러 금지
 - main 직접 push 금지 → 브랜치+PR
-- `runs/`(3.2 GB, gitignore)는 보존 안 됨; 결과 표는 Results.md에만 있음
+- `runs/`(gitignore)는 보존 안 됨; 결과는 Results.md와 CSV
 - `docs/wiki/` 변경이 main에 들어가면 위키 자동 동기화
-- 데이터 캐시 `$CONTILAB_CACHE`(기본 `~/.cache/contilab`)
+- run id는 전체 설정 해시: 기본값을 바꾸면 기존 런과 id가 달라짐
