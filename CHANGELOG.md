@@ -9,6 +9,8 @@
 - `contilab bench --precision` (default `fp32,auto`): throughput at the precision the profiles actually use.
 - A group that runs out of memory is re-run as two smaller groups (recorded as `memory_split` in `env.json`).
   A strategy that cannot be vmapped runs member by member, recorded as `vmap_fallback`.
+- Split CIFAR-100 (Class-IL, 10 × 10 classes) in the `cpu` profile and in `cpu_main`. `cpu_main_seeds` adds
+  seeds 3–5 to the three MNIST benchmarks, so exact paired tests there can reach p < 0.05.
 
 ### Changed
 - Less repeated work:

@@ -7,9 +7,9 @@ An experiment is a YAML file that names a **profile** and a **matrix**:
 name: cpu_main
 profile: cpu
 matrix:
-  preset: [split_mnist_class, split_mnist_task, permuted_mnist, split_cifar10_class, text5_class]
+  preset: [split_mnist_class, split_mnist_task, permuted_mnist, split_cifar10_class, split_cifar100_class, text5_class]
   method.name: [naive, joint, ewc, lwf, er, derpp, agem, lora_per_task,
-                'consolidate:ta', 'consolidate:ties', 'consolidate:distill']
+                'consolidate:ta', 'consolidate:ties', 'consolidate:distill', 'consolidate:continual_distill']
   seed: [0, 1, 2]
 workers: 2
 threads_per_worker: 2
