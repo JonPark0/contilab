@@ -11,16 +11,25 @@ seeds — runs as fast as the hardware allows.
    amortises.
 2. **No DataLoader.** Datasets are preprocessed once, cached as safetensors and kept on the device; batches are
    gathered with index tensors. Replay buffers store indices, not copies.
-3. **`torch.compile`** of the batched loss (`engine.compile: auto|on|off`). A failure on the first step falls
-   back to eager and is recorded.
+3. **`torch.compile`** of the batched loss (`engine.compile: auto|on|off`). A compilation failure, on the
+   first step or a later recompilation, falls back to eager and is recorded.
 4. **bf16 autocast** (`engine.precision: auto|bf16|fp32`). `auto` enables it on CUDA with bf16 support or CPUs
    with AMX / AVX512-BF16.
 5. **Process-level parallelism.** Groups run in a process pool (`workers × threads_per_worker`); language-model
    groups get the whole machine.
+6. **No repeated work on the hot path.**
+   - The class table is built once per stream and device.
+   - LwF runs one student forward per step.
+   - Distillation samples from the run's data pool instead of rebuilding it.
+   - The probe metrics share one fitted probe matrix.
+
+A group that runs out of memory is re-run as two smaller groups, down to single members if needed. A strategy
+that cannot be vmapped runs member by member. Both cases are recorded in each run's `env.json`.
 
 ## Measured throughput
 
-`contilab bench`, 4 CPU cores (Intel Xeon @ 2.1 GHz, AMX), samples/s summed over members:
+`contilab bench`, 4 CPU cores (Intel Xeon @ 2.1 GHz, AMX), samples/s summed over members. The bench measures
+`--precision fp32,auto` by default; `auto` is what the profiles train with (bf16 on this CPU).
 
 | Model | Precision | Compile | E = 1 | E = 2 | E = 4 | E = 8 |
 |---|---|---|---|---|---|---|

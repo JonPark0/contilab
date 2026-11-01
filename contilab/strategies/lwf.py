@@ -28,12 +28,12 @@ class LwF(Strategy):
         return self.tensors
 
     def loss(self, p, s, batch, replay, f):
-        z = f.logits(p, batch.x, batch.attn_mask, batch.mask)
+        z_raw = f.logits(p, batch.x, batch.attn_mask, None)  # one student forward serves both terms
+        z = z_raw.masked_fill(~batch.mask, MASK_FILL)
         loss = cross_entropy(z, batch.y)
         if "old_mask" in s and self.alpha > 0:
             old = {k[4:]: v for k, v in s.items() if k.startswith("old.")}
             z_old = f.logits(old, batch.x, batch.attn_mask, None).detach()
-            z_raw = f.logits(p, batch.x, batch.attn_mask, None)
             mask = s["old_mask"].expand_as(z_raw)
             loss = loss + self.alpha * kd_loss(z_raw, z_old, mask, self.T)
         return loss, z

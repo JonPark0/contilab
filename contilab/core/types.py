@@ -54,12 +54,19 @@ class Stream:
     modality: Modality
     lm_eval: TensorSplit | None = None
 
-    def class_table(self) -> Tensor:
-        """Bool[T, C]: which global classes each task owns."""
-        table = torch.zeros(len(self.tasks), self.num_classes, dtype=torch.bool)
-        for i, t in enumerate(self.tasks):
-            table[i, t.classes.cpu()] = True
-        return table
+    def class_table(self, device: torch.device | str | None = None) -> Tensor:
+        """Bool[T, C]: which global classes each task owns. Built once per stream and device, then cached
+        (the hot path asks for it every batch); callers must not modify it in place."""
+        cache = self.__dict__.setdefault("_class_tables", {})
+        key = str(torch.device(device)) if device is not None else "cpu"
+        if key not in cache:
+            if "cpu" not in cache:
+                table = torch.zeros(len(self.tasks), self.num_classes, dtype=torch.bool)
+                for i, t in enumerate(self.tasks):
+                    table[i, t.classes.cpu()] = True
+                cache["cpu"] = table
+            cache[key] = cache["cpu"].to(key)
+        return cache[key]
 
     def to(self, device: torch.device | str) -> Stream:
         tasks = [replace(t, train=t.train.to(device), val=t.val.to(device), test=t.test.to(device)) for t in self.tasks]

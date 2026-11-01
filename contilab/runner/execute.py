@@ -33,6 +33,23 @@ class VmapFallback(Exception):
     """The group failed before its first optimisation step; members are retried one by one."""
 
 
+class MemorySplit(Exception):
+    """The group ran out of memory; it is re-run as two smaller groups (recursively, down to single members)."""
+
+
+def _is_oom(e: BaseException) -> bool:
+    return isinstance(e, (torch.OutOfMemoryError, MemoryError)) or "out of memory" in str(e).lower()
+
+
+def _annotate_env(exp_dir: Path, cfg: RunConfig, key: str, value: str) -> None:
+    """Add a note to a finished run's env.json (the innermost note wins when fallbacks nest)."""
+    rd = RunDir(exp_dir / run_id(cfg))
+    if (rd.path / "env.json").exists():
+        env = rd.read_json("env.json")
+        env.setdefault(key, value)
+        rd.write_json("env.json", env)
+
+
 def _ckpt_dir(exp_dir: Path, cfgs: list[RunConfig]) -> Path:
     h = hashlib.sha1("|".join(run_id(c) for c in cfgs).encode()).hexdigest()[:16]
     return exp_dir / "_ckpt" / h
@@ -122,7 +139,9 @@ def _run_training(cfgs: list[RunConfig], rdirs: list[RunDir], exp_dir: Path, str
     try:
         step = train_stream(ens, strategy, train_s, cfg.train, cfg.engine, optim, hooks, ctx, start_task=start, on_task_done=on_done)
         step_holder["step"] = step
-    except Exception:
+    except Exception as e:
+        if len(seeds) > 1 and _is_oom(e):
+            raise MemorySplit(f"{type(e).__name__}: {str(e)[:200]}") from e
         if ctx.step == 0 and len(seeds) > 1:
             raise VmapFallback(traceback.format_exc())
         raise
@@ -159,6 +178,7 @@ def execute_group(cfgs: list[RunConfig], exp_dir: Path) -> None:
         if cls is not None and not cls.vmappable:
             for c in cfgs:
                 execute_group([c], exp_dir)
+                _annotate_env(exp_dir, c, "vmap_fallback", f"strategy '{name}' is not vmappable: members ran one by one")
             return
     rdirs = [RunDir(exp_dir / run_id(c)) for c in cfgs]
     for rd, c in zip(rdirs, cfgs):
@@ -179,6 +199,16 @@ def execute_group(cfgs: list[RunConfig], exp_dir: Path) -> None:
         for e, rd in enumerate(rdirs):
             rd.write_json("env.json", env)
             rd.set_status("diverged" if e in info["diverged"] else "done")
+    except MemorySplit as ms:
+        for rd in rdirs:
+            shutil.rmtree(rd.path / "raw", ignore_errors=True)
+        shutil.rmtree(_ckpt_dir(exp_dir, cfgs), ignore_errors=True)
+        half = (len(cfgs) + 1) // 2
+        for part in (cfgs[:half], cfgs[half:]):
+            execute_group(part, exp_dir)
+        for c in cfgs:
+            _annotate_env(exp_dir, c, "memory_split", f"a group of {len(cfgs)} ran out of memory ({ms}); "
+                                                      f"re-run as {half} + {len(cfgs) - half}")
     except VmapFallback as fb:
         for rd in rdirs:
             shutil.rmtree(rd.path / "raw", ignore_errors=True)
