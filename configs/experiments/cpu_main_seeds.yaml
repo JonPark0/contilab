@@ -1,0 +1,12 @@
+# Extra seeds 3–5 for the three MNIST benchmarks of cpu_main (same experiment directory, runs/cpu_main).
+# Exact paired tests need at least 6 pairs to reach p < 0.05 (two-sided), so these benchmarks get 6 seeds;
+# CIFAR and text5 stay at 3 seeds for CPU budget reasons.
+name: cpu_main
+profile: cpu
+matrix:
+  preset: [split_mnist_class, split_mnist_task, permuted_mnist]
+  method.name: [naive, joint, ewc, lwf, er, derpp, agem, lora_per_task, 'consolidate:ta', 'consolidate:ties', 'consolidate:distill',
+                'consolidate:continual_distill']
+  seed: [3, 4, 5]
+workers: 2
+threads_per_worker: 2
