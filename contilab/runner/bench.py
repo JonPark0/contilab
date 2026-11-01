@@ -1,4 +1,4 @@
-"""Throughput benchmark: eager vs compile × ensemble width E (§7.1 `contilab bench`)."""
+"""Throughput benchmark: eager vs compile × precision × ensemble width E (§7.1 `contilab bench`)."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def _stream(model: str, n: int, device) -> Stream:
     return Stream("bench", [Task(0, split, split, split, torch.arange(10))], "class", 10, "text" if model == "hf" else "vision")
 
 
-def _measure(model: str, E: int, steps: int, compile_mode: str, device) -> dict:
+def _measure(model: str, E: int, steps: int, compile_mode: str, device, precision: str = "fp32") -> dict:
     shape, B, mcfg = SHAPES[model]
     stream = _stream(model, B * (steps + 5), device)
     pool = TrainPool.from_stream(stream)
@@ -44,7 +44,7 @@ def _measure(model: str, E: int, steps: int, compile_mode: str, device) -> dict:
         return build_model(mcfg, stream)
 
     ens = Ensemble(fac, list(range(E)), device)
-    step = TrainStep(ens, Naive(), stream, EngineConfig(compile=compile_mode, precision="fp32"), OptimConfig(lr=0.01))
+    step = TrainStep(ens, Naive(), stream, EngineConfig(compile=compile_mode, precision=precision), OptimConfig(lr=0.01))
     step.set_task(0)
     ctx = RunContext(0, 0, device, E, [torch.Generator().manual_seed(s) for s in range(E)], stream,
                      torch.ones(E, dtype=torch.bool), pool=pool, ens=ens)
@@ -65,19 +65,27 @@ def _measure(model: str, E: int, steps: int, compile_mode: str, device) -> dict:
     if device.type == "cuda":
         torch.cuda.synchronize()
     dt = time.perf_counter() - t0
-    return {"model": model, "E": E, "compile": compile_mode, "compile_used": step.compile_decision["used"],
+    return {"model": model, "E": E, "compile": compile_mode, "precision": precision,
+            "precision_used": str(step.autocast_dtype or "fp32").replace("torch.", ""),
+            "precision_reason": step.precision_reason, "compile_used": step.compile_decision["used"],
             "compile_reason": step.compile_decision["reason"], "samples_per_s": steps * B * E / dt,
             "step_ms": 1000 * dt / steps, "threads": torch.get_num_threads(), "device": str(device)}
 
 
-def run_bench(model: str, E_list: list[int], steps: int, compile_modes: list[str], out: Path, device: str = "auto") -> list[dict]:
+def run_bench(model: str, E_list: list[int], steps: int, compile_modes: list[str], out: Path, device: str = "auto",
+              precisions: list[str] | None = None) -> list[dict]:
+    """`precisions` default to fp32 and auto: "auto" is what the profiles train with (bf16 autocast where the CPU
+    has AMX/AVX512-BF16), so the reported speed-ups match the configuration actually used."""
     dev = select_device(device)
-    rows = [_measure(model, E, steps, cm, dev) for cm in compile_modes for E in E_list]
-    eager1 = next((r["samples_per_s"] for r in rows if r["E"] == 1 and r["compile"] == "off"), None)
+    precisions = precisions or ["fp32", "auto"]
+    rows = [_measure(model, E, steps, cm, dev, pr) for pr in precisions for cm in compile_modes for E in E_list]
+    eager1 = next((r["samples_per_s"] for r in rows if r["E"] == 1 and r["compile"] == "off" and r["precision"] == "fp32"),
+                  None)
     for r in rows:
-        same1 = next((x["samples_per_s"] for x in rows if x["E"] == 1 and x["compile"] == r["compile"]), None)
+        same1 = next((x["samples_per_s"] for x in rows
+                      if x["E"] == 1 and x["compile"] == r["compile"] and x["precision"] == r["precision"]), None)
         r["vmap_speedup"] = r["samples_per_s"] / same1 if same1 else None  # vs E sequential E=1 runs
-        r["speedup_vs_E1_eager"] = r["samples_per_s"] / eager1 if eager1 else None
+        r["speedup_vs_E1_eager"] = r["samples_per_s"] / eager1 if eager1 else None  # vs fp32 eager, one seed
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     path = out / "bench.json"

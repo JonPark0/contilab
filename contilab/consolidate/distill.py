@@ -143,7 +143,7 @@ class DistillConsolidator(Consolidator):
         ens, stream, cfg = cctx.ens, cctx.stream, cctx.cfg
         dev = next(iter(ens.params.values())).device
         S = ens.E
-        pool = TrainPool.from_stream(stream)
+        pool = cctx.pool if cctx.pool is not None else TrainPool.from_stream(stream)
         gens = transfer_gens(cctx.seeds, upto)
         tr: TransferSet = build_transfer(stream, pool, upto, self.cfg.transfer, self.cfg.M, gens,
                                          cfg.benchmark.tokenizer, cfg.benchmark.max_len)
@@ -190,7 +190,7 @@ class ContinualDistillConsolidator(DistillConsolidator):
         if self._prev is None:  # θ₀, or the student's own initialisation (consolidate.init is not used here)
             self._prev = cctx.ens.snapshot() if cctx.teacher is not None else \
                 {k: v.clone() for k, v in experts.base.items()}
-        pool = TrainPool.from_stream(stream)
+        pool = cctx.pool if cctx.pool is not None else TrainPool.from_stream(stream)
         gens = transfer_gens(cctx.seeds, upto)
         lo, hi = int(pool.offsets[upto]), int(pool.offsets[upto + 1])
         cur = torch.arange(lo, hi)

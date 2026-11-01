@@ -324,6 +324,12 @@ throughput of one seed (40.7k vs 10.8k samples/s). For the reduced ResNet-18, bf
 - **Distillation cost:** both distillation methods first train one expert per task. Their wall time and FLOPs
   include that, but a deployment that already has the experts would only pay the distillation.
 
+## Data
+
+The per-run results behind every table on this page are in
+[`docs/assets/results/data/`](https://github.com/JonPark0/contilab/tree/main/docs/assets/results/data): one CSV per
+experiment, one row per run with all scalar metrics.
+
 ## Reproduce
 
 ```bash

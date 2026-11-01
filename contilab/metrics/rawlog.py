@@ -18,6 +18,7 @@ class RawLog:
     def __init__(self, run_dir: Path | str):
         self.dir = Path(run_dir) / "raw"
         self._pending: dict[str, dict[str, Tensor]] = {}
+        self.derived: dict[str, object] = {}  # per-log memo for metric intermediates; cleared on every write
 
     def _jsonl(self, key: str) -> Path:
         return self.dir / f"{key}.jsonl"
@@ -26,6 +27,7 @@ class RawLog:
         return self.dir / f"{key}.safetensors"
 
     def append(self, key: str, record: dict) -> None:
+        self.derived.clear()
         self.dir.mkdir(parents=True, exist_ok=True)
         with open(self._jsonl(key), "a") as f:
             f.write(json.dumps(record) + "\n")
@@ -37,6 +39,7 @@ class RawLog:
         return [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
 
     def put_tensor(self, key: str, name: str, t: Tensor) -> None:
+        self.derived.clear()
         self._pending.setdefault(key, {})[name] = t.detach().cpu().clone().contiguous()
 
     def flush(self) -> None:
@@ -65,6 +68,7 @@ class RawLog:
     def truncate_after_task(self, t: int) -> None:
         """Drop everything recorded after task t finished (used when resuming from task t's checkpoint)."""
         self._pending = {}
+        self.derived.clear()
         if not self.dir.exists():
             return
         for p in self.dir.glob("*.jsonl"):
