@@ -252,7 +252,8 @@ def bench_bars(bench_json: Path, out: Path) -> Path | None:
     if not bench_json.exists():
         return None
     rows = json.loads(bench_json.read_text())
-    labels = [f"{r['model']} E={r['E']} {'compile' if r['compile_used'] else 'eager'}" for r in rows]
+    labels = [f"{r['model']} E={r['E']} {'compile' if r['compile_used'] else 'eager'} {r.get('precision_used', 'fp32')}"
+              for r in rows]
     fig, ax = plt.subplots(figsize=(6, 0.3 * len(rows) + 1))
     ax.barh(range(len(rows)), [r["samples_per_s"] for r in rows], color=SERIES1, height=0.6)
     ax.set_yticks(range(len(rows)), labels, fontsize=6)

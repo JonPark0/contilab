@@ -45,11 +45,13 @@ def _cmd_metrics(a) -> int:
 def _cmd_bench(a) -> int:
     from contilab.runner.bench import run_bench
 
-    rows = run_bench(a.model, [int(e) for e in a.E.split(",")], a.steps, a.compile.split(","), Path(a.out), a.device)
-    print(f"{'model':10} {'E':>3} {'compile':8} {'samples/s':>10} {'step ms':>8} {'vmap×':>6}")
+    rows = run_bench(a.model, [int(e) for e in a.E.split(",")], a.steps, a.compile.split(","), Path(a.out), a.device,
+                     a.precision.split(","))
+    print(f"{'model':10} {'E':>3} {'compile':8} {'precision':9} {'samples/s':>10} {'step ms':>8} {'vmap×':>6}")
     for r in rows:
         used = "on" if r["compile_used"] else "off"
-        print(f"{r['model']:10} {r['E']:>3} {used:8} {r['samples_per_s']:>10.0f} {r['step_ms']:>8.2f} {r['vmap_speedup']:>6.2f}")
+        print(f"{r['model']:10} {r['E']:>3} {used:8} {r['precision_used']:9} {r['samples_per_s']:>10.0f} "
+              f"{r['step_ms']:>8.2f} {r['vmap_speedup']:>6.2f}")
     return 0
 
 
@@ -83,6 +85,7 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
     b.add_argument("--E", default="1,2,4,8")
     b.add_argument("--steps", type=int, default=50)
     b.add_argument("--compile", default="off,on")
+    b.add_argument("--precision", default="fp32,auto", help="fp32 | bf16 | fp16 | auto (what the profiles use)")
     b.add_argument("--device", default="auto")
     b.add_argument("--out", default="runs/bench")
     b.set_defaults(fn=_cmd_bench)

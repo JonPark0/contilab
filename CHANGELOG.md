@@ -5,6 +5,16 @@
 ### Added
 - Release workflow: pushing a tag `vX.Y.Z` (or running the workflow with a tag) builds the sdist and wheel and
   publishes a GitHub release with that version's CHANGELOG section as notes.
+- `contilab bench --precision` (default `fp32,auto`): throughput at the precision the profiles actually use.
+- A group that runs out of memory is re-run as two smaller groups (recorded as `memory_split` in `env.json`).
+  A strategy that cannot be vmapped runs member by member, recorded as `vmap_fallback`.
+
+### Changed
+- Less repeated work:
+  - the class table is cached per stream and device
+  - LwF runs one student forward per step instead of two
+  - distillation reuses the run's data pool
+  - probe-based metrics fit the probe matrix once
 
 ## 0.2.0 — 2026-10-31
 

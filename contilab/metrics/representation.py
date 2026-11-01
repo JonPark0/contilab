@@ -50,9 +50,15 @@ def _features(log) -> tuple[dict[tuple[int, int], np.ndarray], dict[tuple[int, i
 
 
 def _probe_matrix(log) -> np.ndarray:
+    """Linear-probe accuracies [T, tasks]; fitted once per log and shared by every probe-based metric."""
+    cached = log.derived.get("probe_matrix")
+    if cached is not None:
+        return cached
     feats, labels, T = _features(log)
     nt = max(j for _, j in feats) + 1
-    return np.array([[probe_accuracy(feats[(t, j)], labels[(t, j)]) for j in range(nt)] for t in range(T)])
+    P = np.array([[probe_accuracy(feats[(t, j)], labels[(t, j)]) for j in range(nt)] for t in range(T)])
+    log.derived["probe_matrix"] = P
+    return P
 
 
 @metric("probe_acc", ("features",), "extended")

@@ -30,6 +30,7 @@ class ConsolidationContext:
     val_score: Callable[[dict[str, Tensor], int], Tensor]  # (params, upto) → mean val acc [S]
     seeds: list[int]
     teacher: Ensemble | None = None  # runs the experts when the student has another architecture (else = ens)
+    pool: TrainPool | None = None  # the run's training pool (consolidators sample transfer data from it)
 
     @property
     def teachers(self) -> Ensemble:
@@ -148,7 +149,7 @@ def run_consolidation(stream: Stream, cfg: RunConfig, seeds: list[int], hooks, c
     if ctx.pool is None:
         ctx.pool = TrainPool.from_stream(stream)
     cctx = ConsolidationContext(stream, ens, cfg, make_val_score(stream, ens, cfg.train.eval_batch_size), list(seeds),
-                                teacher)
+                                teacher, ctx.pool)
     if hasattr(hooks, "consolidation"):
         hooks.consolidation = True
     hooks.on_run_start(ctx)
