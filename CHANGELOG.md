@@ -4,7 +4,8 @@
 
 ### Added
 - Release workflow: pushing a tag `vX.Y.Z` (or running the workflow with a tag) builds the sdist and wheel and
-  publishes a GitHub release with that version's CHANGELOG section as notes.
+  publishes a GitHub release with that version's CHANGELOG section as notes. Its PyPI job uses trusted publishing
+  and stays off until the `PUBLISH_PYPI` repository variable is set (see `RELEASING.md`).
 - `contilab bench --precision` (default `fp32,auto`): throughput at the precision the profiles actually use.
 - A group that runs out of memory is re-run as two smaller groups (recorded as `memory_split` in `env.json`).
   A strategy that cannot be vmapped runs member by member, recorded as `vmap_fallback`.
