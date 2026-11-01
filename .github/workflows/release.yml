@@ -3,6 +3,7 @@ name: Release
 # Pushing a tag vX.Y.Z publishes a GitHub release for it. "Run workflow" with a tag does the same for a tag that
 # does not exist yet: it is created on the selected branch's head. The tag must match the pyproject version, and
 # the notes come from that version's CHANGELOG section. Re-running for an existing release replaces its assets.
+# PyPI upload runs only when the repository variable PUBLISH_PYPI is "true" (trusted publishing, see RELEASING.md).
 on:
   push:
     tags: ["v*"]
@@ -58,3 +59,27 @@ jobs:
           else
             gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "contilab $TAG" --notes-file notes.md
           fi
+
+  pypi:
+    needs: release
+    if: vars.PUBLISH_PYPI == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: pypi
+      url: https://pypi.org/project/contilab/
+    permissions:
+      contents: read
+      id-token: write  # PyPI trusted publishing: no API token is stored in the repository
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1

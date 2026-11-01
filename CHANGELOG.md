@@ -4,7 +4,8 @@
 
 ### Added
 - Release workflow: pushing a tag `vX.Y.Z` (or running the workflow with a tag) builds the sdist and wheel and
-  publishes a GitHub release with that version's CHANGELOG section as notes.
+  publishes a GitHub release with that version's CHANGELOG section as notes. Its PyPI job uses trusted publishing
+  and stays off until the `PUBLISH_PYPI` repository variable is set (see `RELEASING.md`).
 
 ## 0.2.0 — 2026-10-31
 
