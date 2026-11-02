@@ -50,7 +50,7 @@ def test_compile_failure_after_first_call_falls_back_to_eager(monkeypatch):
     from contilab.data.batching import TrainPool, task_batches
     from contilab.engine.ensemble import Ensemble
 
-    def flaky_compile(fn, mode):
+    def flaky_compile(fn, mode, recompile_limit=None):
         calls = {"n": 0}
 
         def wrapped(*a):

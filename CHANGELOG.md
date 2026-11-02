@@ -12,6 +12,13 @@
 - Split CIFAR-100 (Class-IL, 10 × 10 classes) in the `cpu` profile and in `cpu_main`. `cpu_main_seeds` adds
   seeds 3–5 to the three MNIST benchmarks, so exact paired tests there can reach p < 0.05.
 
+### Fixed
+- `torch.compile` no longer recompiles for every batch size. The batch axis is marked dynamic, so A-GEM's
+  reference batches, filling replay buffers and the last batch of a task share one graph. On CPU, each ResNet
+  recompilation took about 25–50 s, and A-GEM runs hit Dynamo's limit of 8 graphs and then trained eagerly.
+- LoRA-per-task stays compiled beyond 8 tasks: the graph limit per compiled function is now the number of
+  tasks + 8.
+
 ### Changed
 - Less repeated work:
   - the class table is cached per stream and device

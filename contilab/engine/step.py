@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import inspect
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -45,10 +46,34 @@ def _index0(tree):
     return torch.utils._pytree.tree_map(lambda t: t[0], tree)
 
 
-def maybe_compile(fn: Callable, mode: str) -> tuple[Callable, dict[str, Any]]:
+def maybe_compile(fn: Callable, mode: str, recompile_limit: int | None = None) -> tuple[Callable, dict[str, Any]]:
+    """`recompile_limit` raises Dynamo's per-function graph limit (default 8). Past it, Dynamo silently runs the
+    function eagerly, so a strategy that needs one graph per task (LoRA-per-task) lost compilation after 8 tasks."""
     if mode == "off":
         return fn, {"requested": mode, "used": False, "reason": "compile disabled"}
-    return torch.compile(fn, dynamic=False), {"requested": mode, "used": True, "reason": "pending first call"}
+    kw: dict[str, Any] = {}
+    if recompile_limit is not None:
+        if "recompile_limit" in inspect.signature(torch.compile).parameters:
+            kw["recompile_limit"] = recompile_limit
+        else:  # older torch: the limit is a global setting
+            import torch._dynamo.config as dynamo_cfg
+
+            name = "recompile_limit" if hasattr(dynamo_cfg, "recompile_limit") else "cache_size_limit"
+            setattr(dynamo_cfg, name, max(getattr(dynamo_cfg, name), recompile_limit))
+    return torch.compile(fn, dynamic=None, **kw), {"requested": mode, "used": True, "reason": "pending first call"}
+
+
+def mark_batch_dynamic(*trees) -> None:
+    """Mark the batch axis (dim 1, after the member axis) of every batch tensor as dynamic.
+
+    Batch sizes vary within a run: the last batch of a task, replay batches while the buffer fills, and A-GEM
+    reference batches, whose size follows the number of buffered samples from earlier tasks and changes at almost
+    every step. With static shapes each size is a new graph, and the 8-graph limit sent these runs back to eager
+    mode. Under vmap, some batching rules (cross-entropy) still specialise the size; Dynamo then keeps it static.
+    """
+    for t in torch.utils._pytree.tree_leaves(trees):
+        if isinstance(t, Tensor) and t.dim() >= 2:
+            torch._dynamo.maybe_mark_dynamic(t, 1)
 
 
 class TrainStep:
@@ -58,8 +83,10 @@ class TrainStep:
         self.frozen = ens.template.frozen_names()
         self.autocast_dtype, self.precision_reason = select_precision(engine_cfg.precision, ens.device)
         self._eager = (self._batched_loss, self._batched_ref)
-        fwd, self.compile_decision = maybe_compile(self._batched_loss, engine_cfg.compile)
-        ref, _ = maybe_compile(self._batched_ref, engine_cfg.compile)
+        # one graph per task is the most a built-in strategy needs (LoRA-per-task), plus replay/state variants
+        limit = len(stream.tasks) + 8
+        fwd, self.compile_decision = maybe_compile(self._batched_loss, engine_cfg.compile, limit)
+        ref, _ = maybe_compile(self._batched_ref, engine_cfg.compile, limit)
         self._fwd, self._ref = fwd, ref
         self._first_call = self.compile_decision["used"]
         self.trainable: list[str] = []
@@ -131,6 +158,8 @@ class TrainStep:
 
     def __call__(self, batch: Batch, replay: Batch | None, ctx: RunContext) -> StepOutput:
         bt, rt, state = batch_tree(batch), batch_tree(replay), self.strategy.state()
+        if self.compile_decision["used"]:
+            mark_batch_dynamic(bt, rt)
         if self.count_flops:
             sig = (tuple(sorted(bt)), None if rt is None else tuple(sorted(rt)), tuple(sorted(state)))
             if sig not in self._flops_seen:  # e.g. replay appears at step 1, LwF/EWC state at task 1

@@ -13,6 +13,12 @@ seeds — runs as fast as the hardware allows.
    gathered with index tensors. Replay buffers store indices, not copies.
 3. **`torch.compile`** of the batched loss (`engine.compile: auto|on|off`). A compilation failure, on the
    first step or a later recompilation, falls back to eager and is recorded.
+   - The batch axis is marked dynamic, so the last batch of a task, a filling replay buffer and A-GEM's reference
+     batch (whose size changes at almost every step) reuse one graph instead of compiling one per size.
+   - The graph limit per compiled function is the number of tasks + 8 (Dynamo's default is 8). LoRA-per-task
+     needs one graph per task, because the active adapter is chosen in Python. Past the limit, Dynamo would
+     silently run the function eagerly.
+   - Under `vmap` (E > 1) some batching rules fix the batch size, so those graphs stay static.
 4. **bf16 autocast** (`engine.precision: auto|bf16|fp32`). `auto` enables it on CUDA with bf16 support or CPUs
    with AMX / AVX512-BF16.
 5. **Process-level parallelism.** Groups run in a process pool (`workers × threads_per_worker`); language-model
@@ -41,11 +47,22 @@ that cannot be vmapped runs member by member. Both cases are recorded in each ru
 | Reduced ResNet-18 | fp32 | on | 422 | 305 | 315 | — |
 | Reduced ResNet-18 | bf16 | on | **730** | — | — | — |
 
+A later run of `contilab bench --model resnet18r --E 1` on the same machine, two repetitions:
+
+| Model | Precision | Compile | E = 1 |
+|---|---|---|---|
+| Reduced ResNet-18 | fp32 | off | 361–364 |
+| Reduced ResNet-18 | fp32 | on | 381–455 |
+| Reduced ResNet-18 | bf16 | off | 586–652 |
+| Reduced ResNet-18 | bf16 | on | 595–613 |
+
 Takeaways:
 
 - For small models, training 8 seeds together is **3.8×** faster than one seed at a time; on this CPU fp32 eager
   beats bf16 and compile for the MLP.
-- For convolutional models vmap brings nothing on CPU, but bf16 + compile gives **2.3×**.
+- For convolutional models vmap brings nothing on CPU, but bf16 + compile gives **2.3×**. Most of it comes from
+  bf16: in the later run, compile added nothing over bf16 eager at steady state, and compiling one ResNet graph
+  took about 50 s.
 - The `cpu` profile therefore uses `max_E: 8`, fp32, eager for MNIST presets and `max_E: 1`, bf16, compile for
   CIFAR. Run `contilab bench` on your own hardware and set `engine` per preset accordingly.
 
