@@ -9,8 +9,8 @@ authors:
 repository-code: "https://github.com/JonPark0/contilab"
 url: "https://github.com/JonPark0/contilab/wiki"
 license: MIT
-version: 0.2.0
-date-released: "2026-10-31"
+version: 0.3.0
+date-released: "2026-11-02"
 abstract: >-
   contilab is a PyTorch framework for empirical continual learning research on vision
   and language models. It trains several seeds at once as a stacked-parameter ensemble

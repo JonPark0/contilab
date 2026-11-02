@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — 2026-11-02
 
 ### Added
 - Release workflow: pushing a tag `vX.Y.Z` (or running the workflow with a tag) builds the sdist and wheel and
@@ -25,6 +25,9 @@
   - LwF runs one student forward per step instead of two
   - distillation reuses the run's data pool
   - probe-based metrics fit the probe matrix once
+- Results (wiki and README) cover 6 benchmarks and 324 runs, with exact paired tests over 6 seeds on MNIST.
+  DER++ now has the best mean on Split MNIST Class-IL, not significantly different from multi-teacher
+  distillation.
 
 ## 0.2.0 — 2026-10-31
 
