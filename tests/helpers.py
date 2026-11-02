@@ -67,7 +67,8 @@ def model_factory(stream: Stream, strategy, model: str = "mlp"):
     return fac
 
 
-def train_on(stream, strategy, seeds, epochs=1, tasks=None, poison_member=None, model="mlp", lr=0.1, hooks=None):
+def train_on(stream, strategy, seeds, epochs=1, tasks=None, poison_member=None, model="mlp", lr=0.1, hooks=None,
+             compile="off"):
     from contilab.core.config import EngineConfig, OptimConfig, TrainConfig
     from contilab.data.batching import TrainPool
     from contilab.engine.ensemble import Ensemble
@@ -79,7 +80,7 @@ def train_on(stream, strategy, seeds, epochs=1, tasks=None, poison_member=None, 
             next(iter(ens.params.values()))[poison_member].fill_(float("nan"))
     ctx = make_ctx(stream, seeds, ens=ens, pool=TrainPool.from_stream(stream))
     train_stream(ens, strategy, stream, TrainConfig(epochs=epochs, batch_size=32),
-                 EngineConfig(compile="off", precision="fp32"), OptimConfig(lr=lr),
+                 EngineConfig(compile=compile, precision="fp32"), OptimConfig(lr=lr),
                  hooks or NullHooks(), ctx, end_task=tasks)
     return ens, ctx
 
