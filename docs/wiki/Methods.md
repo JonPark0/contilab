@@ -28,7 +28,7 @@ All strategies share the same optimiser, epochs, batch size and memory budget. D
 |---|---|---|---|
 | Naive fine-tuning | `naive` | Train on each task in turn (lower bound) | — |
 | Joint | `joint` | All tasks merged into one task (upper bound); evaluated per original task | — |
-| EWC (online) | `ewc` | Quadratic penalty `λ/2 · Σ F (θ − θ*)²` with a diagonal empirical Fisher, accumulated `F ← γF + F_new` | λ = 30 / 10, γ = 1, 1024 Fisher samples |
+| EWC (online) | `ewc` | Quadratic penalty `λ/2 · Σ F (θ − θ*)²` with a diagonal empirical Fisher, accumulated `F ← γF + F_new` | λ = 30 / 10, γ = 1, 1024 Fisher samples, stiffness cap 1 |
 | LwF | `lwf` | Distil the previous model's outputs on the current batch: `T² · KL(p_old ‖ p_new)` on old classes | T = 2, α = 1 |
 | ER | `er` | Reservoir buffer of **dataset indices**; each step trains on current + replay batch | M = 500 / 200 |
 | DER++ | `derpp` | ER + MSE to logits stored at insertion time + CE on a second replay batch | M = 500 / 200, α = 0.1, β = 0.5 |
@@ -38,7 +38,11 @@ All strategies share the same optimiser, epochs, batch size and memory budget. D
 Implementation notes:
 
 - **EWC** computes per-sample gradients with nested `vmap(grad)`, chunked to a 1 GiB memory budget, so it also
-  runs on language models.
+  runs on language models. Under SGD a parameter whose stiffness `lr · λ · F` exceeds 2 oscillates with growing
+  amplitude around its anchor, and the accumulated Fisher only grows, so long streams used to diverge. The stored
+  Fisher is clamped at `max_stiffness / (lr · λ)` (`method.params.max_stiffness`, default 1; `null` turns it off),
+  which leaves every parameter below the bound unchanged. Adam-type optimisers normalise the step, so nothing is
+  clamped for them.
 - **Replay buffers** store global indices into the device-resident `TrainPool`, not copies of samples.
 - **A-GEM** projects per member: `g ← g − (g·g_ref / ‖g_ref‖²) g_ref` only when `g·g_ref < 0`.
 - **LoRA** is implemented in-house (no PEFT) for `nn.Linear` and `nn.Conv2d`; adapters merge as
