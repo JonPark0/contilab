@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 — 2026-11-03
 
 ### Added
 - Docs site (<https://jonpark0.github.io/contilab/>) on Just the Docs:
@@ -14,6 +14,9 @@
 - `scripts/sync_docs.py` writes the chart and the changelog page; the `docs` workflow checks that they are current
   and that the site builds.
 - The release workflow adds each release's Zenodo DOI to its notes once `CITATION.cff` has the concept DOI.
+
+### Changed
+- `CITATION.cff`, the package metadata and the release notes link to the docs site.
 
 ## 0.3.0 — 2026-11-02
 

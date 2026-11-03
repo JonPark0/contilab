@@ -3,7 +3,8 @@
 ## Every release
 
 1. On a branch, bump the version in `pyproject.toml`, `contilab/__init__.py` and `CITATION.cff`
-   (`version`, `date-released`). Update the BibTeX `version` in `README.md` and `docs/wiki/Citing.md`.
+   (`version`, `date-released`). Update the BibTeX `version` in `README.md`, `docs/wiki/Citing.md`,
+   `docs/index.md` and `docs/ko/index.md`, then run `python3 scripts/sync_docs.py` (changelog page).
 2. In `CHANGELOG.md`, rename `## Unreleased` to `## X.Y.Z — YYYY-MM-DD`.
 3. Open a PR, wait for CI, merge.
 4. Push the tag `vX.Y.Z` on the merge commit, or run **Actions → Release → Run workflow** with tag `vX.Y.Z` on
