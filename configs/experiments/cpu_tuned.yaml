@@ -7,7 +7,11 @@ matrix:
   preset: [split_mnist_class, permuted_mnist]
   method.name: [naive, joint, ewc, lwf, er, derpp, agem, lora_per_task,
                 'consolidate:ta', 'consolidate:ties', 'consolidate:distill', 'consolidate:continual_distill']
-  seed: [0, 1, 2]
+  seed: [0, 1, 2, 3, 4, 5]
+# The consolidation defaults this comparison was run with (the v0.1 defaults, its "default" column for
+# distillation). They are part of every run's config, so they keep the run ids of the published results.
+overrides:
+  consolidate: {init: base, routing: entropy, epochs: 1}
 method_sweep:
   ewc: {method.params.lam: [1.0, 3.0, 10.0, 30.0, 100.0, 300.0]}
   lwf: {method.params.alpha: [0.5, 1.0, 2.0, 4.0]}

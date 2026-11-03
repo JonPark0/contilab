@@ -7,7 +7,7 @@ The same files are published as the Hugging Face dataset [jonpark0/contilab-cpu-
 | File | Experiment config | Runs |
 |---|---|---|
 | `cpu_main.csv` | `configs/experiments/cpu_main.yaml` + `cpu_main_seeds.yaml` (seeds 3–5 on MNIST) | 324 |
-| `cpu_tuned.csv` | `configs/experiments/cpu_tuned.yaml` | 228 |
+| `cpu_tuned.csv` | `configs/experiments/cpu_tuned.yaml` | 456 |
 | `cpu_student.csv` | `configs/experiments/cpu_student.yaml` | 12 |
 
 - **Identifier columns**: `run_id`, `preset`, `method`, `variant`, `seed`, `status`. `cpu_tuned` adds `selected`

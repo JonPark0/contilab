@@ -10,6 +10,10 @@ nav_title: "Changelog"
 
 ## Unreleased
 
+### Changed
+- The tuned comparison (`cpu_tuned`) has 6 seeds, like the MNIST benchmarks of the main study. Its config pins the
+  consolidation defaults it was run with, so its run ids stay those of the published results.
+
 ### Added
 - Zenodo DOI `10.5281/zenodo.23906803` (all versions): a badge in the README, `doi` in `CITATION.cff` and the BibTeX entries,
   and the site's structured data. Version 0.3.1 is `10.5281/zenodo.23906804`.

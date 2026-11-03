@@ -44,7 +44,7 @@ It depends on what you may store. In contilab's [CPU study](Results.md) of 12 me
   different from DER++ on Split MNIST (class-incremental) once tuned. It costs the expert training.
 - **If you may store no data at all**, regularisation (EWC, LwF) does not solve class-incremental learning: it
   stays at the Naive level even after tuning. In the domain-incremental setting the gains are small: on
-  Permuted MNIST, LwF reaches 0.817 and tuned EWC 0.821, against about 0.81 for Naive.
+  Permuted MNIST, LwF reaches 0.817 and tuned EWC 0.832, against 0.805 for Naive.
 
 The [Results](Results.md) page has every number, the tuned comparison and the limitations of a CPU-scale study.
 
