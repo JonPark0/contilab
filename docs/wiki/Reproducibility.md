@@ -1,3 +1,10 @@
+---
+title: "Reproducibility: seeds, determinism, caching and resume"
+description: "How contilab keeps continual-learning experiments reproducible: per-run seeds, run ids from the resolved config, cached datasets and experts, checkpoints and resume."
+nav_order: 14
+nav_title: "Reproducibility"
+---
+
 # Reproducibility
 
 - **Seeds.** Each run's model initialisation and data order come from its seed; strategies and distillation draw

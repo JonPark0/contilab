@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 444" width="760" height="444" role="img" aria-labelledby="acc-title acc-desc" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+<title id="acc-title">Final accuracy of continual-learning methods on Split MNIST (Class-IL)</title>
+<desc id="acc-desc">Mean over 6 seeds. Joint (upper bound): 0.950; DER++: 0.871; Multi-teacher distillation: 0.863; Experience Replay: 0.858; Continual distillation: 0.586; TIES-Merging: 0.561; Task Arithmetic: 0.531; A-GEM: 0.335; LwF: 0.228; EWC: 0.197; Naive: 0.196; LoRA-per-task: 0.184</desc>
+<style>
+.bg{fill:#fff;stroke:#e5e7eb}.t{fill:#1f2937}.m{fill:#6b7280}.g{stroke:#e5e7eb}.b{fill:#2a78d6}
+@media (prefers-color-scheme:dark){.bg{fill:#1f2023;stroke:#3a3b40}.t{fill:#e5e7eb}.m{fill:#9ca3af}.g{stroke:#374151}.b{fill:#3987e5}}
+</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="443" rx="8"/>
+<text class="t" x="20" y="32" font-size="17" font-weight="600">Final accuracy on Split MNIST (class-incremental)</text>
+<text class="m" x="20" y="54" font-size="13">Mean over 6 seeds · 5 tasks of 2 digits, one model for all 10 classes, MLP, one epoch per task</text>
+<text class="m" x="20" y="72" font-size="13">Joint trains on all tasks at once; Naive fine-tunes on each task in turn</text>
+<line class="g" x1="210.0" y1="86" x2="210.0" y2="404"/>
+<text class="m" x="210.0" y="422" font-size="12" text-anchor="middle">0.00</text>
+<line class="g" x1="333.5" y1="86" x2="333.5" y2="404"/>
+<text class="m" x="333.5" y="422" font-size="12" text-anchor="middle">0.25</text>
+<line class="g" x1="457.0" y1="86" x2="457.0" y2="404"/>
+<text class="m" x="457.0" y="422" font-size="12" text-anchor="middle">0.50</text>
+<line class="g" x1="580.5" y1="86" x2="580.5" y2="404"/>
+<text class="m" x="580.5" y="422" font-size="12" text-anchor="middle">0.75</text>
+<line class="g" x1="704.0" y1="86" x2="704.0" y2="404"/>
+<text class="m" x="704.0" y="422" font-size="12" text-anchor="middle">1.00</text>
+<text class="t" x="198" y="109.0" font-size="13" text-anchor="end">Joint (upper bound)</text>
+<path class="b" d="M210.0,97.0h465.4a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-465.4z"/>
+<text class="t" x="685.4" y="110.0" font-size="12">0.950</text>
+<text class="t" x="198" y="135.0" font-size="13" text-anchor="end">DER++</text>
+<path class="b" d="M210.0,123.0h426.3a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-426.3z"/>
+<text class="t" x="646.3" y="136.0" font-size="12">0.871</text>
+<text class="t" x="198" y="161.0" font-size="13" text-anchor="end">Multi-teacher distillation</text>
+<path class="b" d="M210.0,149.0h422.3a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-422.3z"/>
+<text class="t" x="642.3" y="162.0" font-size="12">0.863</text>
+<text class="t" x="198" y="187.0" font-size="13" text-anchor="end">Experience Replay</text>
+<path class="b" d="M210.0,175.0h420.0a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-420.0z"/>
+<text class="t" x="640.0" y="188.0" font-size="12">0.858</text>
+<text class="t" x="198" y="213.0" font-size="13" text-anchor="end">Continual distillation</text>
+<path class="b" d="M210.0,201.0h285.3a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-285.3z"/>
+<text class="t" x="505.3" y="214.0" font-size="12">0.586</text>
+<text class="t" x="198" y="239.0" font-size="13" text-anchor="end">TIES-Merging</text>
+<path class="b" d="M210.0,227.0h273.1a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-273.1z"/>
+<text class="t" x="493.1" y="240.0" font-size="12">0.561</text>
+<text class="t" x="198" y="265.0" font-size="13" text-anchor="end">Task Arithmetic</text>
+<path class="b" d="M210.0,253.0h258.4a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-258.4z"/>
+<text class="t" x="478.4" y="266.0" font-size="12">0.531</text>
+<text class="t" x="198" y="291.0" font-size="13" text-anchor="end">A-GEM</text>
+<path class="b" d="M210.0,279.0h161.6a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-161.6z"/>
+<text class="t" x="381.6" y="292.0" font-size="12">0.335</text>
+<text class="t" x="198" y="317.0" font-size="13" text-anchor="end">LwF</text>
+<path class="b" d="M210.0,305.0h108.8a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-108.8z"/>
+<text class="t" x="328.8" y="318.0" font-size="12">0.228</text>
+<text class="t" x="198" y="343.0" font-size="13" text-anchor="end">EWC</text>
+<path class="b" d="M210.0,331.0h93.3a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-93.3z"/>
+<text class="t" x="313.3" y="344.0" font-size="12">0.197</text>
+<text class="t" x="198" y="369.0" font-size="13" text-anchor="end">Naive</text>
+<path class="b" d="M210.0,357.0h92.7a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-92.7z"/>
+<text class="t" x="312.7" y="370.0" font-size="12">0.196</text>
+<text class="t" x="198" y="395.0" font-size="13" text-anchor="end">LoRA-per-task</text>
+<path class="b" d="M210.0,383.0h87.1a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-87.1z"/>
+<text class="t" x="307.1" y="396.0" font-size="12">0.184</text>
+</svg>

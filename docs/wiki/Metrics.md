@@ -1,3 +1,10 @@
+---
+title: "Continual learning metrics: forgetting, backward transfer, stability gap, CKA and plasticity loss"
+description: "Every metric contilab computes, with formulas and references: accuracy matrix, forgetting, backward and forward transfer, stability gap, worst-case accuracy, linear probes, CKA, dormant neurons, effective rank, task-recency bias, calibration, few-shot recovery, loss barriers and LLM general-ability retention."
+nav_order: 7
+nav_title: "Metrics"
+---
+
 # Metrics
 
 contilab computes metrics **after** training from raw data stored per run, so a metric can be added later with

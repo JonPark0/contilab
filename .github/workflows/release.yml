@@ -4,6 +4,7 @@ name: Release
 # does not exist yet: it is created on the selected branch's head. The tag must match the pyproject version, and
 # the notes come from that version's CHANGELOG section. Re-running for an existing release replaces its assets.
 # PyPI upload runs only when the repository variable PUBLISH_PYPI is "true" (trusted publishing, see RELEASING.md).
+# zenodo-doi.yml then adds the release's Zenodo DOI to its notes, once CITATION.cff has the concept DOI.
 on:
   push:
     tags: ["v*"]
@@ -83,3 +84,10 @@ jobs:
           python -m pip install --upgrade build
           python -m build
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  doi:
+    name: Zenodo DOI
+    needs: release
+    uses: ./.github/workflows/zenodo-doi.yml
+    with:
+      tag: ${{ github.event.inputs.tag || github.ref_name }}

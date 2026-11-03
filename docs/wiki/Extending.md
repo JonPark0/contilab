@@ -1,3 +1,10 @@
+---
+title: "Extending contilab: add a strategy, metric, benchmark or consolidation method"
+description: "How to add a continual-learning strategy, a metric, a benchmark or a consolidation method to contilab, with the interfaces and tests each one needs."
+nav_order: 13
+nav_title: "Extending"
+---
+
 # Extending contilab
 
 ## Add a strategy

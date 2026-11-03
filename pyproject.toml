@@ -42,7 +42,8 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/JonPark0/contilab"
-Documentation = "https://github.com/JonPark0/contilab/wiki"
+Documentation = "https://jonpark0.github.io/contilab/"
+Changelog = "https://github.com/JonPark0/contilab/blob/main/CHANGELOG.md"
 Issues = "https://github.com/JonPark0/contilab/issues"
 
 [project.optional-dependencies]

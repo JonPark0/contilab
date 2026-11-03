@@ -1,3 +1,10 @@
+---
+title: "Citing contilab"
+description: "How to cite contilab in a paper: BibTeX entry and CITATION.cff."
+nav_order: 15
+nav_title: "Citing"
+---
+
 # Citing contilab
 
 ```bibtex

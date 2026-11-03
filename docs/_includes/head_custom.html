@@ -1,0 +1,90 @@
+{%- comment -%}
+Included by Just the Docs at the end of <head>.
+- Dark mode: the reader's choice (saved by the header button), else the
+  system setting; switched before the page is drawn.
+- Pages in another language (lang: ko) set <html lang>; the English and Korean
+  home pages point to each other (hreflang).
+- On the home page: schema.org metadata for search engines and AI assistants.
+  On the Results page: the per-run CSVs as a schema.org Dataset.
+{%- endcomment -%}
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("contilab-theme"); } catch (e) {}
+    if (!t && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark";
+    if (t === "dark") jtd.setTheme("dark");
+  })();
+</script>
+{%- if page.lang and page.lang != site.lang %}
+<script>document.documentElement.lang = "{{ page.lang }}";</script>
+{%- endif %}
+<style>:lang(ko) { word-break: keep-all; overflow-wrap: anywhere; }</style>
+{%- if page.url == "/" or page.url == "/ko/" %}
+<link rel="alternate" hreflang="en" href="{{ '/' | absolute_url }}">
+<link rel="alternate" hreflang="ko" href="{{ '/ko/' | absolute_url }}">
+<link rel="alternate" hreflang="x-default" href="{{ '/' | absolute_url }}">
+{%- endif %}
+<link rel="icon" type="image/png" sizes="32x32" href="{{ '/assets/favicon-32.png' | relative_url }}">
+<link rel="apple-touch-icon" href="{{ '/assets/apple-touch-icon.png' | relative_url }}">
+{%- if page.url == "/" %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "contilab",
+  "description": {{ page.description | jsonify }},
+  "url": {{ "/" | absolute_url | jsonify }},
+  "codeRepository": "https://github.com/JonPark0/contilab",
+  "programmingLanguage": "Python",
+  "runtimePlatform": "PyTorch",
+  "license": "https://opensource.org/licenses/MIT",
+  "author": {
+    "@type": "Person",
+    "name": "Yeochoon Park",
+    "alternateName": "JonPark0",
+    "url": "https://github.com/JonPark0"
+  },
+  {%- if site.github.latest_release %}
+  "version": {{ site.github.latest_release.tag_name | remove_first: "v" | jsonify }},
+  {%- endif %}
+  "keywords": ["continual learning", "lifelong learning", "incremental learning", "catastrophic forgetting",
+               "class-incremental learning", "EWC", "LwF", "experience replay", "DER++", "A-GEM", "LoRA",
+               "model merging", "Task Arithmetic", "TIES-Merging", "knowledge distillation", "stability gap",
+               "PyTorch", "benchmark"],
+  "targetProduct": {
+    "@type": "SoftwareApplication",
+    "name": "contilab",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Linux, macOS, Windows",
+    "softwareRequirements": "Python 3.11+, PyTorch 2",
+    "downloadUrl": "https://github.com/JonPark0/contilab/releases",
+    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}
+  }
+}
+</script>
+{%- endif %}
+{%- if page.url == "/wiki/Results.html" %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "contilab CPU study: continual learning results for 12 methods on 6 benchmarks",
+  "description": "Per-run results of an empirical comparison of continual-learning methods (Naive, Joint, EWC, LwF, ER, DER++, A-GEM, LoRA-per-task, Task Arithmetic, TIES-Merging, multi-teacher distillation, teacher-to-student continual distillation) on Split MNIST (Class-IL and Task-IL), Permuted MNIST, Split CIFAR-10, Split CIFAR-100 and text5 with Pythia-70M: one row per run with final accuracy, forgetting, backward transfer, stability gap, task-recency bias, memory and wall time.",
+  "url": {{ page.url | absolute_url | jsonify }},
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "creator": {"@type": "Person", "name": "Yeochoon Park", "url": "https://github.com/JonPark0"},
+  "keywords": ["continual learning", "catastrophic forgetting", "benchmark results", "class-incremental learning",
+               "Split MNIST", "Permuted MNIST", "Split CIFAR-10", "Split CIFAR-100"],
+  "isBasedOn": "https://github.com/JonPark0/contilab",
+  "distribution": [
+    {"@type": "DataDownload", "encodingFormat": "text/csv", "name": "cpu_main.csv",
+     "contentUrl": "https://raw.githubusercontent.com/JonPark0/contilab/main/docs/assets/results/data/cpu_main.csv"},
+    {"@type": "DataDownload", "encodingFormat": "text/csv", "name": "cpu_tuned.csv",
+     "contentUrl": "https://raw.githubusercontent.com/JonPark0/contilab/main/docs/assets/results/data/cpu_tuned.csv"},
+    {"@type": "DataDownload", "encodingFormat": "text/csv", "name": "cpu_student.csv",
+     "contentUrl": "https://raw.githubusercontent.com/JonPark0/contilab/main/docs/assets/results/data/cpu_student.csv"}
+  ]
+}
+</script>
+{%- endif %}

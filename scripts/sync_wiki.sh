@@ -1,6 +1,7 @@
 #!/bin/bash
 # Publish docs/wiki/*.md to the GitHub wiki (https://github.com/JonPark0/contilab/wiki).
-# Relative links "Page.md" become "Page" (wiki link form); docs/wiki/README.md stays repo-only.
+# Relative links "Page.md" become "Page" (wiki link form); the Jekyll front matter (title, description and
+# navigation of the docs site) is dropped; docs/wiki/README.md stays repo-only.
 set -euo pipefail
 repo_root=$(git rev-parse --show-toplevel)
 wiki_url=${WIKI_URL:-https://github.com/JonPark0/contilab.wiki.git}
@@ -11,7 +12,9 @@ find "$tmp/wiki" -maxdepth 1 -name '*.md' -delete
 for f in "$repo_root"/docs/wiki/*.md; do
   name=$(basename "$f")
   [ "$name" = README.md ] && continue
-  sed -E 's/\]\(([A-Za-z0-9_-]+)\.md\)/](\1)/g' "$f" > "$tmp/wiki/$name"
+  awk 'NR == 1 && $0 == "---" { fm = 1; next } fm && $0 == "---" { fm = 0; skip = 1; next }
+       fm { next } skip && $0 == "" { next } { skip = 0; print }' "$f" |
+    sed -E 's/\]\(([A-Za-z0-9_-]+)\.md\)/](\1)/g' > "$tmp/wiki/$name"
 done
 cd "$tmp/wiki"
 git add -A
