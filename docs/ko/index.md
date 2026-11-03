@@ -94,8 +94,12 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
   title   = {contilab: a performance-first framework for continual learning benchmarking, distillation and model merging},
   year    = {2026},
   version = {0.3.1},
+  doi     = {10.5281/zenodo.23906803},
   url     = {https://github.com/JonPark0/contilab}
 }
 ```
+
+모든 릴리스는 [Zenodo](https://doi.org/10.5281/zenodo.23906803)에 보관됩니다. DOI `10.5281/zenodo.23906803`는 모든 버전을 가리키며 항상 최신
+버전으로 연결됩니다. 릴리스마다 고유 DOI도 있으며, Zenodo 페이지에서 볼 수 있습니다.
 
 소스 코드: <https://github.com/JonPark0/contilab> · 라이선스: MIT
