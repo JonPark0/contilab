@@ -1,0 +1,44 @@
+name: Hugging Face dataset
+
+# Publishes the per-run results of the CPU study (docs/assets/results/data/*.csv) with a generated dataset card
+# (scripts/hf_dataset.py) as the Hugging Face dataset jonpark0/contilab-cpu-study. Runs when the data, the
+# script or CITATION.cff change on main, and by hand. Uploading needs the repository secret HF_TOKEN with write
+# access; without it the job only builds the card.
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/assets/results/data/**
+      - scripts/hf_dataset.py
+      - CITATION.cff
+      - .github/workflows/hf-dataset.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-dataset
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Build the dataset card
+        run: python scripts/hf_dataset.py --out hf
+      - name: Upload
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::notice title=hugging face::no HF_TOKEN secret; the card was built but not uploaded (see RELEASING.md)"
+            exit 0
+          fi
+          python -m pip install --upgrade huggingface_hub
+          python scripts/hf_dataset.py --out hf --upload

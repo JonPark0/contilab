@@ -2,6 +2,7 @@
 
 One row per run (preset × method × variant × seed). These are the `results.csv` files that `contilab run`
 writes, copied from the run directories. The raw logs (about 3 GB) are not kept in the repository.
+The same files are published as the Hugging Face dataset [jonpark0/contilab-cpu-study](https://huggingface.co/datasets/jonpark0/contilab-cpu-study).
 
 | File | Experiment config | Runs |
 |---|---|---|

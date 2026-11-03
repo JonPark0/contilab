@@ -5,6 +5,8 @@
 ### Added
 - Zenodo DOI `10.5281/zenodo.23906803` (all versions): a badge in the README, `doi` in `CITATION.cff` and the BibTeX entries,
   and the site's structured data. Version 0.3.1 is `10.5281/zenodo.23906804`.
+- The per-run results are a Hugging Face dataset, [jonpark0/contilab-cpu-study](https://huggingface.co/datasets/jonpark0/contilab-cpu-study), republished by the
+  `hf-dataset` workflow when the CSVs change; the site, README and `llms.txt` link to it.
 
 ## 0.3.1 — 2026-11-03
 
