@@ -402,7 +402,9 @@ throughput of one seed (40.7k vs 10.8k samples/s). For the reduced ResNet-18, bf
 
 The per-run results behind every table on this page are in
 [`docs/assets/results/data/`](https://github.com/JonPark0/contilab/tree/main/docs/assets/results/data): one CSV per
-experiment, one row per run with all scalar metrics.
+experiment, one row per run with all scalar metrics. The same files are the Hugging Face dataset
+[jonpark0/contilab-cpu-study](https://huggingface.co/datasets/jonpark0/contilab-cpu-study), with a dataset card; load one with
+`datasets.load_dataset("jonpark0/contilab-cpu-study", "cpu_main")`.
 
 ## Reproduce
 

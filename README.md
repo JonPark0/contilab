@@ -157,6 +157,8 @@ recency bias, memory, wall time), figures and limitations: [Results](docs/wiki/R
 - Site: <https://jonpark0.github.io/contilab/>, with search and a [Korean home page](https://jonpark0.github.io/contilab/ko/)
 - Wiki: <https://github.com/JonPark0/contilab/wiki> (the same pages; source in [`docs/wiki/`](docs/wiki))
 - [FAQ](docs/wiki/FAQ.md): which method to use, scenarios, the stability gap, language models, GPUs
+- Per-run results of the CPU study: [`docs/assets/results/data/`](docs/assets/results/data) and the Hugging Face
+  dataset [jonpark0/contilab-cpu-study](https://huggingface.co/datasets/jonpark0/contilab-cpu-study)
 - [Changelog](CHANGELOG.md) · design spec: [`docs/design/2026-10-22-contilab-design.md`](docs/design/2026-10-22-contilab-design.md)
 
 ## Citing
