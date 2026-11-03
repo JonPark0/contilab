@@ -8,11 +8,12 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - v0.2.0 릴리스: 지표 수정, 견고성, CI, 검증 기반 sweep 선택, 연속 증류, 작은 학생 모델
 - v0.3.0: M10–M12(bench 정밀도, 반복 계산 제거, vmap 폴백·OOM 분할 기록), compile 재컴파일 수정(배치 축 dynamic, 그래프 한도 = 태스크 수 + 8), 릴리스 워크플로(PyPI job은 변수로 꺼둠), Split CIFAR-100
 - CPU 연구: `cpu_main` 324런(6 벤치마크, MNIST 6시드), `cpu_tuned` 228런, `cpu_student` 12런 → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
+- 문서 사이트(Just the Docs): 한국어 홈, FAQ, 구조화 데이터, llms.txt, IndexNow; 차트·변경 이력 페이지는 `scripts/sync_docs.py`가 생성
 - 테스트 191 통과, 5 skip(네트워크)
 
 ## 남은 작업
 - v0.3.0 태그: 릴리스 PR 머지 후 Actions → Release → Run workflow(tag `v0.3.0`)
-- 사용자 설정: PyPI pending publisher + 변수 `PUBLISH_PYPI=true`, Zenodo 연동(`RELEASING.md`)
+- 사용자 설정: PyPI pending publisher + 변수 `PUBLISH_PYPI=true`, Zenodo 연동, Search Console 인증, 소셜 미리보기 업로드(`RELEASING.md`)
 - 미검증: `configs/profiles/gpu.yaml`(GPU 없음), text5 전체 규모(CPU ~20시간+)
 - main의 옛 작성자 커밋: 이력 재작성은 force push 필요(사용자)
 

@@ -1,3 +1,10 @@
+---
+title: "Continual learning methods: EWC, LwF, experience replay, DER++, A-GEM and LoRA-per-task"
+description: "Task-, class- and domain-incremental scenarios and the continual-learning strategies in contilab: Naive fine-tuning, Joint training, EWC, LwF, Experience Replay, DER++, A-GEM and LoRA-per-task, with their hyperparameters."
+nav_order: 5
+nav_title: "Methods"
+---
+
 # Methods
 
 ## Scenarios

@@ -1,3 +1,10 @@
+---
+title: "Model merging and distillation for continual learning: Task Arithmetic, TIES-Merging, multi-teacher and continual distillation"
+description: "Train one expert per task, then consolidate them into one model with Task Arithmetic, TIES-Merging, multi-teacher knowledge distillation or teacher-to-student continual distillation, optionally into a smaller student."
+nav_order: 6
+nav_title: "Merging and distillation"
+---
+
 # Consolidation: merging and distillation
 
 Besides training one model sequentially, contilab can **train one expert per task and consolidate** the experts

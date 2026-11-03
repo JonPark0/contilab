@@ -1,3 +1,10 @@
+---
+title: "Performance: vmap seed ensembles, torch.compile and bf16 for continual learning"
+description: "How contilab trains several seeds at once with torch.func.vmap, uses torch.compile and bf16, avoids a DataLoader, and the measured throughput on a 4-core CPU."
+nav_order: 11
+nav_title: "Performance"
+---
+
 # Performance
 
 contilab is designed so that the expensive part of continual-learning studies — many methods × benchmarks ×

@@ -1,3 +1,10 @@
+---
+title: "Getting started: install contilab and run a continual learning benchmark"
+description: "Install contilab, run every continual-learning method on synthetic data in a minute, run a real benchmark such as Split MNIST, and read the report."
+nav_order: 2
+nav_title: "Getting started"
+---
+
 # Getting Started
 
 ## Install

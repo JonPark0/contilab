@@ -1,3 +1,11 @@
+---
+title: "contilab wiki"
+description: "Index of the contilab documentation."
+nav_exclude: true
+search_exclude: true
+sitemap: false
+---
+
 # contilab wiki
 
 **contilab** is a PyTorch framework for empirical **continual learning** research (lifelong / incremental

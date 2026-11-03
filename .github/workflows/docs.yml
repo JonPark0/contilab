@@ -1,0 +1,33 @@
+name: docs
+
+# Checks the docs site before it reaches main: the generated files are current
+# (scripts/sync_docs.py: the home-page chart from the results CSV, the changelog
+# page from CHANGELOG.md), and the site builds with the GitHub Pages builder.
+on:
+  push:
+    branches: [main]
+    paths: ["CHANGELOG.md", "docs/**", "scripts/sync_docs.py", ".github/workflows/docs.yml"]
+  pull_request:
+    paths: ["CHANGELOG.md", "docs/**", "scripts/sync_docs.py", ".github/workflows/docs.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Generated docs are current
+        run: python3 scripts/sync_docs.py --check
+      - name: Build the site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site

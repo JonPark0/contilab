@@ -1,3 +1,11 @@
+---
+title: "Architecture: how contilab trains, logs and evaluates continual learning runs"
+description: "The packages of contilab and how data flows from a config to results: stacked-parameter ensembles, strategies as plugins, raw logs and post hoc metrics, reports."
+nav_order: 12
+nav_title: "Architecture"
+mermaid: true
+---
+
 # Architecture
 
 ```mermaid

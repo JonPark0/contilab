@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Docs site (<https://jonpark0.github.io/contilab/>) on Just the Docs:
+  - search, dark mode, navigation, and a home page with a results chart generated from the CSVs
+  - a Korean home page and a changelog page
+  - a FAQ written around common questions
+- Discoverability:
+  - per-page titles and descriptions, a social preview image, a favicon, `llms.txt`
+  - schema.org metadata for the software and for the results CSVs (as a dataset)
+  - IndexNow submission of changed pages after each Pages build
+- `scripts/sync_docs.py` writes the chart and the changelog page; the `docs` workflow checks that they are current
+  and that the site builds.
+- The release workflow adds each release's Zenodo DOI to its notes once `CITATION.cff` has the concept DOI.
+
 ## 0.3.0 — 2026-11-02
 
 ### Added

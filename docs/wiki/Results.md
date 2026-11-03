@@ -1,3 +1,10 @@
+---
+title: "Continual learning benchmark results: EWC, LwF, replay, DER++, A-GEM, model merging and distillation"
+description: "An empirical CPU study of 12 continual-learning methods on 6 benchmarks (Split MNIST, Permuted MNIST, Split CIFAR-10/100, text5 with Pythia-70M): accuracy, forgetting, stability gap, rankings with Friedman and Nemenyi tests, tuned hyperparameters and per-run CSVs."
+nav_order: 3
+nav_title: "Results"
+---
+
 # Results: CPU study
 
 An empirical comparison of 12 continual-learning methods on 6 benchmarks, run end to end on a 4-core CPU with

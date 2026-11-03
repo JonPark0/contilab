@@ -1,3 +1,10 @@
+---
+title: "Continual learning benchmarks: Split MNIST, Permuted MNIST, Split CIFAR-10/100 and text5"
+description: "The benchmarks and models in contilab: Split MNIST, Permuted MNIST, Split CIFAR-10, Split CIFAR-100, the text5 language benchmark with Hugging Face language models, synthetic streams, and the CPU and GPU profiles."
+nav_order: 8
+nav_title: "Benchmarks"
+---
+
 # Benchmarks
 
 | Name | Tasks | Scenarios | Source |

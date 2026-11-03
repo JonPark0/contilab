@@ -1,3 +1,10 @@
+---
+title: "Running continual learning experiments: CLI, run directories, resume and reports"
+description: "The contilab command line: run an experiment matrix, resume after an interruption, handle failed and diverged runs, recompute metrics and build Markdown and HTML reports."
+nav_order: 10
+nav_title: "Running experiments"
+---
+
 # Running Experiments
 
 ## Commands

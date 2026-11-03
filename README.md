@@ -4,7 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org)
-[![Docs: wiki](https://img.shields.io/badge/docs-wiki-green.svg)](https://github.com/JonPark0/contilab/wiki)
+[![Docs](https://img.shields.io/badge/docs-site-green.svg)](https://jonpark0.github.io/contilab/)
+[![Release](https://img.shields.io/github/v/release/JonPark0/contilab)](https://github.com/JonPark0/contilab/releases)
 
 **contilab** is a research framework for **continual learning** (also called *lifelong learning* or
 *incremental learning*): training a model on a sequence of tasks without **catastrophic forgetting**.
@@ -25,6 +26,14 @@ language (LLM) benchmarks — and is designed around three goals:
    **Task Arithmetic**, **TIES-Merging**, **multi-teacher knowledge distillation** or **teacher → student
    continual distillation** (optionally into a smaller student).
 
+![Final accuracy on Split MNIST (class-incremental), mean over 6 seeds: Joint 0.950, DER++ 0.871, multi-teacher distillation 0.863, Experience Replay 0.858, continual distillation 0.586, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.197, Naive 0.196, LoRA-per-task 0.184](docs/assets/results/split-mnist-class-acc.svg)
+
+Replay (DER++, Experience Replay) and tuned multi-teacher distillation lead; regularisation alone (EWC, LwF)
+stays at the Naive level in class-incremental learning. All 6 benchmarks: [Results](#results).
+
+**Documentation:** <https://jonpark0.github.io/contilab/> ([FAQ](docs/wiki/FAQ.md) ·
+[Getting started](docs/wiki/Getting-Started.md) · [한국어](https://jonpark0.github.io/contilab/ko/))
+
 ## Features
 
 | Area | What you get |
@@ -43,11 +52,11 @@ language (LLM) benchmarks — and is designed around three goals:
 git clone https://github.com/JonPark0/contilab && cd contilab
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 
-# every method on tiny synthetic streams (~40 s on 4 CPU cores)
+# every method on tiny synthetic streams (under a minute on 4 CPU cores)
 .venv/bin/contilab run configs/experiments/smoke_all.yaml
 .venv/bin/contilab report runs/smoke_all          # runs/smoke_all/report.md + report.html
 
-# the CPU study: Split/Permuted MNIST, Split CIFAR-10, text5 × 11 methods × 3 seeds
+# the CPU study: 12 methods × Split/Permuted MNIST, Split CIFAR-10/100, text5 (resumable; about 22 h)
 .venv/bin/contilab run configs/experiments/cpu_main.yaml
 .venv/bin/contilab run configs/experiments/cpu_main.yaml "matrix.preset=[split_mnist_class]" train.epochs=2
 
@@ -144,8 +153,10 @@ recency bias, memory, wall time), figures and limitations: [Results](docs/wiki/R
 
 ## Documentation
 
-- Wiki: <https://github.com/JonPark0/contilab/wiki> (mirrored in [`docs/wiki/`](docs/wiki))
-- Design spec: [`docs/design/2026-10-22-contilab-design.md`](docs/design/2026-10-22-contilab-design.md)
+- Site: <https://jonpark0.github.io/contilab/>, with search and a [Korean home page](https://jonpark0.github.io/contilab/ko/)
+- Wiki: <https://github.com/JonPark0/contilab/wiki> (the same pages; source in [`docs/wiki/`](docs/wiki))
+- [FAQ](docs/wiki/FAQ.md): which method to use, scenarios, the stability gap, language models, GPUs
+- [Changelog](CHANGELOG.md) · design spec: [`docs/design/2026-10-22-contilab-design.md`](docs/design/2026-10-22-contilab-design.md)
 
 ## Citing
 
@@ -190,7 +201,7 @@ If contilab helps your research, please cite it (GitHub's *Cite this repository*
   - 정규화 계열(EWC, LwF)은 튜닝 후에도 Class-IL에서 Naive 수준에 머물렀습니다.
   - Split CIFAR-100(CPU 2 epoch)은 Joint도 0.118에 그쳤고, 연속 학습 방법 중에서는 리플레이(ER, DER++)만 Naive를 넘었습니다.
 
-자세한 문서는 [위키](https://github.com/JonPark0/contilab/wiki)를 참고하세요.
+자세한 문서는 [문서 사이트](https://jonpark0.github.io/contilab/ko/)와 [위키](https://github.com/JonPark0/contilab/wiki)를 참고하세요.
 
 ## License
 

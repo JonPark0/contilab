@@ -1,3 +1,10 @@
+---
+title: "Configuration: profiles, presets, experiment matrices and hyperparameter sweeps"
+description: "How contilab experiments are configured: YAML profiles and presets, experiment matrices, command-line overrides, per-method sweeps and validation-based selection of variants."
+nav_order: 9
+nav_title: "Configuration"
+---
+
 # Configuration
 
 An experiment is a YAML file that names a **profile** and a **matrix**:
