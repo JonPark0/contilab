@@ -35,13 +35,29 @@ contilab. The page has three experiments:
 > The tuned comparison has 6 seeds as well; its selections hold, except that 30 distillation epochs now edge out
 > 10 on Split MNIST Class-IL.
 
+> **Update: EWC λ = 30, CIFAR without compile.** Two defaults changed, and the affected runs were re-run:
+> - EWC on vision uses λ = 30, the value selected on validation accuracy in the tuned comparison, instead of the
+>   literature default λ = 100. The 18 MNIST EWC runs were re-run.
+> - The CIFAR presets train in bf16 without `torch.compile`: compile added no throughput at steady state and
+>   took about 50 s per graph. All 72 Split CIFAR-10 and CIFAR-100 runs were re-run.
+>
+> The other runs are unchanged. Without compile the CIFAR runs follow a different numerical path, so every CIFAR
+> number moved, for example Joint on Split CIFAR-10 from 0.398 ± 0.099 to 0.462 ± 0.017. What changed in the
+> statements:
+> - EWC trains stably on Permuted MNIST (0.832, above Naive's 0.805 on 5 of 6 seeds), but no longer leads Naive on
+>   Split MNIST Class-IL (0.196 for both). Success criterion 3 now holds for LwF only.
+> - EWC still diverges on Split CIFAR-10 (1 of 3 seeds) and Split CIFAR-100 (3 of 3), late in the task stream.
+> - ER and DER++ no longer tie on Split CIFAR-100: DER++ reaches 0.063 and ER 0.057 (Naive 0.046).
+> - Average ranks: DER++ 2.3 (was 2.7), multi-teacher distillation 5.0 (4.7), EWC 8.2 (9.5). DER++ is no longer
+>   significantly ahead of EWC.
+
 ## Setup
 
 | | |
 |---|---|
 | Hardware | 4 CPU cores (Intel Xeon @ 2.1 GHz, AMX/AVX512-BF16), 15 GB RAM, no GPU |
-| Main study | 12 methods × (3 MNIST benchmarks × 6 seeds + 3 other benchmarks × 3 seeds) = **324 runs**: 312 done, 12 diverged (EWC λ = 100), 0 failed |
-| Vision | Split MNIST (Class-IL and Task-IL) and Permuted MNIST (10 tasks, 10k/2k samples per task) with an MLP 2×400, 1 epoch, SGD lr 0.03; Split CIFAR-10 and Split CIFAR-100 (Class-IL; 5 × 2 and 10 × 10 classes) with a reduced ResNet-18, **2 epochs**, bf16 + `torch.compile` |
+| Main study | 12 methods × (3 MNIST benchmarks × 6 seeds + 3 other benchmarks × 3 seeds) = **324 runs**: 320 done, 4 diverged (EWC on Split CIFAR-10 and CIFAR-100), 0 failed |
+| Vision | Split MNIST (Class-IL and Task-IL) and Permuted MNIST (10 tasks, 10k/2k samples per task) with an MLP 2×400, 1 epoch, SGD lr 0.03; Split CIFAR-10 and Split CIFAR-100 (Class-IL; 5 × 2 and 10 × 10 classes) with a reduced ResNet-18, **2 epochs**, bf16 |
 | Language | text5 (AG News → Yelp → Amazon → DBpedia → Yahoo, 33 classes) with **Pythia-70M**, **1,000 train / 200 test texts per task**, 1 epoch, AdamW lr 1e-4, batch 16 |
 | Memory budget | 500 samples (vision) / 200 (text) for ER, DER++, A-GEM and both distillation methods |
 | Distillation | multi-teacher: TIES-merged student, targets routed to each sample's teacher, 10 passes over the buffer; continual: one pass (`train.epochs`) over each task plus the buffer |
@@ -56,22 +72,22 @@ Deviations from the original design, all made to fit a CPU budget:
 ## Accuracy overview
 
 Final average accuracy (ACC), mean ± std over 6 seeds (MNIST benchmarks) or 3 seeds (CIFAR, text5). † = number of
-seeds that diverged.
+seeds that diverged; the mean is over the other seeds.
 
 | Method | Split MNIST (Class-IL) | Split MNIST (Task-IL) | Permuted MNIST (Domain-IL) | Split CIFAR-10 (Class-IL) | Split CIFAR-100 (Class-IL) | text5 + Pythia-70M (Class-IL) |
 |---|---|---|---|---|---|---|
-| Naive | 0.196 ± 0.000 | 0.980 ± 0.001 | 0.805 ± 0.011 | 0.181 ± 0.004 | 0.049 ± 0.003 | 0.097 ± 0.016 |
-| Joint | 0.950 ± 0.002 | 0.993 ± 0.001 | 0.909 ± 0.006 | 0.398 ± 0.099 | 0.118 ± 0.016 | 0.529 ± 0.015 |
-| EWC | 0.197 ± 0.001 | 0.983 ± 0.002 | diverged (6/6) | diverged (3/3) | diverged (3/3) | 0.105 ± 0.015 |
-| LwF | 0.228 ± 0.005 | 0.990 ± 0.001 | 0.817 ± 0.010 | 0.173 ± 0.003 | 0.047 ± 0.001 | 0.105 ± 0.006 |
-| ER | 0.858 ± 0.012 | 0.983 ± 0.001 | 0.869 ± 0.004 | 0.302 ± 0.017 | 0.059 ± 0.004 | 0.329 ± 0.038 |
-| DER++ | 0.871 ± 0.014 | 0.991 ± 0.001 | 0.902 ± 0.002 | 0.256 ± 0.054 | 0.059 ± 0.009 | 0.397 ± 0.068 |
-| A-GEM | 0.335 ± 0.013 | 0.984 ± 0.001 | 0.864 ± 0.006 | 0.181 ± 0.003 | 0.048 ± 0.002 | 0.100 ± 0.008 |
-| LoRA-per-task | 0.184 ± 0.005 | 0.986 ± 0.002 | 0.619 ± 0.021 | 0.137 ± 0.006 | 0.015 ± 0.003 | 0.024 ± 0.002 |
-| Task Arithmetic | 0.531 ± 0.019 | 0.979 ± 0.003 | 0.570 ± 0.038 | 0.158 ± 0.027 | 0.011 ± 0.001 | 0.034 ± 0.003 |
-| TIES | 0.561 ± 0.020 | 0.983 ± 0.002 | 0.677 ± 0.012 | 0.166 ± 0.015 | 0.013 ± 0.002 | 0.033 ± 0.004 |
-| Multi-teacher distill. | 0.863 ± 0.025 | 0.986 ± 0.001 | 0.773 ± 0.010 | 0.262 ± 0.023 | 0.040 ± 0.014 | 0.452 ± 0.013 |
-| Continual distill. | 0.586 ± 0.070 | 0.980 ± 0.001 | 0.818 ± 0.005 | 0.210 ± 0.041 | 0.030 ± 0.004 | 0.331 ± 0.045 |
+| Naive | 0.196 ± 0.000 | 0.980 ± 0.001 | 0.805 ± 0.011 | 0.182 ± 0.004 | 0.046 ± 0.004 | 0.097 ± 0.016 |
+| Joint | 0.950 ± 0.002 | 0.993 ± 0.001 | 0.909 ± 0.006 | 0.462 ± 0.017 | 0.120 ± 0.006 | 0.529 ± 0.015 |
+| EWC | 0.196 ± 0.000 | 0.981 ± 0.001 | 0.832 ± 0.015 | 0.165 ± 0.004 †1 | diverged (3/3) | 0.105 ± 0.015 |
+| LwF | 0.228 ± 0.005 | 0.990 ± 0.001 | 0.817 ± 0.010 | 0.171 ± 0.004 | 0.047 ± 0.002 | 0.105 ± 0.006 |
+| ER | 0.858 ± 0.012 | 0.983 ± 0.001 | 0.869 ± 0.004 | 0.290 ± 0.027 | 0.057 ± 0.007 | 0.329 ± 0.038 |
+| DER++ | 0.871 ± 0.014 | 0.991 ± 0.001 | 0.902 ± 0.002 | 0.285 ± 0.018 | 0.063 ± 0.007 | 0.397 ± 0.068 |
+| A-GEM | 0.335 ± 0.013 | 0.984 ± 0.001 | 0.864 ± 0.006 | 0.180 ± 0.005 | 0.044 ± 0.004 | 0.100 ± 0.008 |
+| LoRA-per-task | 0.184 ± 0.005 | 0.986 ± 0.002 | 0.619 ± 0.021 | 0.129 ± 0.001 | 0.015 ± 0.003 | 0.024 ± 0.002 |
+| Task Arithmetic | 0.531 ± 0.019 | 0.979 ± 0.003 | 0.570 ± 0.038 | 0.151 ± 0.020 | 0.011 ± 0.001 | 0.034 ± 0.003 |
+| TIES | 0.561 ± 0.020 | 0.983 ± 0.002 | 0.677 ± 0.012 | 0.160 ± 0.034 | 0.013 ± 0.002 | 0.033 ± 0.004 |
+| Multi-teacher distill. | 0.863 ± 0.025 | 0.986 ± 0.001 | 0.773 ± 0.010 | 0.267 ± 0.005 | 0.040 ± 0.014 | 0.452 ± 0.013 |
+| Continual distill. | 0.586 ± 0.070 | 0.980 ± 0.001 | 0.818 ± 0.005 | 0.229 ± 0.028 | 0.030 ± 0.004 | 0.331 ± 0.045 |
 
 ![Critical-difference diagram](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/assets/results/cd_diagram.png)
 
@@ -80,23 +96,24 @@ seeds that diverged.
 | Rank | Method |
 |---|---|
 | 1.0 | Joint |
-| 2.7 | DER++ |
+| 2.3 | DER++ |
 | 4.2 | ER |
-| 4.7 | Multi-teacher distillation |
-| 6.3 | A-GEM |
-| 6.3 | Continual distillation |
-| 6.5 | LwF |
-| 7.8 | Naive |
-| 8.8 | TIES |
-| 9.5 | EWC |
-| 9.8 | LoRA-per-task |
-| 10.3 | Task Arithmetic |
+| 5.0 | Multi-teacher distillation |
+| 6.3 | LwF |
+| 6.5 | A-GEM |
+| 6.5 | Continual distillation |
+| 8.2 | Naive |
+| 8.2 | EWC |
+| 9.0 | TIES |
+| 10.2 | LoRA-per-task |
+| 10.7 | Task Arithmetic |
 
-The Friedman test gives p = 6.6·10⁻⁶, and the Nemenyi critical difference is 6.80 (α = 0.05). With 6
+A diverged seed is ranked by the final accuracy of its model, whose parameters stop changing at the divergence.
+The Friedman test gives p = 4.5·10⁻⁶, and the Nemenyi critical difference is 6.80 (α = 0.05). With 6
 benchmarks the CD is still wide:
 
-- Joint is significantly better than Naive, TIES, EWC, LoRA-per-task and Task Arithmetic.
-- DER++ is significantly better than EWC, LoRA-per-task and Task Arithmetic.
+- Joint is significantly better than Naive, EWC, TIES, LoRA-per-task and Task Arithmetic.
+- DER++ is significantly better than LoRA-per-task and Task Arithmetic.
 
 Before v0.2, multi-teacher distillation ranked last (9.8) with under-trained defaults.
 
@@ -107,8 +124,8 @@ With 6 pairs the smallest possible two-sided p is 0.031, reached when every seed
 
 | Benchmark | A vs B | Mean ACC (A / B) | Seeds where B is higher | p |
 |---|---|---|---|---|
-| Split MNIST Class-IL | Naive vs EWC | 0.196 / 0.197 | 6 / 6 | 0.031 |
-| Split MNIST Class-IL | EWC vs LwF | 0.197 / 0.228 | 6 / 6 | 0.031 |
+| Split MNIST Class-IL | Naive vs EWC | 0.196 / 0.196 | 2 / 6 | 1 |
+| Split MNIST Class-IL | EWC vs LwF | 0.196 / 0.228 | 6 / 6 | 0.031 |
 | Split MNIST Class-IL | LwF vs ER | 0.228 / 0.858 | 6 / 6 | 0.031 |
 | Split MNIST Class-IL | ER vs DER++ | 0.858 / 0.871 | 6 / 6 | 0.031 |
 | Split MNIST Class-IL | DER++ vs Joint | 0.871 / 0.950 | 6 / 6 | 0.031 |
@@ -117,6 +134,8 @@ With 6 pairs the smallest possible two-sided p is 0.031, reached when every seed
 | Split MNIST Class-IL | Task Arithmetic vs TIES | 0.531 / 0.561 | 6 / 6 | 0.031 |
 | Split MNIST Class-IL | Naive vs Continual distill. | 0.196 / 0.586 | 6 / 6 | 0.031 |
 | Split MNIST Task-IL | LwF vs DER++ | 0.990 / 0.991 | 3 / 6 | 0.44 |
+| Permuted MNIST | Naive vs EWC | 0.805 / 0.832 | 5 / 6 | 0.063 |
+| Permuted MNIST | EWC vs LwF | 0.832 / 0.817 | 1 / 6 | 0.063 |
 | Permuted MNIST | Naive vs LwF | 0.805 / 0.817 | 5 / 6 | 0.094 |
 | Permuted MNIST | Naive vs Continual distill. | 0.805 / 0.818 | 5 / 6 | 0.063 |
 | Permuted MNIST | Multi-teacher distill. vs Naive | 0.773 / 0.805 | 6 / 6 | 0.031 |
@@ -130,10 +149,10 @@ With 6 pairs the smallest possible two-sided p is 0.031, reached when every seed
    - DER++ on Split MNIST Class-IL (0.871), Split MNIST Task-IL (0.991) and Permuted MNIST (0.902). On Split
      MNIST Class-IL, multi-teacher distillation (0.863) does not differ significantly from it (p = 0.69); on
      Task-IL, neither does LwF (0.990, p = 0.44).
-   - ER on Split CIFAR-10 (0.302), and ER and DER++ together on Split CIFAR-100 (0.059)
+   - ER on Split CIFAR-10 (0.290, DER++ 0.285), and DER++ on Split CIFAR-100 (0.063, ER 0.057)
    - multi-teacher distillation on text5 (0.452)
 
-   Average ranks: DER++ 2.7, ER 4.2, multi-teacher distillation 4.7. Replay also has the smallest stability gap,
+   Average ranks: DER++ 2.3, ER 4.2, multi-teacher distillation 5.0. Replay also has the smallest stability gap,
    for example 0.150 (DER++) vs 0.995 for Naive on Split MNIST Class-IL.
 2. **Multi-teacher distillation buys accuracy with experts.**
    - It keeps every task expert: 11 MB of stored models on Split MNIST against 1.8 MB for a single model.
@@ -142,28 +161,32 @@ With 6 pairs the smallest possible two-sided p is 0.031, reached when every seed
      on Split MNIST Class-IL.
    - On Permuted MNIST it falls below Naive on every seed (0.773 vs 0.805, p = 0.031): the 500-sample buffer
      leaves 50 samples for each of the 10 input distributions.
-   - On Split CIFAR-100 it also falls below Naive (0.040 vs 0.049). The buffer holds 5 samples per class, and
-     the student reaches a learning accuracy of only 0.099.
+   - On Split CIFAR-100 it also falls below Naive (0.040 vs 0.046). The buffer holds 5 samples per class, and
+     the student reaches a learning accuracy of only 0.102.
 3. **Teacher → student continual distillation is the cheap variant.** It never stores an expert: the student is
    the only model kept (1.8 MB). It beats Naive on every Class- and Domain-IL benchmark except Split CIFAR-100:
    - Split MNIST Class-IL 0.586 vs 0.196 (all 6 seeds)
    - Permuted MNIST 0.818 vs 0.805 (5 of 6 seeds, p = 0.063), and ahead of multi-teacher distillation (0.773)
      on every seed
-   - CIFAR-10 0.210 vs 0.181
+   - CIFAR-10 0.229 vs 0.182
    - text5 0.331 vs 0.097, on par with ER
-   - Split CIFAR-100: 0.030 vs 0.049, below Naive
+   - Split CIFAR-100: 0.030 vs 0.046, below Naive
 
    Old knowledge reaches the student only through self-distillation on the buffer, so errors compound task by
    task: BWT −0.499 and recency bias 0.46 on Split MNIST Class-IL. With 10 tasks of 10 classes on CIFAR-100
    the recency bias reaches 1.0.
-4. **Regularisation alone does not solve Class-IL.** EWC (0.197) and LwF (0.228) stay at the Naive level (0.196)
+4. **Regularisation alone does not solve Class-IL.** EWC (0.196) and LwF (0.228) stay at the Naive level (0.196)
    on Split MNIST Class-IL, with task-recency bias ≈ 1.0: almost every old-task sample is predicted as a
-   newest-task class. Both are above Naive on all 6 seeds, but EWC by only 0.001. The same holds on text5
-   (0.105 vs 0.097) and Split CIFAR-100 (LwF 0.047 vs 0.049). Tuning does not change this (see
+   newest-task class. LwF is above Naive on all 6 seeds; EWC with λ = 30 is not (higher on 2 of 6 seeds,
+   p = 1), and λ = 100 led by only 0.001. The same holds on text5 (0.105 vs 0.097), Split CIFAR-10 (LwF 0.171,
+   EWC 0.165, Naive 0.182) and Split CIFAR-100 (LwF 0.047 vs 0.046). Tuning does not change this (see
    [Tuned comparison](#tuned-comparison)).
 5. **EWC is sensitive to λ.** With the literature default λ = 100 and an online (accumulated) Fisher, every seed
-   diverged on Permuted MNIST, Split CIFAR-10 and Split CIFAR-100. With λ = 30, chosen on validation accuracy,
-   Permuted MNIST trains stably and reaches 0.832, above Naive (0.805).
+   diverged on Permuted MNIST, Split CIFAR-10 and Split CIFAR-100. The default is now λ = 30, chosen on
+   validation accuracy: Permuted MNIST trains stably and reaches 0.832, above Naive (0.805) on 5 of 6 seeds
+   (p = 0.063). On CIFAR λ = 30 only delays the divergence: one Split CIFAR-10 seed diverges in the last of 5
+   tasks, and every Split CIFAR-100 seed in task 5, 9 or 10 of 10. The accumulated Fisher keeps growing from task
+   to task, so the penalty eventually becomes too stiff for the learning rate.
 6. **A-GEM helps in Domain-IL but not in Class-IL.** It reaches 0.864 on Permuted MNIST but only 0.335 on Split
    MNIST Class-IL, and stays at the Naive level on CIFAR-10, CIFAR-100 and text5. This matches the known
    weakness of gradient projection under class-incremental output heads.
@@ -183,9 +206,10 @@ With 6 pairs the smallest possible two-sided p is 0.031, reached when every seed
 10. **LoRA-per-task on vision uses a frozen randomly initialised backbone** (no pretraining), which limits it to
     0.184 on Split MNIST Class-IL and 0.619 on Permuted MNIST. It is a meaningful baseline only with pretrained
     backbones.
-11. **Split CIFAR-100 at 2 epochs is a floor test.** Joint reaches only 0.118 on 100 classes, so every continual
-    method sits between chance (0.010) and 0.06. Only replay (ER and DER++, 0.059) is above Naive (0.049). The
-    rankings on this benchmark mostly reflect under-training, not forgetting.
+11. **Split CIFAR-100 at 2 epochs is a floor test.** Joint reaches only 0.120 on 100 classes, so every continual
+    method sits between chance (0.010) and 0.063. Only replay (DER++ 0.063, ER 0.057) is clearly above Naive
+    (0.046); LwF (0.047) matches it. The rankings on this benchmark mostly reflect under-training, not
+    forgetting.
 
 ![Continual evaluation on Split MNIST Class-IL](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/assets/results/split_mnist_class_stream_curves.png)
 
@@ -207,9 +231,10 @@ small grid (`method_sweep`) on the two MNIST benchmarks:
 
 For each method, the variant with the best mean **validation** accuracy over seeds is selected (spec §5.3);
 diverged seeds score 0. Optimiser, learning rate, epochs, batch size and memory budget stay fixed by the
-fairness rules. "Default" is the literature default from the main study (v0.1 defaults for distillation). This
-experiment has 6 seeds, like the MNIST benchmarks of the main study, so its default and untuned values are the
-same as in the overview above. † = number of diverged seeds.
+fairness rules. "Default" is the literature default: λ = 100 for EWC and the v0.1 defaults for distillation. The
+main study now uses λ = 30 and the selected distillation settings, with 10 instead of 30 epochs. This
+experiment has 6 seeds, like the MNIST benchmarks of the main study, so its other default and untuned values are
+the same as in the overview above. † = number of diverged seeds.
 
 | Method | Split MNIST Class-IL: selected | default | tuned | Permuted MNIST: selected | default | tuned |
 |---|---|---|---|---|---|---|
@@ -234,7 +259,7 @@ same as in the overview above. † = number of diverged seeds.
     0.773) and takes three times the distillation time, so the default stays at 10.
 - **Tuning does not rescue regularisation in Class-IL.** No λ makes EWC differ from Naive on Split MNIST
   Class-IL (0.196–0.201), and no α lifts LwF above 0.230. On Permuted MNIST, λ = 30 avoids the divergence of
-  λ = 100 and λ = 300 and gives 0.832 (Naive 0.805).
+  λ = 100 and λ = 300 and gives 0.832 (Naive 0.805); it is now EWC's default on vision.
 - DER++ gains 0.03 with stronger replay terms (α = β = 1: 0.899 against 0.871). TIES gains 0.03 with sparser task
   vectors (k = 0.1: 0.591 against 0.561) on Split MNIST Class-IL.
 - Average ranks over the two benchmarks, using the selected variants:
@@ -270,10 +295,13 @@ Means over 6 seeds (MNIST benchmarks) or 3 seeds (CIFAR, text5).
 - `wall_time` is training time per run, averaged over seeds 0–2 only: seeds 3–5 ran in a later session with a
   different CPU load. It includes expert training for consolidation methods and Fisher computation for EWC.
   Joint and both distillation methods were re-run for v0.2 while other jobs shared the CPU, and wall times of
-  runs from different sessions vary by up to 2× with load.
+  runs from different sessions vary by up to 2× with load. The CIFAR runs and the MNIST EWC runs come from one
+  later session that ran two run groups at a time, so the MNIST EWC wall times are not comparable with the other
+  MNIST rows.
 - `buffer_bytes` counts the stored samples (or the distillation transfer set) and DER++ logits.
 - `state_bytes` counts extra state kept between tasks: the EWC Fisher diagonal and anchor, and the LwF teacher.
-- EWC has no row on Permuted MNIST, Split CIFAR-10 and Split CIFAR-100 because every seed diverged at λ = 100.
+- EWC has no row on Split CIFAR-100 because every seed diverged. Its Split CIFAR-10 row is the mean of the two
+  seeds that did not diverge.
 
 ### Split MNIST (Class-IL)
 
@@ -281,7 +309,7 @@ Means over 6 seeds (MNIST benchmarks) or 3 seeds (CIFAR, text5).
 |---|---|---|---|---|---|---|---|---|---|
 | Naive | 0.196 | -0.992 | 0.989 | 0.000 | 0.995 | 1.000 | 0 | 0 | 11 s |
 | Joint | 0.950 | — | — | — | — | 0.012 | 0 | 0 | 10 s |
-| EWC | 0.197 | -0.990 | 0.989 | 0.000 | 0.994 | 0.998 | 0 | 3.65 MB | 38 s |
+| EWC | 0.196 | -0.992 | 0.989 | 0.000 | 0.995 | 1.000 | 0 | 3.65 MB | 68 s |
 | LwF | 0.228 | -0.953 | 0.990 | 0.025 | 0.970 | 0.956 | 0 | 1.82 MB | 18 s |
 | ER | 0.858 | -0.148 | 0.976 | 0.757 | 0.155 | 0.125 | 1.50 MB | 0 | 14 s |
 | DER++ | 0.871 | -0.143 | 0.986 | 0.764 | 0.150 | 0.120 | 1.52 MB | 0 | 17 s |
@@ -298,7 +326,7 @@ Means over 6 seeds (MNIST benchmarks) or 3 seeds (CIFAR, text5).
 |---|---|---|---|---|---|---|---|---|
 | Naive | 0.980 | -0.012 | 0.990 | 0.970 | 0.016 | 0 | 0 | 10 s |
 | Joint | 0.993 | — | — | — | — | 0 | 0 | 10 s |
-| EWC | 0.983 | -0.008 | 0.990 | 0.975 | 0.012 | 0 | 3.65 MB | 39 s |
+| EWC | 0.981 | -0.010 | 0.990 | 0.972 | 0.015 | 0 | 3.65 MB | 68 s |
 | LwF | 0.990 | -0.001 | 0.990 | 0.991 | 0.003 | 0 | 1.82 MB | 18 s |
 | ER | 0.983 | -0.006 | 0.987 | 0.980 | 0.009 | 1.50 MB | 0 | 14 s |
 | DER++ | 0.991 | -0.001 | 0.992 | 0.985 | 0.008 | 1.52 MB | 0 | 18 s |
@@ -315,6 +343,7 @@ Means over 6 seeds (MNIST benchmarks) or 3 seeds (CIFAR, text5).
 |---|---|---|---|---|---|---|---|---|
 | Naive | 0.805 | -0.104 | 0.898 | 0.763 | 0.025 | 0 | 0 | 20 s |
 | Joint | 0.909 | — | — | — | — | 0 | 0 | 19 s |
+| EWC | 0.832 | -0.046 | 0.873 | 0.791 | 0.024 | 0 | 3.65 MB | 131 s |
 | LwF | 0.817 | -0.085 | 0.893 | 0.779 | 0.022 | 0 | 1.82 MB | 33 s |
 | ER | 0.869 | -0.046 | 0.910 | 0.846 | 0.021 | 1.50 MB | 0 | 27 s |
 | DER++ | 0.902 | -0.004 | 0.906 | 0.884 | -0.001 | 1.52 MB | 0 | 34 s |
@@ -329,33 +358,34 @@ Means over 6 seeds (MNIST benchmarks) or 3 seeds (CIFAR, text5).
 
 | Method | acc | bwt | learning_acc | min_acc | stability_gap | recency_bias | buffer_bytes | state_bytes | wall_time |
 |---|---|---|---|---|---|---|---|---|---|
-| Naive | 0.181 | -0.799 | 0.820 | 0.000 | 0.795 | 1.000 | 0 | 0 | 238 s |
-| Joint | 0.398 | — | — | — | — | 0.052 | 0 | 0 | 421 s |
-| LwF | 0.173 | -0.793 | 0.807 | 0.000 | 0.787 | 1.000 | 0 | 4.18 MB | 439 s |
-| ER | 0.302 | -0.670 | 0.838 | 0.063 | 0.686 | 0.647 | 5.86 MB | 0 | 415 s |
-| DER++ | 0.256 | -0.665 | 0.788 | 0.066 | 0.659 | 0.763 | 5.88 MB | 0 | 930 s |
-| A-GEM | 0.181 | -0.817 | 0.834 | 0.000 | 0.815 | 1.000 | 5.86 MB | 0 | 3465 s |
-| LoRA-per-task | 0.137 | -0.722 | 0.714 | 0.000 | 0.732 | 1.000 | 0 | 0 | 1635 s |
-| Task Arithmetic | 0.158 | -0.240 | 0.350 | — | — | 0.008 | 0 | 0 | 430 s |
-| TIES | 0.166 | -0.238 | 0.357 | — | — | 0.017 | 0 | 0 | 431 s |
-| Multi-teacher distill. | 0.262 | -0.234 | 0.449 | — | — | 0.202 | 5.86 MB | 0 | 490 s |
-| Continual distill. | 0.210 | -0.709 | 0.777 | — | — | 0.723 | 5.86 MB | 0 | 565 s |
+| Naive | 0.182 | -0.797 | 0.820 | 0.000 | 0.795 | 1.000 | 0 | 0 | 344 s |
+| Joint | 0.462 | — | — | — | — | 0.081 | 0 | 0 | 360 s |
+| EWC | 0.165 | -0.753 | 0.767 | 0.000 | 0.741 | 1.000 | 0 | 8.35 MB | 439 s |
+| LwF | 0.171 | -0.791 | 0.805 | 0.000 | 0.787 | 1.000 | 0 | 4.18 MB | 460 s |
+| ER | 0.290 | -0.684 | 0.837 | 0.080 | 0.666 | 0.701 | 5.86 MB | 0 | 641 s |
+| DER++ | 0.285 | -0.626 | 0.786 | 0.060 | 0.620 | 0.700 | 5.88 MB | 0 | 632 s |
+| A-GEM | 0.180 | -0.818 | 0.834 | 0.000 | 0.818 | 1.000 | 5.86 MB | 0 | 2032 s |
+| LoRA-per-task | 0.129 | -0.711 | 0.699 | 0.000 | 0.740 | 1.000 | 0 | 0 | 850 s |
+| Task Arithmetic | 0.151 | -0.288 | 0.382 | — | — | 0.016 | 0 | 0 | 561 s |
+| TIES | 0.160 | -0.293 | 0.395 | — | — | 0.037 | 0 | 0 | 577 s |
+| Multi-teacher distill. | 0.267 | -0.262 | 0.476 | — | — | 0.142 | 5.86 MB | 0 | 682 s |
+| Continual distill. | 0.229 | -0.684 | 0.776 | — | — | 0.604 | 5.86 MB | 0 | 806 s |
 
 ### Split CIFAR-100 (Class-IL)
 
 | Method | acc | bwt | learning_acc | min_acc | stability_gap | recency_bias | buffer_bytes | state_bytes | wall_time |
 |---|---|---|---|---|---|---|---|---|---|
-| Naive | 0.049 | -0.418 | 0.425 | 0.000 | 0.405 | 1.000 | 0 | 0 | 304 s |
-| Joint | 0.118 | — | — | — | — | 0.158 | 0 | 0 | 303 s |
-| LwF | 0.047 | -0.401 | 0.408 | 0.000 | 0.386 | 1.000 | 0 | 4.23 MB | 448 s |
-| ER | 0.059 | -0.406 | 0.424 | 0.003 | 0.343 | 0.972 | 5.86 MB | 0 | 425 s |
-| DER++ | 0.059 | -0.423 | 0.440 | 0.003 | 0.394 | 0.967 | 6.05 MB | 0 | 619 s |
-| A-GEM | 0.048 | -0.416 | 0.422 | 0.000 | 0.404 | 1.000 | 5.86 MB | 0 | 1452 s |
-| LoRA-per-task | 0.015 | -0.190 | 0.185 | 0.000 | 0.183 | 1.000 | 0 | 0 | 1208 s |
-| Task Arithmetic | 0.011 | -0.077 | 0.080 | — | — | 0.040 | 0 | 0 | 587 s |
-| TIES | 0.013 | -0.090 | 0.094 | — | — | 0.051 | 0 | 0 | 605 s |
-| Multi-teacher distill. | 0.040 | -0.066 | 0.099 | — | — | 0.025 | 5.86 MB | 0 | 818 s |
-| Continual distill. | 0.030 | -0.288 | 0.290 | — | — | 1.000 | 5.80 MB | 0 | 595 s |
+| Naive | 0.046 | -0.402 | 0.408 | 0.000 | 0.393 | 1.000 | 0 | 0 | 409 s |
+| Joint | 0.120 | — | — | — | — | 0.155 | 0 | 0 | 425 s |
+| LwF | 0.047 | -0.408 | 0.414 | 0.000 | 0.396 | 1.000 | 0 | 4.23 MB | 476 s |
+| ER | 0.057 | -0.398 | 0.416 | 0.003 | 0.335 | 0.968 | 5.86 MB | 0 | 722 s |
+| DER++ | 0.063 | -0.409 | 0.431 | 0.004 | 0.373 | 0.968 | 6.05 MB | 0 | 704 s |
+| A-GEM | 0.044 | -0.410 | 0.413 | 0.000 | 0.395 | 1.000 | 5.86 MB | 0 | 3348 s |
+| LoRA-per-task | 0.015 | -0.192 | 0.188 | 0.000 | 0.188 | 1.000 | 0 | 0 | 1237 s |
+| Task Arithmetic | 0.011 | -0.077 | 0.080 | — | — | 0.040 | 0 | 0 | 601 s |
+| TIES | 0.013 | -0.090 | 0.094 | — | — | 0.051 | 0 | 0 | 634 s |
+| Multi-teacher distill. | 0.040 | -0.068 | 0.102 | — | — | 0.023 | 5.86 MB | 0 | 877 s |
+| Continual distill. | 0.030 | -0.287 | 0.289 | — | — | 1.000 | 5.80 MB | 0 | 662 s |
 
 ### text5 + Pythia-70M (Class-IL)
 
@@ -379,15 +409,16 @@ Means over 6 seeds (MNIST benchmarks) or 3 seeds (CIFAR, text5).
 ![Training throughput](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/assets/results/bench_bars.png)
 
 See [Performance](Performance.md). For the MLP, training 8 seeds in one `vmap` ensemble gives 3.8× the
-throughput of one seed (40.7k vs 10.8k samples/s). For the reduced ResNet-18, bf16 + `torch.compile` gives 2.3×.
+throughput of one seed (40.7k vs 10.8k samples/s). For the reduced ResNet-18, bf16 + `torch.compile` gives 2.3×,
+almost all of it from bf16, so the CIFAR presets train in bf16 without compile.
 
 ## Success criteria
 
 | # | Criterion | Verdict | Evidence |
 |---|---|---|---|
 | 1 | Smoke profile: every method and consolidation path finishes within 60 s; all tests pass | Met | 66 smoke runs within the 60 s test on an idle 4-core CPU; 188 tests pass on Python 3.11 and 3.13 in CI (5 network tests skipped by default) |
-| 2 | CPU profile matrix completes in the session and produces a report | Met, with the budget deviations listed above | 324/324 runs finished (312 done, 12 diverged, 0 failed); `report.md` / `report.html` generated |
-| 3 | Split MNIST Class-IL ordering Naive < {EWC, LwF} < {ER, DER++} < Joint (mean ACC) | Met, on every seed | 0.196 < 0.197 / 0.228 < 0.858 / 0.871 < 0.950. Each step holds on all 6 seeds (exact Wilcoxon p = 0.031, the minimum for 6 pairs). EWC is ahead of Naive by only 0.001 |
+| 2 | CPU profile matrix completes in the session and produces a report | Met, with the budget deviations listed above | 324/324 runs finished (320 done, 4 diverged, 0 failed); `report.md` / `report.html` generated |
+| 3 | Split MNIST Class-IL ordering Naive < {EWC, LwF} < {ER, DER++} < Joint (mean ACC) | Partly met: not for EWC | 0.196 < 0.228 (LwF) < 0.858 / 0.871 < 0.950, each step on all 6 seeds (exact Wilcoxon p = 0.031, the minimum for 6 pairs). EWC with λ = 30 equals Naive (0.196, higher on 2 of 6 seeds, p = 1); λ = 100 was ahead by 0.001 on every seed but diverges on Permuted MNIST and CIFAR |
 | 4 | `contilab bench` reports vmap / compile speed-ups | Met | MLP vmap E=8: 3.8×; ResNet bf16 + compile: 2.3×; ResNet vmap: no gain (reported) |
 | 5 | Equivalence and consistency tests pass | Met | vmap members = single runs, compile = eager, EWC(λ=0) / ER(M=0) / DER++(0,0) = Naive, merge identities, resume = uninterrupted run |
 
@@ -396,7 +427,7 @@ throughput of one seed (40.7k vs 10.8k samples/s). For the reduced ResNet-18, bf
 - **Statistical power:** the MNIST benchmarks have 6 seeds, enough for an exact paired test to reach p < 0.05
   when every seed agrees. CIFAR-10, CIFAR-100 and text5 have 3 seeds: enough for means and spreads, not for
   per-benchmark significance tests.
-- **Scale:** this is a CPU-scale study. CIFAR-10 and CIFAR-100 at 2 epochs (Joint 0.398 and 0.118) and text5 at
+- **Scale:** this is a CPU-scale study. CIFAR-10 and CIFAR-100 at 2 epochs (Joint 0.462 and 0.120) and text5 at
   1,000 texts per task are far below their converged regimes; read absolute numbers as relative comparisons.
 - **Tuning scope:** hyperparameters were tuned only on the two MNIST benchmarks. CIFAR-10, CIFAR-100 and text5
   use the defaults, including the distillation defaults chosen on MNIST.

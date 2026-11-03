@@ -7,9 +7,10 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - v0.1: 전략 8종, TA/TIES/증류, vmap 앙상블, 러너·리포트·CLI
 - v0.2.0 릴리스: 지표 수정, 견고성, CI, 검증 기반 sweep 선택, 연속 증류, 작은 학생 모델
 - v0.3.0: M10–M12(bench 정밀도, 반복 계산 제거, vmap 폴백·OOM 분할 기록), compile 재컴파일 수정(배치 축 dynamic, 그래프 한도 = 태스크 수 + 8), 릴리스 워크플로(PyPI job은 변수로 꺼둠), Split CIFAR-100
-- CPU 연구: `cpu_main` 324런(6 벤치마크, MNIST 6시드), `cpu_tuned` 228런, `cpu_student` 12런 → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
+- CPU 연구: `cpu_main` 324런(6 벤치마크, MNIST 6시드), `cpu_tuned` 456런, `cpu_student` 12런 → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
+- EWC 비전 기본 λ=30(튜닝 선택값), CIFAR 프리셋은 compile 없이 bf16 → CIFAR 72런·MNIST EWC 18런 재실행
 - 문서 사이트(Just the Docs): 한국어 홈, FAQ, 구조화 데이터, llms.txt, IndexNow; 차트·변경 이력 페이지는 `scripts/sync_docs.py`가 생성
-- 테스트 191 통과, 5 skip(네트워크)
+- 테스트 196 통과, 5 skip(네트워크)
 
 ## 남은 작업
 - Zenodo: concept DOI `10.5281/zenodo.23906803`(전체 버전), v0.3.1 `10.5281/zenodo.23906804`; 이후 릴리스 DOI는 release 워크플로가 노트에 자동 추가
@@ -21,7 +22,7 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - HF Xet CDN 403 → 원본 미러(GCS MNIST, fast.ai S3)
 - 위키 push·force push·릴리스 API가 프록시에서 차단 → 위키는 `wiki-sync.yml`, 릴리스는 `release.yml`
 - CPU 과다구독 → text5 6배 저하, text 그룹 단독 실행
-- EWC λ=100: Permuted MNIST·CIFAR-10/100 전 시드 발산(λ 10–30 안정)
+- EWC λ=100: Permuted MNIST·CIFAR-10/100 전 시드 발산 → λ=30으로 MNIST는 안정, CIFAR-10 1/3·CIFAR-100 3/3은 스트림 후반에 여전히 발산(누적 Fisher가 계속 커짐)
 - 증류 v0.1 기본값은 학습 부족 → ties·routed·10 epoch
 - 컨테이너 재시작 시 분리 실행도 종료 → 재실행하면 끝난 런은 건너뜀
 

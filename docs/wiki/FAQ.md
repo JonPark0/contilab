@@ -39,12 +39,12 @@ contilab expresses each scenario as a logit mask on one shared head ([Methods](M
 It depends on what you may store. In contilab's [CPU study](Results.md) of 12 methods on 6 benchmarks:
 
 - **If you may keep a small replay buffer**, use DER++ or Experience Replay. After Joint training they have the
-  best average ranks (2.7 and 4.2), with 500 stored samples on the vision benchmarks.
+  best average ranks (2.3 and 4.2), with 500 stored samples on the vision benchmarks.
 - **If you can train one expert per task**, multi-teacher distillation into one student is not significantly
   different from DER++ on Split MNIST (class-incremental) once tuned. It costs the expert training.
 - **If you may store no data at all**, regularisation (EWC, LwF) does not solve class-incremental learning: it
   stays at the Naive level even after tuning. In the domain-incremental setting the gains are small: on
-  Permuted MNIST, LwF reaches 0.817 and tuned EWC 0.832, against 0.805 for Naive.
+  Permuted MNIST, LwF reaches 0.817 and EWC (λ = 30) 0.832, against 0.805 for Naive.
 
 The [Results](Results.md) page has every number, the tuned comparison and the limitations of a CPU-scale study.
 
@@ -87,10 +87,11 @@ the interface of each and the tests it needs.
 
 ## Why is EWC marked `diverged` in some runs?
 
-With the literature default λ = 100 and an accumulated (online) Fisher, the penalty becomes too stiff for the
-learning rate on long or hard sequences, and the loss explodes. Diverged runs are kept and flagged rather than
-dropped; sweep `method.params.lam` to tune it. λ = 30, chosen on validation accuracy, trains stably on Permuted
-MNIST.
+With an accumulated (online) Fisher, the penalty grows from task to task and eventually becomes too stiff for the
+learning rate, and the loss explodes. With the literature default λ = 100 every seed diverged on Permuted MNIST
+and Split CIFAR-10/100. The vision default is now λ = 30, chosen on validation accuracy: it trains stably on
+Permuted MNIST, but on Split CIFAR-10 (1 of 3 seeds) and CIFAR-100 (3 of 3) the divergence still comes late in
+the stream. Diverged runs are kept and flagged rather than dropped; sweep `method.params.lam` to tune it.
 
 ## Why is FWT empty in class-incremental learning?
 

@@ -125,15 +125,17 @@ main = load_dataset("{REPO_ID}", "cpu_main", split="train")
   `seed`, `status` (`done`, `diverged` or `failed`). `cpu_tuned` adds `selected` (the variant chosen on validation
   accuracy) and `cell` (the comparison-axis part of the variant).
 - **Metrics:** every other column. Definitions and references are on the [Metrics]({SITE}wiki/Metrics.html)
-  page. An empty cell means the metric is undefined for that run, for example forward transfer in Class-IL, stream
-  metrics for consolidation methods, or anything for a diverged run.
+  page. An empty cell means the metric is undefined for that run, for example forward transfer in Class-IL or stream
+  metrics for consolidation methods. Diverged runs keep their metrics, computed on the model whose parameters
+  stopped changing at the divergence.
 
 ## Final accuracy (cpu_main, mean over seeds)
 
 {overview(main)}
 
-"diverged" marks a benchmark where every seed of the method diverged (its loss stopped being finite); such runs
-are kept with `status = diverged`.
+Means are over the seeds that did not diverge. "diverged" marks a benchmark where every seed of the method
+diverged (its loss became non-finite or exceeded 1000 × its first value); such runs are kept with
+`status = diverged`.
 
 ## How the data were produced
 
