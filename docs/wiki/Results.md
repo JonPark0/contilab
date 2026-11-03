@@ -31,6 +31,9 @@ contilab. The page has three experiments:
 >   do not differ significantly.
 > - Continual distillation no longer beats Naive on every Class-IL benchmark: it falls below Naive on Split
 >   CIFAR-100.
+>
+> The tuned comparison has 6 seeds as well; its selections hold, except that 30 distillation epochs now edge out
+> 10 on Split MNIST Class-IL.
 
 ## Setup
 
@@ -160,7 +163,7 @@ With 6 pairs the smallest possible two-sided p is 0.031, reached when every seed
    [Tuned comparison](#tuned-comparison)).
 5. **EWC is sensitive to λ.** With the literature default λ = 100 and an online (accumulated) Fisher, every seed
    diverged on Permuted MNIST, Split CIFAR-10 and Split CIFAR-100. With λ = 30, chosen on validation accuracy,
-   Permuted MNIST trains stably and reaches 0.821, above Naive (0.808, seeds 0–2).
+   Permuted MNIST trains stably and reaches 0.832, above Naive (0.805).
 6. **A-GEM helps in Domain-IL but not in Class-IL.** It reaches 0.864 on Permuted MNIST but only 0.335 on Split
    MNIST Class-IL, and stays at the Naive level on CIFAR-10, CIFAR-100 and text5. This matches the known
    weakness of gradient projection under class-incremental output heads.
@@ -205,35 +208,39 @@ small grid (`method_sweep`) on the two MNIST benchmarks:
 For each method, the variant with the best mean **validation** accuracy over seeds is selected (spec §5.3);
 diverged seeds score 0. Optimiser, learning rate, epochs, batch size and memory budget stay fixed by the
 fairness rules. "Default" is the literature default from the main study (v0.1 defaults for distillation). This
-experiment uses seeds 0–2, so its numbers are 3-seed means and differ slightly from the 6-seed overview above.
+experiment has 6 seeds, like the MNIST benchmarks of the main study, so its default and untuned values are the
+same as in the overview above. † = number of diverged seeds.
 
 | Method | Split MNIST Class-IL: selected | default | tuned | Permuted MNIST: selected | default | tuned |
 |---|---|---|---|---|---|---|
-| Naive | — | 0.196 | 0.196 | — | 0.808 | 0.808 |
-| Joint | — | 0.951 | 0.951 | — | 0.911 | 0.911 |
-| EWC | λ=300 | 0.198 | **0.203** | λ=30 | diverged 3/3 | **0.821** |
-| LwF | α=1 | 0.225 | **0.225** | α=0.5 | 0.809 | **0.822** |
-| ER | — | 0.856 | 0.856 | — | 0.866 | 0.866 |
-| DER++ | α=1, β=1 | 0.861 | **0.891** | α=0.3, β=1 | 0.901 | **0.904** |
-| A-GEM | — | 0.344 | 0.344 | — | 0.861 | 0.861 |
-| LoRA-per-task | — | 0.184 | 0.184 | — | 0.625 | 0.625 |
-| Task Arithmetic | — | 0.525 | 0.525 | — | 0.565 | 0.565 |
-| TIES | k=0.1 | 0.552 | **0.582** | k=0.2 | 0.675 | **0.675** |
-| Multi-teacher distill. | epochs 10, TIES init, routed | 0.204 | **0.882** | epochs 30, TIES init, routed | 0.091 | **0.781** |
-| Continual distill. | — | 0.533 | 0.533 | — | 0.816 | 0.816 |
+| Naive | — | 0.196 | 0.196 | — | 0.805 | 0.805 |
+| Joint | — | 0.950 | 0.950 | — | 0.909 | 0.909 |
+| EWC | λ=300 | 0.197 | **0.201** | λ=30 | diverged 6/6 | **0.832** |
+| LwF | α=1 | 0.229 | **0.229** | α=0.5 | 0.816 | **0.828** |
+| ER | — | 0.858 | 0.858 | — | 0.869 | 0.869 |
+| DER++ | α=1, β=1 | 0.871 | **0.899** | α=0.3, β=1 | 0.902 | **0.906** |
+| A-GEM | — | 0.335 | 0.335 | — | 0.864 | 0.864 |
+| LoRA-per-task | — | 0.184 | 0.184 | — | 0.619 | 0.619 |
+| Task Arithmetic | — | 0.531 | 0.531 | — | 0.570 | 0.570 |
+| TIES | k=0.1 | 0.561 | **0.591** | k=0.2 | 0.677 | **0.677** |
+| Multi-teacher distill. | epochs 30, TIES init, routed | 0.223 | **0.871** | epochs 30, TIES init, routed | 0.097 | **0.786** |
+| Continual distill. | — | 0.586 | 0.586 | — | 0.818 | 0.818 |
 
 - **Tuning changes the verdict for distillation.** The v0.1 defaults trained the student for 16 SGD steps per task
   from θ₀ with entropy-mixed targets. A TIES-merged start with routed targets lifts Split MNIST Class-IL from
-  0.204 to 0.882 and Permuted MNIST from 0.091 to 0.781. These settings are now the defaults.
+  0.223 to 0.871 and Permuted MNIST from 0.097 to 0.786.
+  - These settings are now the defaults, with 10 distillation epochs.
+  - With 6 seeds, 30 epochs is selected on both benchmarks. It is 0.008 and 0.013 above 10 epochs (0.863 and
+    0.773) and takes three times the distillation time, so the default stays at 10.
 - **Tuning does not rescue regularisation in Class-IL.** No λ makes EWC differ from Naive on Split MNIST
-  Class-IL (0.197–0.203), and no α lifts LwF above 0.225. On Permuted MNIST, λ = 30 avoids the divergence of
-  λ = 100 and gives 0.821 (Naive 0.808).
-- DER++ gains 0.03 with stronger replay terms (α = β = 1). TIES gains 0.03 with sparser task vectors (k = 0.1) on
-  Split MNIST Class-IL.
+  Class-IL (0.196–0.201), and no α lifts LwF above 0.230. On Permuted MNIST, λ = 30 avoids the divergence of
+  λ = 100 and λ = 300 and gives 0.832 (Naive 0.805).
+- DER++ gains 0.03 with stronger replay terms (α = β = 1: 0.899 against 0.871). TIES gains 0.03 with sparser task
+  vectors (k = 0.1: 0.591 against 0.561) on Split MNIST Class-IL.
 - Average ranks over the two benchmarks, using the selected variants:
   - Joint 1.0, DER++ 2.0, ER 3.5
   - A-GEM 6.0, multi-teacher distillation 6.0, continual distillation 6.5
-  - LwF 7.0, TIES 7.5, EWC 8.0
+  - EWC 7.5, LwF 7.5, TIES 7.5
   - Naive 9.5, TA 9.5, LoRA-per-task 11.5
 
   Two benchmarks are too few for significance (Friedman p = 0.13).
@@ -411,7 +418,7 @@ experiment, one row per run with all scalar metrics. The same files are the Hugg
 ```bash
 contilab run configs/experiments/cpu_main.yaml        # ~22 h of training on 4 CPU cores (resumable)
 contilab run configs/experiments/cpu_main_seeds.yaml  # seeds 3–5 on the MNIST benchmarks, same directory
-contilab run configs/experiments/cpu_tuned.yaml       # ~25 min
+contilab run configs/experiments/cpu_tuned.yaml       # 456 runs, ~2 h
 contilab run configs/experiments/cpu_student.yaml     # ~10 min
 contilab report runs/cpu_main
 ```

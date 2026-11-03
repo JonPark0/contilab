@@ -48,8 +48,8 @@ A CPU study ran 12 methods on 6 benchmarks: 324 runs, with 3 to 6 seeds each.
 
 - **Replay leads.** After Joint training, DER++ and Experience Replay have the best average ranks across the 6
   benchmarks: 2.7 and 4.2 (Friedman p = 6.6·10⁻⁶).
-- **Multi-teacher distillation needed tuning.** Settings chosen on validation accuracy lifted it from 0.204 to
-  0.882 on Split MNIST (class-incremental). With them as defaults it reaches 0.863 over 6 seeds, not
+- **Multi-teacher distillation needed tuning.** Settings chosen on validation accuracy lifted it from 0.223 to
+  0.871 on Split MNIST (class-incremental). With them as defaults it reaches 0.863 over 6 seeds, not
   significantly different from DER++ (0.871).
 - **Regularisation alone stays at the Naive level** in class-incremental learning, even after tuning: EWC
   0.197 and LwF 0.228 against 0.196.
