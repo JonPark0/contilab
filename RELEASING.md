@@ -43,12 +43,22 @@ From then on, the release workflow's `doi` job ([zenodo-doi.yml](.github/workflo
 release's Zenodo record and adds its DOI to the release notes. Run **Actions → Zenodo DOI** with a tag to add it
 to an older release.
 
+### Hugging Face dataset
+
+The per-run CSVs are published as the dataset
+[jonpark0/contilab-cpu-study](https://huggingface.co/datasets/jonpark0/contilab-cpu-study) with a card generated
+by `scripts/hf_dataset.py` ([hf-dataset.yml](.github/workflows/hf-dataset.yml)). One-time setup:
+
+1. On <https://huggingface.co/settings/tokens>, create a token with write access.
+2. Add it as the repository secret `HF_TOKEN` (Settings → Secrets and variables → Actions → Secrets).
+3. Run **Actions → Hugging Face dataset → Run workflow**. Later changes to the CSVs on `main` republish it.
+
 ### Search engines (optional)
 
 - The docs site sends changed pages to IndexNow (Bing, Yandex, Seznam, Naver) after every Pages build
   ([indexnow.yml](.github/workflows/indexnow.yml)); run it by hand once to submit every page.
-- For Google and Bing ownership checks, add the HTML-tag codes from Google Search Console and Bing Webmaster
-  Tools under `webmaster_verifications` in `docs/_config.yml`, then submit
-  `https://jonpark0.github.io/contilab/sitemap.xml`.
+- Google Search Console verifies the site with `docs/google0f5a07030fefb89e.html`; submit
+  `https://jonpark0.github.io/contilab/sitemap.xml` there. For Bing Webmaster Tools, add its HTML-tag code under
+  `webmaster_verifications` in `docs/_config.yml` (or import the site from Search Console).
 - Upload `docs/assets/social-preview.png` under Settings → General → Social preview, so links to the repository
   show it too.
