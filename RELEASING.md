@@ -37,3 +37,17 @@ The next release is then uploaded to PyPI as well. Until the variable is set, th
 2. Publish the next release. Zenodo archives it and mints a DOI, taking the metadata from `CITATION.cff`.
 3. Add the concept DOI (the one that covers all versions) to `CITATION.cff` (`doi:`) and to the BibTeX entries,
    and add the DOI badge to the README.
+
+From then on, the release workflow's `doi` job ([zenodo-doi.yml](.github/workflows/zenodo-doi.yml)) waits for each
+release's Zenodo record and adds its DOI to the release notes. Run **Actions → Zenodo DOI** with a tag to add it
+to an older release.
+
+### Search engines (optional)
+
+- The docs site sends changed pages to IndexNow (Bing, Yandex, Seznam, Naver) after every Pages build
+  ([indexnow.yml](.github/workflows/indexnow.yml)); run it by hand once to submit every page.
+- For Google and Bing ownership checks, add the HTML-tag codes from Google Search Console and Bing Webmaster
+  Tools under `webmaster_verifications` in `docs/_config.yml`, then submit
+  `https://jonpark0.github.io/contilab/sitemap.xml`.
+- Upload `docs/assets/social-preview.png` under Settings → General → Social preview, so links to the repository
+  show it too.
