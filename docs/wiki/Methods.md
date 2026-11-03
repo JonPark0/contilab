@@ -28,7 +28,7 @@ All strategies share the same optimiser, epochs, batch size and memory budget. D
 |---|---|---|---|
 | Naive fine-tuning | `naive` | Train on each task in turn (lower bound) | — |
 | Joint | `joint` | All tasks merged into one task (upper bound); evaluated per original task | — |
-| EWC (online) | `ewc` | Quadratic penalty `λ/2 · Σ F (θ − θ*)²` with a diagonal empirical Fisher, accumulated `F ← γF + F_new` | λ = 100 / 10, γ = 1, 1024 Fisher samples |
+| EWC (online) | `ewc` | Quadratic penalty `λ/2 · Σ F (θ − θ*)²` with a diagonal empirical Fisher, accumulated `F ← γF + F_new` | λ = 30 / 10, γ = 1, 1024 Fisher samples |
 | LwF | `lwf` | Distil the previous model's outputs on the current batch: `T² · KL(p_old ‖ p_new)` on old classes | T = 2, α = 1 |
 | ER | `er` | Reservoir buffer of **dataset indices**; each step trains on current + replay batch | M = 500 / 200 |
 | DER++ | `derpp` | ER + MSE to logits stored at insertion time + CE on a second replay batch | M = 500 / 200, α = 0.1, β = 0.5 |
