@@ -47,8 +47,8 @@ to an older release.
 
 - The docs site sends changed pages to IndexNow (Bing, Yandex, Seznam, Naver) after every Pages build
   ([indexnow.yml](.github/workflows/indexnow.yml)); run it by hand once to submit every page.
-- For Google and Bing ownership checks, add the HTML-tag codes from Google Search Console and Bing Webmaster
-  Tools under `webmaster_verifications` in `docs/_config.yml`, then submit
-  `https://jonpark0.github.io/contilab/sitemap.xml`.
+- Google Search Console verifies the site with `docs/google0f5a07030fefb89e.html`; submit
+  `https://jonpark0.github.io/contilab/sitemap.xml` there. For Bing Webmaster Tools, add its HTML-tag code under
+  `webmaster_verifications` in `docs/_config.yml` (or import the site from Search Console).
 - Upload `docs/assets/social-preview.png` under Settings → General → Social preview, so links to the repository
   show it too.
