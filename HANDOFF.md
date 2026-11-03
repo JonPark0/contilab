@@ -12,7 +12,7 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - 테스트 191 통과, 5 skip(네트워크)
 
 ## 남은 작업
-- v0.3.0 태그: 릴리스 PR 머지 후 Actions → Release → Run workflow(tag `v0.3.0`)
+- v0.3.1 태그: 릴리스 PR 머지 후 Actions → Release → Run workflow(tag `v0.3.1`); Zenodo가 첫 DOI 발급 → concept DOI를 `CITATION.cff`·BibTeX·README 배지에 추가
 - 사용자 설정: PyPI pending publisher + 변수 `PUBLISH_PYPI=true`, Zenodo 연동, Search Console 인증, 소셜 미리보기 업로드(`RELEASING.md`)
 - 미검증: `configs/profiles/gpu.yaml`(GPU 없음), text5 전체 규모(CPU ~20시간+)
 - main의 옛 작성자 커밋: 이력 재작성은 force push 필요(사용자)

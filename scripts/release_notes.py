@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 REPO = "https://github.com/JonPark0/contilab"
+SITE = "https://jonpark0.github.io/contilab/"
 
 
 def section(changelog: str, version: str) -> str:
@@ -24,7 +25,7 @@ def notes(changelog: str, version: str) -> str:
     return "\n".join([
         section(changelog, version),
         "",
-        f"Results and documentation: [wiki]({REPO}/wiki) · [Results]({REPO}/wiki/Results)",
+        f"Documentation: [docs site]({SITE}) · [Results]({SITE}wiki/Results.html) · [wiki]({REPO}/wiki)",
         "",
         "## Install",
         "",

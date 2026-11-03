@@ -167,7 +167,7 @@ If contilab helps your research, please cite it (GitHub's *Cite this repository*
   author  = {Park, Yeochoon},
   title   = {contilab: a performance-first framework for continual learning benchmarking, distillation and model merging},
   year    = {2026},
-  version = {0.3.0},
+  version = {0.3.1},
   url     = {https://github.com/JonPark0/contilab}
 }
 ```

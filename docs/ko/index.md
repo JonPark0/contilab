@@ -93,7 +93,7 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
   author  = {Park, Yeochoon},
   title   = {contilab: a performance-first framework for continual learning benchmarking, distillation and model merging},
   year    = {2026},
-  version = {0.3.0},
+  version = {0.3.1},
   url     = {https://github.com/JonPark0/contilab}
 }
 ```
