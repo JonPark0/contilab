@@ -14,8 +14,9 @@ The same files are published as the Hugging Face dataset [jonpark0/contilab-cpu-
   (chosen on validation accuracy) and `cell` (comparison-axis part of the variant).
 - **Metric columns**: every other column is a scalar metric. Definitions are on the
   [Metrics](https://github.com/JonPark0/contilab/wiki/Metrics) page.
-- **Empty cells**: the metric is undefined for that run. Examples are FWT in Class-IL, stream metrics for
-  consolidation methods, and anything for a diverged run.
+- **Empty cells**: the metric is undefined for that run. Examples are FWT in Class-IL and stream metrics for
+  consolidation methods. Diverged runs keep their metrics, computed on the model whose parameters stopped
+  changing at the divergence.
 
 Rebuild the tables of the Results page with pandas:
 

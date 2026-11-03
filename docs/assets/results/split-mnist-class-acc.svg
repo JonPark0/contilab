@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 444" width="760" height="444" role="img" aria-labelledby="acc-title acc-desc" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
 <title id="acc-title">Final accuracy of continual-learning methods on Split MNIST (Class-IL)</title>
-<desc id="acc-desc">Mean over 6 seeds. Joint (upper bound): 0.950; DER++: 0.871; Multi-teacher distillation: 0.863; Experience Replay: 0.858; Continual distillation: 0.586; TIES-Merging: 0.561; Task Arithmetic: 0.531; A-GEM: 0.335; LwF: 0.228; EWC: 0.197; Naive: 0.196; LoRA-per-task: 0.184</desc>
+<desc id="acc-desc">Mean over 6 seeds. Joint (upper bound): 0.950; DER++: 0.871; Multi-teacher distillation: 0.863; Experience Replay: 0.858; Continual distillation: 0.586; TIES-Merging: 0.561; Task Arithmetic: 0.531; A-GEM: 0.335; LwF: 0.228; EWC: 0.196; Naive: 0.196; LoRA-per-task: 0.184</desc>
 <style>
 .bg{fill:#fff;stroke:#e5e7eb}.t{fill:#1f2937}.m{fill:#6b7280}.g{stroke:#e5e7eb}.b{fill:#2a78d6}
 @media (prefers-color-scheme:dark){.bg{fill:#1f2023;stroke:#3a3b40}.t{fill:#e5e7eb}.m{fill:#9ca3af}.g{stroke:#374151}.b{fill:#3987e5}}
@@ -47,8 +47,8 @@
 <path class="b" d="M210.0,305.0h108.8a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-108.8z"/>
 <text class="t" x="328.8" y="318.0" font-size="12">0.228</text>
 <text class="t" x="198" y="343.0" font-size="13" text-anchor="end">EWC</text>
-<path class="b" d="M210.0,331.0h93.3a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-93.3z"/>
-<text class="t" x="313.3" y="344.0" font-size="12">0.197</text>
+<path class="b" d="M210.0,331.0h92.7a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-92.7z"/>
+<text class="t" x="312.7" y="344.0" font-size="12">0.196</text>
 <text class="t" x="198" y="369.0" font-size="13" text-anchor="end">Naive</text>
 <path class="b" d="M210.0,357.0h92.7a4.0,4.0 0 0 1 4.0,4.0v8.0a4.0,4.0 0 0 1 -4.0,4.0h-92.7z"/>
 <text class="t" x="312.7" y="370.0" font-size="12">0.196</text>

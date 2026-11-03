@@ -42,17 +42,17 @@ fair, reproducible comparisons of methods across seeds, benchmarks and model siz
 
 ## Results at a glance
 
-![Final accuracy on Split MNIST (class-incremental), mean over 6 seeds: Joint 0.950, DER++ 0.871, multi-teacher distillation 0.863, Experience Replay 0.858, continual distillation 0.586, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.197, Naive 0.196, LoRA-per-task 0.184](assets/results/split-mnist-class-acc.svg)
+![Final accuracy on Split MNIST (class-incremental), mean over 6 seeds: Joint 0.950, DER++ 0.871, multi-teacher distillation 0.863, Experience Replay 0.858, continual distillation 0.586, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.196, Naive 0.196, LoRA-per-task 0.184](assets/results/split-mnist-class-acc.svg)
 
 A CPU study ran 12 methods on 6 benchmarks: 324 runs, with 3 to 6 seeds each.
 
 - **Replay leads.** After Joint training, DER++ and Experience Replay have the best average ranks across the 6
-  benchmarks: 2.7 and 4.2 (Friedman p = 6.6·10⁻⁶).
+  benchmarks: 2.3 and 4.2 (Friedman p = 4.5·10⁻⁶).
 - **Multi-teacher distillation needed tuning.** Settings chosen on validation accuracy lifted it from 0.223 to
   0.871 on Split MNIST (class-incremental). With them as defaults it reaches 0.863 over 6 seeds, not
   significantly different from DER++ (0.871).
 - **Regularisation alone stays at the Naive level** in class-incremental learning, even after tuning: EWC
-  0.197 and LwF 0.228 against 0.196.
+  0.196 and LwF 0.228 against 0.196.
 - **Continual distillation stores no experts.** Its 2×100 student keeps 98 % of the full-size accuracy on
   Permuted MNIST in 0.34 MB.
 
