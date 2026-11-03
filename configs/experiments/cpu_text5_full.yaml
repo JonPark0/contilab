@@ -1,0 +1,15 @@
+# text5 at the scale of the design (2,000 training and 500 test texts per task) instead of the cpu profile's
+# 1,000 / 200. Everything else follows cpu_main: same methods, seeds, optimiser, metrics settings and memory budget.
+# A-GEM keeps its 64-sample reference batch on text (256 would make each A-GEM step about 4x as expensive).
+# About a day of training on 4 CPU cores (resumable).
+name: cpu_text5_full
+profile: cpu
+matrix:
+  preset: [text5_class]
+  method.name: [naive, joint, ewc, lwf, er, derpp, agem, lora_per_task, 'consolidate:ta', 'consolidate:ties', 'consolidate:distill',
+                'consolidate:continual_distill']
+  seed: [0, 1, 2]
+overrides:
+  benchmark: {n_train: 2000, n_test: 500}
+workers: 2
+threads_per_worker: 2
