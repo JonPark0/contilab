@@ -13,9 +13,13 @@ nav_title: "Citing"
   title   = {contilab: a performance-first framework for continual learning benchmarking, distillation and model merging},
   year    = {2026},
   version = {0.3.1},
+  doi     = {10.5281/zenodo.23906803},
   url     = {https://github.com/JonPark0/contilab}
 }
 ```
+
+Every release is archived on [Zenodo](https://doi.org/10.5281/zenodo.23906803). The DOI `10.5281/zenodo.23906803` stands for all versions and
+resolves to the latest one; each release also has its own DOI, listed on the Zenodo page.
 
 GitHub's *Cite this repository* button reads [`CITATION.cff`](https://github.com/JonPark0/contilab/blob/main/CITATION.cff).
 Please also cite the original papers of the methods, metrics and datasets you use; references are listed in

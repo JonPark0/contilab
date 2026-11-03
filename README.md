@@ -6,6 +6,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org)
 [![Docs](https://img.shields.io/badge/docs-site-green.svg)](https://jonpark0.github.io/contilab/)
 [![Release](https://img.shields.io/github/v/release/JonPark0/contilab)](https://github.com/JonPark0/contilab/releases)
+[![DOI](https://zenodo.org/badge/1430580636.svg)](https://doi.org/10.5281/zenodo.23906803)
 
 **contilab** is a research framework for **continual learning** (also called *lifelong learning* or
 *incremental learning*): training a model on a sequence of tasks without **catastrophic forgetting**.
@@ -168,9 +169,13 @@ If contilab helps your research, please cite it (GitHub's *Cite this repository*
   title   = {contilab: a performance-first framework for continual learning benchmarking, distillation and model merging},
   year    = {2026},
   version = {0.3.1},
+  doi     = {10.5281/zenodo.23906803},
   url     = {https://github.com/JonPark0/contilab}
 }
 ```
+
+Every release is archived on [Zenodo](https://doi.org/10.5281/zenodo.23906803). The DOI `10.5281/zenodo.23906803` stands for all versions and
+resolves to the latest one; each release also has its own DOI, listed on the Zenodo page.
 
 ## 한국어 요약
 
