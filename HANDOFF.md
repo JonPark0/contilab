@@ -7,7 +7,7 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - v0.1: 전략 8종, TA/TIES/증류, vmap 앙상블, 러너·리포트·CLI
 - v0.2.0 릴리스: 지표 수정, 견고성, CI, 검증 기반 sweep 선택, 연속 증류, 작은 학생 모델
 - v0.3.0: M10–M12(bench 정밀도, 반복 계산 제거, vmap 폴백·OOM 분할 기록), compile 재컴파일 수정(배치 축 dynamic, 그래프 한도 = 태스크 수 + 8), 릴리스 워크플로(PyPI job은 변수로 꺼둠), Split CIFAR-100
-- CPU 연구: `cpu_main` 324런(6 벤치마크, MNIST 6시드), `cpu_tuned` 456런, `cpu_student` 12런 → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
+- CPU 연구: `cpu_main` 324런(6 벤치마크, MNIST 6시드), `cpu_tuned` 456런, `cpu_student` 12런, `cpu_text5_full` 36런(text5 설계 규모 2,000/500, 학습 19시간) → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
 - EWC 비전 기본 λ=30(튜닝 선택값), CIFAR 프리셋은 compile 없이 bf16 → CIFAR 72런·MNIST EWC 18런 재실행
 - EWC 강성 상한: SGD에서 Fisher를 max_stiffness/(lr·λ)로 clamp → 발산 0건(cpu_main EWC 24런·cpu_tuned EWC 72런 재실행)
 - 문서 사이트(Just the Docs): 한국어 홈, FAQ, 구조화 데이터, llms.txt, IndexNow; 차트·변경 이력 페이지는 `scripts/sync_docs.py`가 생성
@@ -16,7 +16,7 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 ## 남은 작업
 - Zenodo: concept DOI `10.5281/zenodo.23906803`(전체 버전), v0.3.1 `10.5281/zenodo.23906804`; 이후 릴리스 DOI는 release 워크플로가 노트에 자동 추가
 - 사용자 설정: PyPI pending publisher + 변수 `PUBLISH_PYPI=true`, Search Console 인증, 소셜 미리보기 업로드(`RELEASING.md`)
-- 미검증: `configs/profiles/gpu.yaml`(GPU 없음), text5 전체 규모(CPU ~20시간+)
+- 미검증: `configs/profiles/gpu.yaml`(GPU 없음)
 - main의 옛 작성자 커밋: 이력 재작성은 force push 필요(사용자)
 
 ## 실패한 시도와 원인
