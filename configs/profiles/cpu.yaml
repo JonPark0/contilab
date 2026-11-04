@@ -1,7 +1,8 @@
 # In-session CPU empirical study (§4.1 cpu column).
 defaults:
   # bench (4 CPUs, AMX): MLP fp32 eager vmap E=8 = 40.7k samples/s (3.8x E=1; bf16 28.6k, compiled 31-37k);
-  # ResNet: vmap gives nothing, bf16+compile = 730/s vs fp32 eager 318/s
+  # ResNet: vmap gives nothing; bf16 eager 586-652/s = bf16 compiled 595-613/s, fp32 eager 361/s; compiling one
+  # ResNet graph takes about 50 s, so the CIFAR presets train in bf16 without compile
   engine: {device: auto, compile: "off", precision: fp32, max_E: 8}
   model: {name: mlp, hidden: 400, depth: 2}
   optim: {name: sgd, lr: 0.03}
@@ -20,13 +21,13 @@ presets:
     benchmark: {name: split_cifar10, scenario: class}
     model: {name: resnet18r, nf: 20}
     train: {epochs: 2}  # 3 in the spec; lowered to fit the 6 h CPU budget (A-GEM ≈ 1 h/seed at 3 epochs)
-    engine: {compile: "on", precision: auto, max_E: 1}
+    engine: {precision: auto, max_E: 1}
     metrics: {rho: 50}  # ResNet evaluation is expensive; Δ ≈ 56 steps at 2 epochs
   split_cifar100_class:  # 10 tasks × 10 classes; same budget rules as Split CIFAR-10
     benchmark: {name: split_cifar100, scenario: class}
     model: {name: resnet18r, nf: 20}
     train: {epochs: 2}
-    engine: {compile: "on", precision: auto, max_E: 1}
+    engine: {precision: auto, max_E: 1}
     metrics: {rho: 50}
   text5_class:
     # n_train 2000 in the spec; 1000 per the plan's budget rule (pythia-70m ≈ 1 s/step on 4 CPU threads)

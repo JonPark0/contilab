@@ -19,7 +19,7 @@ def fisher_chunk(n_params: int, budget_bytes: int = FISHER_BUDGET_BYTES) -> int:
 
 @register_strategy("ewc")
 class EWC(Strategy):
-    DEFAULTS = {"vision": {"lam": 100.0, "gamma": 1.0, "fisher_n": 1024},
+    DEFAULTS = {"vision": {"lam": 30.0, "gamma": 1.0, "fisher_n": 1024},
                 "text": {"lam": 10.0, "gamma": 1.0, "fisher_n": 1024}}
 
     def __init__(self, lam: float = 100.0, gamma: float = 1.0, fisher_n: int = 1024):

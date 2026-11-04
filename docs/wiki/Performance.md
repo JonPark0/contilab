@@ -67,10 +67,10 @@ Takeaways:
 
 - For small models, training 8 seeds together is **3.8×** faster than one seed at a time; on this CPU fp32 eager
   beats bf16 and compile for the MLP.
-- For convolutional models vmap brings nothing on CPU, but bf16 + compile gives **2.3×**. Most of it comes from
-  bf16: in the later run, compile added nothing over bf16 eager at steady state, and compiling one ResNet graph
-  took about 50 s.
-- The `cpu` profile therefore uses `max_E: 8`, fp32, eager for MNIST presets and `max_E: 1`, bf16, compile for
+- For convolutional models vmap brings nothing on CPU, but bf16 + compile gives **2.3×**. Almost all of it comes
+  from bf16: in the later run bf16 eager reached 586–652 samples/s (1.6–1.8× fp32), compile added nothing on top at
+  steady state, and compiling one ResNet graph took about 50 s.
+- The `cpu` profile therefore uses `max_E: 8`, fp32, eager for MNIST presets and `max_E: 1`, bf16, eager for
   CIFAR. Run `contilab bench` on your own hardware and set `engine` per preset accordingly.
 
 ## Practical notes

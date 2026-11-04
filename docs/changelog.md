@@ -11,6 +11,13 @@ nav_title: "Changelog"
 ## Unreleased
 
 ### Changed
+- EWC's default λ on vision is 30, the value selected on validation accuracy in the tuned comparison, instead of
+  100. With λ = 100 every seed diverged on Permuted MNIST; with λ = 30 it reaches 0.832 (Naive 0.805).
+- The Split CIFAR-10 and CIFAR-100 presets of the `cpu` profile train in bf16 without `torch.compile`: compile added
+  no throughput at steady state and took about 50 s per graph.
+- The main study's CIFAR runs and MNIST EWC runs were re-run with these defaults, and the results, tables and
+  figures were updated. EWC still diverges late in the stream on Split CIFAR-10 (1 of 3 seeds) and CIFAR-100
+  (3 of 3).
 - The tuned comparison (`cpu_tuned`) has 6 seeds, like the MNIST benchmarks of the main study. Its config pins the
   consolidation defaults it was run with, so its run ids stay those of the published results.
 
