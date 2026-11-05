@@ -9,6 +9,7 @@ import torch
 from torch import Tensor
 
 if TYPE_CHECKING:
+    from contilab.core.config import OptimConfig
     from contilab.data.batching import TrainPool
     from contilab.engine.ensemble import Ensemble
 
@@ -100,3 +101,4 @@ class RunContext:
     pool: TrainPool | None = None
     ens: Ensemble | None = None
     loss_baseline: Tensor | None = None  # first loss per member (divergence reference; checkpointed)
+    optim: OptimConfig | None = None  # the stream optimiser, set by train_stream (EWC bounds its stiffness by it)

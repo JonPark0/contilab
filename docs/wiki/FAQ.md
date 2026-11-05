@@ -85,13 +85,16 @@ profile or set `engine.device: cuda`; mixed precision and compilation are then c
 Strategies, metrics, benchmarks and consolidation methods are registered plugins. [Extending](Extending.md) shows
 the interface of each and the tests it needs.
 
-## Why is EWC marked `diverged` in some runs?
+## Why did EWC diverge, and how is it prevented?
 
-With an accumulated (online) Fisher, the penalty grows from task to task and eventually becomes too stiff for the
-learning rate, and the loss explodes. With the literature default λ = 100 every seed diverged on Permuted MNIST
-and Split CIFAR-10/100. The vision default is now λ = 30, chosen on validation accuracy: it trains stably on
-Permuted MNIST, but on Split CIFAR-10 (1 of 3 seeds) and CIFAR-100 (3 of 3) the divergence still comes late in
-the stream. Diverged runs are kept and flagged rather than dropped; sweep `method.params.lam` to tune it.
+Under SGD, EWC's penalty multiplies a parameter's distance from its anchor by (1 − lr·λ·F) per step. The online
+Fisher F only grows from task to task, and once lr·λ·F exceeds 2 the parameter oscillates with growing amplitude
+and the loss explodes. Before EWC bounded this, every seed diverged with λ = 100 on Permuted MNIST and Split
+CIFAR-10/100, and some CIFAR seeds still did with λ = 30.
+
+EWC now clamps the stored Fisher so that lr·λ·F ≤ `method.params.max_stiffness` (default 1) under SGD, and no run
+of the CPU study diverges. Setting `max_stiffness: null` turns the clamp off. Any run whose loss becomes
+non-finite or exceeds 1000 × its first value is still kept and flagged `diverged` rather than dropped.
 
 ## Why is FWT empty in class-incremental learning?
 

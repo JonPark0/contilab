@@ -16,10 +16,18 @@ nav_title: "Changelog"
 - The Split CIFAR-10 and CIFAR-100 presets of the `cpu` profile train in bf16 without `torch.compile`: compile added
   no throughput at steady state and took about 50 s per graph.
 - The main study's CIFAR runs and MNIST EWC runs were re-run with these defaults, and the results, tables and
-  figures were updated. EWC still diverges late in the stream on Split CIFAR-10 (1 of 3 seeds) and CIFAR-100
-  (3 of 3).
+  figures were updated.
 - The tuned comparison (`cpu_tuned`) has 6 seeds, like the MNIST benchmarks of the main study. Its config pins the
   consolidation defaults it was run with, so its run ids stay those of the published results.
+
+### Fixed
+- EWC no longer diverges on long task streams under SGD. A step multiplies a parameter's distance from its anchor
+  by (1 − lr·λ·F), and the online Fisher only grows, so once lr·λ·F exceeded 2 the run diverged: with λ = 30, late
+  in the stream on Split CIFAR-10 (1 of 3 seeds) and CIFAR-100 (3 of 3). The stored Fisher is now clamped at
+  `max_stiffness / (lr·λ)` (`method.params.max_stiffness`, default 1, `null` turns it off) when the optimiser is
+  SGD; Adam-type optimisers are not clamped. No run of the main study or the tuned EWC sweep diverges any more; the
+  MNIST results are unchanged, and on CIFAR EWC is stable but below Naive. The EWC runs of both studies were
+  re-run.
 
 ### Added
 - Zenodo DOI `10.5281/zenodo.23906803` (all versions): a badge in the README, `doi` in `CITATION.cff` and the BibTeX entries,

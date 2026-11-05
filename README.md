@@ -125,7 +125,7 @@ average accuracy (mean over seeds):
 |---|---|---|---|---|---|---|
 | Naive | 0.196 | 0.980 | 0.805 | 0.182 | 0.046 | 0.097 |
 | Joint (upper bound) | 0.950 | 0.993 | 0.909 | 0.462 | 0.120 | 0.529 |
-| EWC | 0.196 | 0.981 | 0.832 | 0.165 (1 of 3 diverged) | diverged | 0.105 |
+| EWC | 0.196 | 0.981 | 0.832 | 0.159 | 0.041 | 0.105 |
 | LwF | 0.228 | 0.990 | 0.817 | 0.171 | 0.047 | 0.105 |
 | ER | 0.858 | 0.983 | 0.869 | **0.290** | 0.057 | 0.329 |
 | DER++ | **0.871** | **0.991** | **0.902** | 0.285 | **0.063** | 0.397 |
@@ -137,14 +137,14 @@ average accuracy (mean over seeds):
 | Teacher → student continual distillation | 0.586 | 0.980 | 0.818 | 0.229 | 0.030 | 0.331 |
 
 - **Ranking.** Replay (DER++, ER) and multi-teacher distillation rank best after Joint (average ranks 2.3, 4.2
-  and 5.0; Friedman p = 4.5·10⁻⁶). On Split MNIST Class-IL, multi-teacher distillation and DER++ do not differ
+  and 5.2; Friedman p = 5.8·10⁻⁶). On Split MNIST Class-IL, multi-teacher distillation and DER++ do not differ
   significantly over 6 seeds.
 - **Distillation needed tuning.** It needed validation-tuned defaults: a TIES-merged student and targets routed
   to each sample's teacher. With the v0.1 defaults it ranked last.
 - **Continual distillation** stores no experts and still beats Naive on every Class- and Domain-IL benchmark
   except Split CIFAR-100.
-- **Regularisation** stays at the Naive level in Class-IL even after tuning. EWC uses λ = 30 on vision, chosen on
-  validation accuracy; it still diverges late in the stream on Split CIFAR-10 and CIFAR-100.
+- **Regularisation** stays at the Naive level in Class-IL even after tuning. EWC (λ = 30 on vision, chosen on
+  validation accuracy, with its stiffness bounded under SGD) no longer diverges, but stays below Naive on CIFAR.
 - **Split CIFAR-100** at 2 CPU epochs is a floor test: Joint reaches only 0.120, and DER++ and ER are the only
   continual methods clearly above Naive.
 - **Language models.** LoRA-per-task keeps the language model's general ability (perplexity +186 vs +7,481 for

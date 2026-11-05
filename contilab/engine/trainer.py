@@ -56,7 +56,7 @@ class DivergenceGuard:
 def train_stream(ens: Ensemble, strategy: Strategy, stream: Stream, train_cfg: TrainConfig, engine_cfg: EngineConfig,
                  optim_cfg: OptimConfig, hooks: CollectorHooks, ctx: RunContext, start_task: int = 0,
                  on_task_done: Callable[[int], None] | None = None, end_task: int | None = None) -> TrainStep:
-    ctx.ens = ens
+    ctx.ens, ctx.optim = ens, optim_cfg
     if ctx.pool is None:
         ctx.pool = TrainPool.from_stream(stream)
     step = TrainStep(ens, strategy, stream, engine_cfg, optim_cfg)
