@@ -13,7 +13,7 @@ CPU = Path("configs/experiments/cpu_main.yaml")
 def test_merge_order_and_expand():
     exp = load_experiment(SMOKE, ["train.epochs=2"])
     runs = expand(exp)
-    assert len(runs) == 3 * 11 * 2
+    assert len(runs) == 3 * 15 * 2
     r = next(r for r in runs if r.preset == "syn_text" and r.method.name == "ewc")
     assert r.train.epochs == 2 and r.model.hf_name == "tiny-gptneox" and r.metrics.tier == "full"
     assert r.experiment == "smoke_all"

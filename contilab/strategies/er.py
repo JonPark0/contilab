@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import torch
 
-from contilab.core.scenario import sample_mask
+from contilab.core.scenario import MASK_FILL, sample_mask
 from contilab.core.types import Batch
 from contilab.strategies.base import Strategy, cross_entropy, derived_gens, register_strategy
 from contilab.strategies.buffer import ReservoirBuffer
@@ -86,3 +86,21 @@ class ER(ReplayStrategy):
         both = batch if replay is None else cat_batches(batch, replay)
         z = f.logits(p, both.x, both.attn_mask, both.mask)
         return cross_entropy(z, both.y), z[:B]
+
+
+@register_strategy("er_ace")
+class ERACE(ReplayStrategy):
+    """ER with asymmetric cross-entropy (Caccia et al., 2022): the incoming batch's softmax covers only the classes
+    present in that batch, so learning new classes does not push down the logits of old ones; the replay batch keeps
+    the usual cross-entropy over all classes the scenario allows."""
+
+    DEFAULTS = ER.DEFAULTS
+
+    def loss(self, p, s, batch, replay, f):
+        z = f.logits(p, batch.x, batch.attn_mask, batch.mask)
+        present = (batch.y[:, None] == torch.arange(z.shape[-1], device=z.device)).any(0)
+        loss = cross_entropy(z.masked_fill(~present, MASK_FILL), batch.y)
+        if replay is not None:
+            zr = f.logits(p, replay.x, replay.attn_mask, replay.mask)
+            loss = loss + cross_entropy(zr, replay.y)
+        return loss, z

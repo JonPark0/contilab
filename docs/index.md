@@ -1,6 +1,6 @@
 ---
 title: contilab — continual learning benchmark, model merging and distillation framework for PyTorch
-description: PyTorch framework for continual learning research. Benchmark EWC, LwF, experience replay, DER++, A-GEM and LoRA against catastrophic forgetting on vision and language models, compare them with Task Arithmetic, TIES-Merging and knowledge distillation, and report 30+ metrics with proper statistics.
+description: PyTorch framework for continual learning research. Benchmark EWC, LwF, experience replay, ER-ACE, DER++, A-GEM, GEM, LoRA and O-LoRA against catastrophic forgetting on vision and language models, compare them with Task Arithmetic, TIES-Merging, MagMax and knowledge distillation, and report 30+ metrics with proper statistics.
 nav_order: 1
 nav_title: "Home"
 ---
@@ -22,10 +22,10 @@ compare them with model merging and distillation, on vision and language models.
 **continual learning**, and also *lifelong* or *incremental learning*. contilab is built for empirical studies:
 fair, reproducible comparisons of methods across seeds, benchmarks and model sizes.
 
-- **12 methods, one evaluation.**
-  - Sequential methods: Naive fine-tuning, Joint training, EWC, LwF, Experience Replay, DER++, A-GEM and
-    LoRA-per-task.
-  - Train-then-consolidate pipelines: Task Arithmetic, TIES-Merging, multi-teacher distillation and
+- **16 methods, one evaluation.**
+  - Sequential methods: Naive fine-tuning, Joint training, EWC, LwF, Experience Replay, ER-ACE, DER++, A-GEM,
+    GEM, LoRA-per-task and O-LoRA.
+  - Train-then-consolidate pipelines: Task Arithmetic, TIES-Merging, MagMax, multi-teacher distillation and
     teacher → student continual distillation.
   - Every method is scored with the same metrics.
 - **30+ metrics, computed after training.** Forgetting, backward and forward transfer, the stability gap,
@@ -81,7 +81,7 @@ Or install a [release](https://github.com/JonPark0/contilab/releases) wheel with
 | Area | Contents |
 |---|---|
 | Scenarios | Task-incremental, class-incremental, domain-incremental |
-| [Methods](wiki/Methods.md) | Naive, Joint, EWC (online), LwF, Experience Replay, DER++, A-GEM, LoRA-per-task |
+| [Methods](wiki/Methods.md) | Naive, Joint, EWC (online), LwF, Experience Replay, ER-ACE, DER++, A-GEM, GEM, LoRA-per-task, O-LoRA |
 | [Merging and distillation](wiki/Consolidation.md) | Task Arithmetic, TIES-Merging, multi-teacher distillation, teacher → student continual distillation, smaller students |
 | [Benchmarks](wiki/Benchmarks.md) | Split MNIST, Permuted MNIST, Split CIFAR-10, Split CIFAR-100, text5 (AG News → Yelp → Amazon → DBpedia → Yahoo Answers) |
 | [Metrics](wiki/Metrics.md) | 30+ metrics, figures (accuracy heatmaps, stability-gap curves, CKA, t-SNE, loss barriers, critical-difference diagrams) |

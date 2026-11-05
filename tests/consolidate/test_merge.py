@@ -53,3 +53,12 @@ def test_assemble_head_rows_and_domain_mean():
     d = assemble_head([e0, e1], torch.ones(2, 4, dtype=torch.bool), 1, "domain")
     assert torch.allclose(d["head.weight"], torch.full((1, 4, 2), 0.5))
     assert body_names({"head.weight": 0, "layers.0.weight": 0}) == ["layers.0.weight"]
+
+
+def test_magmax_keeps_the_largest_magnitude_entry():
+    from contilab.consolidate.merge import merge_magmax
+
+    a = {"w": torch.tensor([[1.0, -3.0, 2.0]])}
+    b = {"w": torch.tensor([[-2.0, 1.0, 2.0]])}
+    c = {"w": torch.tensor([[0.5, 0.5, -2.0]])}
+    assert merge_magmax([a, b, c])["w"].tolist() == [[-2.0, -3.0, -2.0]]  # ties go to the later task

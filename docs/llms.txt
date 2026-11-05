@@ -1,6 +1,6 @@
 # contilab
 
-> contilab is a PyTorch framework for empirical continual learning (lifelong, incremental learning) research on vision and language models. It benchmarks methods against catastrophic forgetting (Naive, Joint, EWC, LwF, Experience Replay, DER++, A-GEM, LoRA-per-task), compares them with train-then-consolidate pipelines (Task Arithmetic, TIES-Merging, multi-teacher distillation, teacher-to-student continual distillation), and computes 30+ metrics after training with bootstrap confidence intervals, exact paired tests and Friedman/Nemenyi critical differences. MIT license.
+> contilab is a PyTorch framework for empirical continual learning (lifelong, incremental learning) research on vision and language models. It benchmarks methods against catastrophic forgetting (Naive, Joint, EWC, LwF, Experience Replay, ER-ACE, DER++, A-GEM, GEM, LoRA-per-task, O-LoRA), compares them with train-then-consolidate pipelines (Task Arithmetic, TIES-Merging, MagMax, multi-teacher distillation, teacher-to-student continual distillation), and computes 30+ metrics after training with bootstrap confidence intervals, exact paired tests and Friedman/Nemenyi critical differences. MIT license.
 
 Key facts:
 
@@ -18,7 +18,7 @@ Key facts:
 - [Results](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/wiki/Results.md): the CPU study, rankings, tuned comparison, findings
 - [FAQ](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/wiki/FAQ.md): which method to use, scenarios, stability gap, language models, GPUs
 - [Methods](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/wiki/Methods.md): scenarios and strategies with hyperparameters
-- [Merging and distillation](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/wiki/Consolidation.md): Task Arithmetic, TIES-Merging, multi-teacher and continual distillation
+- [Merging and distillation](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/wiki/Consolidation.md): Task Arithmetic, TIES-Merging, MagMax, multi-teacher and continual distillation
 - [Metrics](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/wiki/Metrics.md): every metric with formula and reference
 - [README](https://raw.githubusercontent.com/JonPark0/contilab/main/README.md): overview, quick start, references
 

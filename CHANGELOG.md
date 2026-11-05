@@ -22,6 +22,18 @@
   re-run.
 
 ### Added
+- Four methods:
+  - **GEM** (`gem`): one reference gradient per previous task and the dual-QP projection of the paper, solved
+    exactly per member. It uses A-GEM's memory and reference-batch size, so the two differ only in the projection.
+    Strategies can now ask for one reference gradient per group of the replay batch (`Strategy.ref_groups`).
+  - **ER-ACE** (`er_ace`): ER with an asymmetric cross-entropy. The incoming batch's softmax covers only the
+    classes present in it.
+  - **O-LoRA** (`olora`): a new LoRA adapter per task with an orthogonality penalty against the earlier ones; all
+    adapters stay active at inference, so it needs no task identity.
+  - **MagMax** (`consolidate:magmax`): experts fine-tuned sequentially, merged by keeping each parameter's
+    largest-magnitude task-vector value. Sequential experts (`train_experts(..., sequential=True)`) have their
+    own cache entry.
+- The smoke matrix covers the new methods (90 runs, about 40 s on 4 cores).
 - Experiment config `cpu_text5_full`: text5 at the design scale (2,000 training and 500 test texts per task). Its
   36 runs are in `cpu_text5_full.csv` and on the Results page: the method order of the main study holds (rank
   correlation 0.97), and most methods gain 0.01–0.05.

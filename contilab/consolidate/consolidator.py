@@ -11,7 +11,7 @@ from torch import Tensor
 
 from contilab.consolidate.experts import Experts, expert_factory, train_experts
 from contilab.consolidate.heads import assemble_head, body_names
-from contilab.consolidate.merge import apply_tv, merge_ta, merge_ties, select_lambda, task_vector
+from contilab.consolidate.merge import apply_tv, merge_magmax, merge_ta, merge_ties, select_lambda, task_vector
 from contilab.core.config import ConsolidateConfig, ModelConfig, RunConfig
 from contilab.core.scenario import sample_mask
 from contilab.core.types import RunContext, Stream
@@ -40,6 +40,7 @@ class ConsolidationContext:
 class Consolidator:
     supports_student = False  # True: the consolidated model may use another architecture than the experts
     keeps_experts = True  # False: each expert is discarded once used (no expert storage cost)
+    sequential_experts = False  # True: expert t is fine-tuned from expert t-1 instead of from θ₀
 
     def __init__(self, cfg: ConsolidateConfig, params: dict[str, Any] | None = None):
         self.cfg = cfg
@@ -85,12 +86,24 @@ class TIESConsolidator(Consolidator):
         return self._merge(experts, upto, cctx, merge_ties(self._task_vectors(experts, upto, cctx), self.cfg.ties_k))
 
 
+class MagMaxConsolidator(Consolidator):
+    """MagMax: sequential fine-tuning, then per entry the largest-magnitude value over the task vectors (all taken
+    from θ₀). The scaling λ is chosen on validation accuracy like TA and TIES (the paper fixes it at 0.5)."""
+
+    sequential_experts = True
+
+    def consolidate(self, experts, upto, cctx):
+        return self._merge(experts, upto, cctx, merge_magmax(self._task_vectors(experts, upto, cctx)))
+
+
 def build_consolidator(method_name: str, cfg: ConsolidateConfig, params: dict[str, Any] | None = None) -> Consolidator:
     kind = method_name.split(":", 1)[1]
     if kind == "ta":
         return TAConsolidator(cfg, params)
     if kind == "ties":
         return TIESConsolidator(cfg, params)
+    if kind == "magmax":
+        return MagMaxConsolidator(cfg, params)
     if kind == "distill":
         from contilab.consolidate.distill import DistillConsolidator
 
@@ -130,7 +143,7 @@ def run_consolidation(stream: Stream, cfg: RunConfig, seeds: list[int], hooks, c
     student = student_model_config(cfg)
     if student is not None and not consolidator.supports_student:
         raise ValueError(f"{cfg.method.name} merges expert weights: the student must keep the teacher architecture")
-    experts = train_experts(stream, cfg, seeds)
+    experts = train_experts(stream, cfg, seeds, sequential=consolidator.sequential_experts)
     fac, holder = expert_factory(stream, cfg)
     init = [cfg.consolidate.init_seed] * len(seeds)
     teacher = None

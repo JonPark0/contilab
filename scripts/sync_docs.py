@@ -34,8 +34,9 @@ nav_title: "Changelog"
 """
 
 NAMES = {"naive": "Naive", "joint": "Joint (upper bound)", "ewc": "EWC", "lwf": "LwF", "er": "Experience Replay",
-         "derpp": "DER++", "agem": "A-GEM", "lora_per_task": "LoRA-per-task", "consolidate:ta": "Task Arithmetic",
-         "consolidate:ties": "TIES-Merging", "consolidate:distill": "Multi-teacher distillation",
+         "er_ace": "ER-ACE", "derpp": "DER++", "agem": "A-GEM", "gem": "GEM", "lora_per_task": "LoRA-per-task",
+         "olora": "O-LoRA", "consolidate:ta": "Task Arithmetic", "consolidate:ties": "TIES-Merging",
+         "consolidate:magmax": "MagMax", "consolidate:distill": "Multi-teacher distillation",
          "consolidate:continual_distill": "Continual distillation"}
 
 

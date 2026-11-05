@@ -66,3 +66,33 @@ def test_er_beats_naive_class_il():
 def test_derpp_beats_naive_class_il():
     s = build_synthetic(scenario="class")
     assert final_acc(s, DERpp(M=100), [0, 1]) > final_acc(s, Naive(), [0, 1]) + 0.1
+
+
+def _head_grad(strategy, batch):
+    from contilab.strategies.base import MemberFns
+    from helpers import mlp_factory
+
+    model = mlp_factory(in_dim=batch.x.shape[1], C=4)(0)
+    p = dict(model.named_parameters())
+    loss, _ = strategy.loss(p, {}, batch, None, MemberFns(model, dict(model.named_buffers())))
+    loss.backward()
+    return model.head.weight.grad
+
+
+def test_er_ace_incoming_softmax_covers_only_the_batch_classes():
+    from contilab.core.types import Batch
+    from contilab.strategies.er import ERACE
+
+    x, y = torch.randn(6, 32), torch.tensor([2, 3, 2, 3, 2, 3])
+    batch = Batch(x, y, torch.ones(6, dtype=torch.long), None, torch.arange(6), torch.ones(6, 4, dtype=torch.bool))
+    ace, er = _head_grad(ERACE(M=10), batch), _head_grad(ER(M=10), batch)
+    assert (ace[:2] == 0).all() and (ace[2:] != 0).any()  # old classes 0, 1 untouched by the incoming batch
+    assert (er[:2] != 0).any()
+
+
+def test_er_ace_runs_and_differs_from_er():
+    from contilab.strategies.er import ERACE
+
+    s = default_stream()
+    ace, _ = train_on(s, ERACE(M=50), [0, 1])
+    assert not params_equal(ace, train_on(s, ER(M=50), [0, 1])[0])

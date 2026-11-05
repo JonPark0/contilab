@@ -19,8 +19,8 @@ ends at 0.196 accuracy over the 10 digits, against 0.950 when all tasks are trai
 
 contilab is a PyTorch framework for empirical continual-learning research. It runs methods on benchmarks across
 seeds, stores the raw outcomes, computes 30+ metrics afterwards, and reports means, confidence intervals and
-significance tests. It covers the usual sequential methods (EWC, LwF, Experience Replay, DER++, A-GEM,
-LoRA-per-task) and train-then-consolidate pipelines: Task Arithmetic, TIES-Merging, multi-teacher distillation
+significance tests. It covers the usual sequential methods (EWC, LwF, Experience Replay, ER-ACE, DER++, A-GEM,
+GEM, LoRA-per-task, O-LoRA) and train-then-consolidate pipelines: Task Arithmetic, TIES-Merging, MagMax, multi-teacher distillation
 and teacher → student continual distillation ([Consolidation](Consolidation.md)).
 
 ## What is the difference between task-, class- and domain-incremental learning?

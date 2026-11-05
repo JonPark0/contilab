@@ -67,6 +67,12 @@ class Strategy:
     def eval_setup(self, ctx: RunContext, task_eval: int | None) -> None:
         """Called before evaluating task `task_eval`; None restores the training configuration."""
 
+    def ref_groups(self) -> list[int] | None:
+        """Sizes of consecutive groups in the current replay batch, each with its own reference gradient (GEM).
+        None: one reference gradient over the whole replay batch (A-GEM). Then `transform_grad` receives
+        `ref_grads` of shape [E, ...]; with groups, [E, K, ...] for K groups."""
+        return None
+
     def transform_grad(self, grads: dict[str, Tensor], ref_grads: dict[str, Tensor] | None) -> dict[str, Tensor]:
         return grads
 
