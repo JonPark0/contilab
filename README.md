@@ -148,10 +148,12 @@ average accuracy (mean over seeds):
 - **Split CIFAR-100** at 2 CPU epochs is a floor test: Joint reaches only 0.120, and DER++ and ER are the only
   continual methods clearly above Naive.
 - **Language models.** LoRA-per-task keeps the language model's general ability (perplexity +186 vs +7,481 for
-  Naive) but learns little.
+  Naive) but learns little. At the design scale of text5 (2,000 / 500 texts per task instead of 1,000 / 200) the
+  method order holds (rank correlation 0.97), and multi-teacher distillation reaches 0.477.
 
-Setup, a validation-tuned comparison, a smaller-student experiment, per-benchmark metrics (BWT, stability gap,
-recency bias, memory, wall time), figures and limitations: [Results](docs/wiki/Results.md).
+Setup, a validation-tuned comparison, a smaller-student experiment, text5 at the design scale, per-benchmark
+metrics (BWT, stability gap, recency bias, memory, wall time), figures and limitations:
+[Results](docs/wiki/Results.md).
 
 ## Documentation
 
@@ -208,6 +210,7 @@ resolves to the latest one; each release also has its own DOI, listed on the Zen
   - 교사→학생 연속 증류는 전문가 모델을 저장하지 않고도 Split CIFAR-100을 제외한 Class-IL·Domain-IL 벤치마크에서 Naive보다 높았습니다.
   - 정규화 계열(EWC, LwF)은 튜닝 후에도 Class-IL에서 Naive 수준에 머물렀습니다.
   - Split CIFAR-100(CPU 2 epoch)은 Joint도 0.120에 그쳤고, 연속 학습 방법 중에서는 리플레이(DER++, ER)만 Naive를 뚜렷이 넘었습니다.
+  - text5를 설계 규모(태스크당 학습 2,000·테스트 500개)로 다시 돌려도 메서드 순위는 거의 같았습니다(순위 상관 0.97).
 
 자세한 문서는 [문서 사이트](https://jonpark0.github.io/contilab/ko/)와 [위키](https://github.com/JonPark0/contilab/wiki)를 참고하세요.
 

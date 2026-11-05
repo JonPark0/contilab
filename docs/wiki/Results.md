@@ -8,13 +8,14 @@ nav_title: "Results"
 # Results: CPU study
 
 An empirical comparison of 12 continual-learning methods on 6 benchmarks, run end to end on a 4-core CPU with
-contilab. The page has three experiments:
+contilab. The page has four experiments:
 
 | Experiment | Config | What it answers |
 |---|---|---|
 | Main study | `configs/experiments/cpu_main.yaml` (+ `cpu_main_seeds.yaml`) | All methods with default hyperparameters on 6 benchmarks |
 | Tuned comparison | `configs/experiments/cpu_tuned.yaml` | The same methods when each one's hyperparameters are chosen on validation accuracy (two MNIST benchmarks) |
 | Smaller student | `configs/experiments/cpu_student.yaml` | Distilling full-size experts into a student with 5.3× fewer parameters |
+| text5 at the design scale | `configs/experiments/cpu_text5_full.yaml` | Whether the text5 results hold with 2,000 / 500 texts per task instead of 1,000 / 200 |
 
 > **v0.2 update.** The results were refreshed after these changes:
 > - Metric fixes: `cka_final`, `buffer_bytes`, and the continual-evaluation curves of Joint.
@@ -65,6 +66,11 @@ contilab. The page has three experiments:
 > - Average ranks: EWC 7.8 (was 8.2), multi-teacher distillation 5.2, continual distillation 6.7; Friedman
 >   p = 5.8·10⁻⁶.
 
+> **Update: text5 at the design scale.** text5 was run again with 2,000 training and 500 test texts per task, the
+> scale of the original design. The method order holds (Spearman ρ = 0.97 between the method means), and most
+> methods gain 0.01–0.05; see [text5 at the design scale](#text5-at-the-design-scale). The main-study tables keep
+> the 1,000 / 200 runs.
+
 ## Setup
 
 | | |
@@ -80,7 +86,8 @@ contilab. The page has three experiments:
 Deviations from the original design, all made to fit a CPU budget:
 
 - CIFAR-10 and CIFAR-100 were trained for 2 epochs instead of 3.
-- text5 used 1,000 training and 200 test texts per task, instead of 2,000 and 500.
+- text5 used 1,000 training and 200 test texts per task, instead of 2,000 and 500. A separate run at the design
+  scale gives the same method order; see [text5 at the design scale](#text5-at-the-design-scale).
 - A-GEM on text used a 64-sample reference batch instead of 256.
 
 ## Accuracy overview
@@ -219,7 +226,8 @@ With 6 pairs the smallest possible two-sided p is 0.031, reached when every seed
    - Full fine-tuning methods raise the WikiText perplexity of the original LM head by +4,500 to +14,000.
    - LoRA-per-task (+186) and TIES (+1,709) keep it low but barely learn the tasks (learning accuracy
      0.21–0.25).
-   - Multi-teacher distillation has the best balance: the highest text5 accuracy (0.452) at +3,643.
+   - Multi-teacher distillation has the best balance: the highest text5 accuracy (0.452) at +3,643. At the design
+     scale it holds: 0.477 at +3,703.
 10. **LoRA-per-task on vision uses a frozen randomly initialised backbone** (no pretraining), which limits it to
     0.184 on Split MNIST Class-IL and 0.619 on Permuted MNIST. It is a meaningful baseline only with pretrained
     backbones.
@@ -306,6 +314,56 @@ variant of the tuned comparison. All rows use seeds 0–2.
   all 10 classes shared) costs it 0.07.
 - Continual distillation never stores an expert. Its 2×100 student keeps 98 % of the full-size accuracy on
   Permuted MNIST, in 0.34 MB. That is the smallest deployable result in this study.
+
+## text5 at the design scale
+
+`cpu_text5_full` repeats the text5 benchmark of the main study at the scale of the original design: 2,000
+training and 500 test texts per task instead of 1,000 and 200. Methods, seeds (0–2), optimiser, memory budget and
+metric settings are those of the main study. The 36 runs took 19 h of training. Each text run has the whole
+4-core CPU in both experiments, so their wall times are comparable.
+
+| Method | ACC, 1,000 / 200 | ACC, 2,000 / 500 | Δ | BWT, 2,000 / 500 | Wall time |
+|---|---|---|---|---|---|
+| Naive | 0.097 ± 0.016 | 0.111 ± 0.007 | +0.015 | -0.596 | 461 → 940 s |
+| Joint | 0.529 ± 0.015 | 0.556 ± 0.031 | +0.027 | — | 674 → 872 s |
+| EWC | 0.105 ± 0.015 | 0.112 ± 0.008 | +0.007 | -0.586 | 1199 → 2187 s |
+| LwF | 0.105 ± 0.006 | 0.124 ± 0.003 | +0.019 | -0.594 | 816 → 1127 s |
+| ER | 0.329 ± 0.038 | 0.333 ± 0.029 | +0.004 | -0.346 | 733 → 1834 s |
+| DER++ | 0.397 ± 0.068 | 0.372 ± 0.058 | -0.025 | -0.298 | 1044 → 2757 s |
+| A-GEM | 0.100 ± 0.008 | 0.119 ± 0.006 | +0.019 | -0.595 | 1563 → 4063 s |
+| LoRA-per-task | 0.024 ± 0.002 | 0.024 ± 0.003 | +0.001 | -0.326 | 755 → 1929 s |
+| Task Arithmetic | 0.034 ± 0.003 | 0.044 ± 0.027 | +0.010 | -0.259 | 628 → 1421 s |
+| TIES | 0.033 ± 0.004 | 0.040 ± 0.015 | +0.008 | -0.274 | 674 → 1444 s |
+| Multi-teacher distill. | 0.452 ± 0.013 | 0.477 ± 0.008 | +0.025 | -0.062 | 1915 → 2275 s |
+| Continual distill. | 0.331 ± 0.045 | 0.382 ± 0.017 | +0.051 | -0.245 | 916 → 1954 s |
+
+- **The method order holds.** The rank correlation between the method means at the two scales is 0.97
+  (Spearman). Joint and multi-teacher distillation lead at both. Continual distillation (0.382) and DER++ (0.372)
+  swap third and fourth place, a difference well inside their spread over seeds.
+- **Most methods gain 0.01–0.05.** DER++ is the exception (−0.025); it has the widest spread over seeds at both
+  scales (0.317–0.433 at the design scale).
+- **The groups stay apart.** Regularisation and A-GEM stay at the Naive level (0.112–0.124 vs 0.111), and
+  LoRA-per-task, Task Arithmetic and TIES stay below it (0.024–0.044).
+- **Multi-teacher distillation keeps the best balance** between the tasks and general ability: BWT −0.062 and
+  WikiText perplexity +3,703, against +8,179 for Naive, +16,811 for ER and +227 for LoRA-per-task.
+- **Cost.** Wall time grows 1.2–2.6× for 2× the training texts and 2.5× the test texts.
+
+All metrics at the design scale (means over seeds 0–2):
+
+| Method | acc | bwt | learning_acc | min_acc | stability_gap | general_ppl_delta | buffer_bytes | state_bytes | wall_time |
+|---|---|---|---|---|---|---|---|---|---|
+| Naive | 0.111 | -0.596 | 0.588 | 0.000 | 0.517 | +8179 | 0 | 0 | 940 s |
+| Joint | 0.556 | — | — | — | — | +5162 | 0 | 0 | 872 s |
+| EWC | 0.112 | -0.586 | 0.581 | 0.000 | 0.514 | +9673 | 0 | 340.94 MB | 2187 s |
+| LwF | 0.124 | -0.594 | 0.599 | 0.000 | 0.526 | +8826 | 0 | 268.72 MB | 1127 s |
+| ER | 0.333 | -0.346 | 0.609 | 0.246 | 0.143 | +16811 | 0.39 MB | 0 | 1834 s |
+| DER++ | 0.372 | -0.298 | 0.610 | 0.279 | 0.198 | +8290 | 0.42 MB | 0 | 2757 s |
+| A-GEM | 0.119 | -0.595 | 0.595 | 0.001 | 0.520 | +9349 | 0.39 MB | 0 | 4063 s |
+| LoRA-per-task | 0.024 | -0.326 | 0.285 | 0.000 | 0.282 | +227 | 0 | 0 | 1929 s |
+| Task Arithmetic | 0.044 | -0.259 | 0.251 | — | — | +4567 | 0 | 0 | 1421 s |
+| TIES | 0.040 | -0.274 | 0.260 | — | — | +1602 | 0 | 0 | 1444 s |
+| Multi-teacher distill. | 0.477 | -0.062 | 0.527 | — | — | +3703 | 0.39 MB | 0 | 2275 s |
+| Continual distill. | 0.382 | -0.245 | 0.577 | — | — | +10650 | 0.39 MB | 0 | 1954 s |
 
 ## Per-benchmark details
 
@@ -445,7 +503,7 @@ almost all of it from bf16, so the CIFAR presets train in bf16 without compile.
   when every seed agrees. CIFAR-10, CIFAR-100 and text5 have 3 seeds: enough for means and spreads, not for
   per-benchmark significance tests.
 - **Scale:** this is a CPU-scale study. CIFAR-10 and CIFAR-100 at 2 epochs (Joint 0.462 and 0.120) and text5 at
-  1,000 texts per task are far below their converged regimes; read absolute numbers as relative comparisons.
+  1,000–2,000 texts per task are far below their converged regimes; read absolute numbers as relative comparisons.
 - **Tuning scope:** hyperparameters were tuned only on the two MNIST benchmarks. CIFAR-10, CIFAR-100 and text5
   use the defaults, including the distillation defaults chosen on MNIST.
 - **Head assembly in merging:** Class-IL merging assembles classifier rows from different experts, leaving
@@ -468,5 +526,6 @@ contilab run configs/experiments/cpu_main.yaml        # ~22 h of training on 4 C
 contilab run configs/experiments/cpu_main_seeds.yaml  # seeds 3–5 on the MNIST benchmarks, same directory
 contilab run configs/experiments/cpu_tuned.yaml       # 456 runs, ~2 h
 contilab run configs/experiments/cpu_student.yaml     # ~10 min
+contilab run configs/experiments/cpu_text5_full.yaml  # 36 runs, ~19 h
 contilab report runs/cpu_main
 ```

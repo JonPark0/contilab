@@ -30,6 +30,9 @@ nav_title: "Changelog"
   re-run.
 
 ### Added
+- Experiment config `cpu_text5_full`: text5 at the design scale (2,000 training and 500 test texts per task). Its
+  36 runs are in `cpu_text5_full.csv` and on the Results page: the method order of the main study holds (rank
+  correlation 0.97), and most methods gain 0.01–0.05.
 - Zenodo DOI `10.5281/zenodo.23906803` (all versions): a badge in the README, `doi` in `CITATION.cff` and the BibTeX entries,
   and the site's structured data. Version 0.3.1 is `10.5281/zenodo.23906804`.
 - The per-run results are a Hugging Face dataset, [jonpark0/contilab-cpu-study](https://huggingface.co/datasets/jonpark0/contilab-cpu-study), republished by the

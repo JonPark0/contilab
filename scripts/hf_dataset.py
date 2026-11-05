@@ -30,6 +30,7 @@ FILES = [  # (config name, description, experiment configs)
     ("cpu_tuned", "Tuned comparison: per-method grids on the two MNIST benchmarks, variant chosen on validation "
      "accuracy (`selected`)", "`cpu_tuned.yaml`"),
     ("cpu_student", "Teacher → smaller student: distillation into a 2×100 MLP", "`cpu_student.yaml`"),
+    ("cpu_text5_full", "text5 at the design scale: 2,000 training and 500 test texts per task", "`cpu_text5_full.yaml`"),
 ]
 PRESETS = {"split_mnist_class": "Split MNIST (Class-IL)", "split_mnist_task": "Split MNIST (Task-IL)",
            "permuted_mnist": "Permuted MNIST (Domain-IL)", "split_cifar10_class": "Split CIFAR-10 (Class-IL)",
@@ -142,7 +143,7 @@ diverged (its loss became non-finite or exceeded 1000 × its first value); such 
 - Hardware: 4 CPU cores (Intel Xeon @ 2.1 GHz), no GPU.
 - Vision: MLP 2×400 on the MNIST benchmarks (1 epoch per task), reduced ResNet-18 on Split CIFAR-10/100
   (2 epochs). Language: Pythia-70M on text5 (AG News → Yelp → Amazon → DBpedia → Yahoo Answers), 1,000 training
-  texts per task.
+  texts per task (2,000 in `cpu_text5_full`).
 - Replay and distillation methods keep 500 samples (vision) or 200 (text).
 - Reproduce with `contilab run configs/experiments/<config>.yaml`; the setup and every deviation from the design
   are listed on the [Results]({SITE}wiki/Results.html) page.

@@ -29,5 +29,5 @@ Key facts:
 - [Performance](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/wiki/Performance.md): vmap ensembles, torch.compile, bf16, measured throughput
 - [Extending](https://raw.githubusercontent.com/JonPark0/contilab/main/docs/wiki/Extending.md): adding a strategy, metric, benchmark or consolidation method
 - [Per-run results (CSV)](https://github.com/JonPark0/contilab/tree/main/docs/assets/results/data): one row per run with all scalar metrics
-- [Results dataset on Hugging Face](https://huggingface.co/datasets/jonpark0/contilab-cpu-study): the same CSVs with a dataset card (configs cpu_main, cpu_tuned, cpu_student)
+- [Results dataset on Hugging Face](https://huggingface.co/datasets/jonpark0/contilab-cpu-study): the same CSVs with a dataset card (configs cpu_main, cpu_tuned, cpu_student, cpu_text5_full)
 - [Changelog](https://raw.githubusercontent.com/JonPark0/contilab/main/CHANGELOG.md): what changed in each release
