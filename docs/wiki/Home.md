@@ -19,7 +19,7 @@ evaluation metrics with proper statistics.
 |---|---|
 | [Getting Started](Getting-Started.md) | Install, first run, reading the report |
 | [Architecture](Architecture.md) | Modules, data flow, the ensemble axis, raw-log-first metrics |
-| [Methods](Methods.md) | Scenarios and the CL strategies: Naive, Joint, EWC, LwF, ER, DER++, A-GEM, LoRA-per-task |
+| [Methods](Methods.md) | Scenarios and the CL strategies: Naive, Joint, EWC, LwF, ER, ER-ACE, DER++, A-GEM, GEM, LoRA-per-task, O-LoRA |
 | [Consolidation](Consolidation.md) | Train-then-consolidate: Task Arithmetic, TIES-Merging, multi-teacher and teacher → student continual distillation |
 | [Metrics](Metrics.md) | Every metric with its formula and reference, statistics, figures |
 | [Benchmarks](Benchmarks.md) | Split/Permuted MNIST, Split CIFAR, text5, synthetic streams |

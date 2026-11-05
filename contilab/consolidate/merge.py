@@ -46,6 +46,18 @@ def merge_ties(tvs: list[dict[str, Tensor]], k: float = 0.2) -> dict[str, Tensor
     return out
 
 
+def merge_magmax(tvs: list[dict[str, Tensor]]) -> dict[str, Tensor]:
+    """MagMax (Marczak et al., 2024): per entry, the task-vector value of largest magnitude (ties → later task,
+    as in the reference code)."""
+    out = {}
+    for n in tvs[0]:
+        best = tvs[0][n]
+        for tv in tvs[1:]:
+            best = torch.where(tv[n].abs() >= best.abs(), tv[n], best)
+        out[n] = best
+    return out
+
+
 def apply_tv(base: dict[str, Tensor], tv: dict[str, Tensor], lam: Tensor | float) -> dict[str, Tensor]:
     out = dict(base)
     for k, v in tv.items():

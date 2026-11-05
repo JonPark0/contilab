@@ -64,11 +64,14 @@ def expert_factory(stream: Stream, cfg: RunConfig):
     return fac, holder
 
 
-def _expert_key(stream: Stream, cfg: RunConfig, seeds: list[int]) -> dict:
-    return {"stream": stream.name, "tasks": [len(t.train) for t in stream.tasks], "scenario": stream.scenario,
-            "benchmark": asdict(cfg.benchmark), "model": asdict(cfg.model), "optim": asdict(cfg.optim),
-            "train": asdict(cfg.train), "seeds": seeds, "init_seed": cfg.consolidate.init_seed,
-            "lora": cfg.consolidate.experts_lora}
+def _expert_key(stream: Stream, cfg: RunConfig, seeds: list[int], sequential: bool = False) -> dict:
+    key = {"stream": stream.name, "tasks": [len(t.train) for t in stream.tasks], "scenario": stream.scenario,
+           "benchmark": asdict(cfg.benchmark), "model": asdict(cfg.model), "optim": asdict(cfg.optim),
+           "train": asdict(cfg.train), "seeds": seeds, "init_seed": cfg.consolidate.init_seed,
+           "lora": cfg.consolidate.experts_lora}
+    if sequential:  # only added when set, so the cache keys of independent experts stay unchanged
+        key["sequential"] = True
+    return key
 
 
 def plan_expert_groups(task_sizes: list[int], seeds: list[int], max_E: int) -> list[list[tuple[int, int]]]:
@@ -84,11 +87,14 @@ def plan_expert_groups(task_sizes: list[int], seeds: list[int], max_E: int) -> l
 
 
 def _train_group(stream: Stream, pool: TrainPool, members: list[tuple[int, int]], cfg: RunConfig,
-                 device) -> tuple[Ensemble, int, set[int]]:
-    """Returns the trained ensemble, the total FLOPs of all its members and the diverged member positions."""
+                 device, init: dict[str, Tensor] | None = None) -> tuple[Ensemble, int, set[int]]:
+    """Returns the trained ensemble, the total FLOPs of all its members and the diverged member positions.
+    `init` ([E, ...] per parameter) replaces θ₀ as the starting point (sequential experts)."""
     fac, holder = expert_factory(stream, cfg)
     E = len(members)
     ens = Ensemble(fac, [cfg.consolidate.init_seed] * E, device)
+    if init is not None:
+        ens.load_params({k: v.to(device) for k, v in init.items()})
     if holder.get("modules"):
         set_active(ens.template, [0])
     gens = [torch.Generator().manual_seed(s) for _, s in members]
@@ -113,8 +119,9 @@ def _train_group(stream: Stream, pool: TrainPool, members: list[tuple[int, int]]
     return ens, flops, ctx.diverged
 
 
-def train_experts(stream: Stream, cfg: RunConfig, seeds: list[int]) -> Experts:
-    key = _expert_key(stream, cfg, seeds)
+def train_experts(stream: Stream, cfg: RunConfig, seeds: list[int], sequential: bool = False) -> Experts:
+    """sequential: expert t starts from expert t-1 of the same seed (MagMax); otherwise every expert starts from θ₀."""
+    key = _expert_key(stream, cfg, seeds, sequential)
     d = cache_dir() / "experts" / key_hash(key)
     fac, holder = expert_factory(stream, cfg)
     if (d / "meta.json").exists():  # written last: a cache without it is incomplete and is rebuilt
@@ -135,8 +142,17 @@ def train_experts(stream: Stream, cfg: RunConfig, seeds: list[int]) -> Experts:
     flops = 0
     diverged: set[int] = set()
     sizes = [pool.task_size(t) for t in range(len(stream.tasks))]
-    for members in plan_expert_groups(sizes, seeds, cfg.engine.max_E):
-        ens, f, bad = _train_group(s_stream, pool, members, cfg, device)
+    if sequential:  # task by task, the seeds of one task trained together
+        step = max(1, cfg.engine.max_E)
+        plan = [[(t, s) for s in seeds[i : i + step]] for t in range(len(stream.tasks)) for i in range(0, S, step)]
+    else:
+        plan = plan_expert_groups(sizes, seeds, cfg.engine.max_E)
+    for members in plan:
+        init = None
+        if sequential and members[0][0] > 0:
+            prev = [per_member[(t - 1, s)] for t, s in members]
+            init = {k: torch.stack([p[k] for p in prev]) for k in prev[0]}
+        ens, f, bad = _train_group(s_stream, pool, members, cfg, device, init)
         flops += f
         diverged |= {seeds.index(members[i][1]) for i in bad}
         for i, m in enumerate(members):

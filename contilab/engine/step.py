@@ -46,6 +46,11 @@ def _index0(tree):
     return torch.utils._pytree.tree_map(lambda t: t[0], tree)
 
 
+def slice_batch_tree(tree: dict[str, Any], a: int, b: int) -> dict[str, Any]:
+    """Samples a:b of a member-stacked batch tree (batch axis 1)."""
+    return torch.utils._pytree.tree_map(lambda t: t[:, a:b] if isinstance(t, Tensor) and t.dim() >= 2 else t, tree)
+
+
 def maybe_compile(fn: Callable, mode: str, recompile_limit: int | None = None) -> tuple[Callable, dict[str, Any]]:
     """`recompile_limit` raises Dynamo's per-function graph limit (default 8). Past it, Dynamo silently runs the
     function eagerly, so a strategy that needs one graph per task (LoRA-per-task) lost compilation after 8 tasks."""
@@ -131,6 +136,25 @@ class TrainStep:
         gs = torch.autograd.grad(vec.sum(), ts, allow_unused=True)
         return {n: (g if g is not None else torch.zeros_like(t)) for n, g, t in zip(self.trainable, gs, ts)}
 
+    def _ref_grads(self, rt, state) -> dict[str, Tensor]:
+        params, buffers = self.ens.params, self.ens.buffers
+        groups = self.strategy.ref_groups()
+        if not groups:
+            with self._autocast():
+                ref_vec = self._ref(params, buffers, state, rt)
+            return self._grads(ref_vec)
+        # one forward/backward per group, so the cost stays that of one reference batch (not K full backwards)
+        per, off = [], 0
+        for n in groups:
+            sub = slice_batch_tree(rt, off, off + n)
+            if self.compile_decision["used"]:
+                mark_batch_dynamic(sub)
+            with self._autocast():
+                ref_vec = self._ref(params, buffers, state, sub)
+            per.append(self._grads(ref_vec))
+            off += n
+        return {k: torch.stack([g[k] for g in per], 1) for k in per[0]}
+
     def _compute(self, bt, rt, state):
         params, buffers = self.ens.params, self.ens.buffers
         with self._autocast():
@@ -138,9 +162,7 @@ class TrainStep:
         grads = self._grads(loss_vec)
         ref = None
         if self.strategy.uses_ref_grad and rt is not None:
-            with self._autocast():
-                ref_vec = self._ref(params, buffers, state, rt)
-            ref = self._grads(ref_vec)
+            ref = self._ref_grads(rt, state)
         return loss_vec, logits, grads, ref
 
     def measure_flops(self, bt, rt, state) -> int:

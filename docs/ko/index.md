@@ -1,6 +1,6 @@
 ---
 title: "contilab — 지속 학습(연속 학습) 벤치마크·모델 병합·지식 증류 PyTorch 프레임워크"
-description: "contilab은 지속 학습 연구를 위한 PyTorch 프레임워크입니다. EWC, LwF, 경험 재생, DER++, A-GEM, LoRA와 Task Arithmetic, TIES-Merging, 지식 증류를 비전·언어 모델에서 비교하고, 파국적 망각을 지표 30여 종과 통계 검정으로 평가합니다."
+description: "contilab은 지속 학습 연구를 위한 PyTorch 프레임워크입니다. EWC, LwF, 경험 재생, ER-ACE, DER++, A-GEM, GEM, LoRA, O-LoRA와 Task Arithmetic, TIES-Merging, MagMax, 지식 증류를 비전·언어 모델에서 비교하고, 파국적 망각을 지표 30여 종과 통계 검정으로 평가합니다."
 lang: ko
 nav_exclude: true
 permalink: /ko/
@@ -23,9 +23,9 @@ permalink: /ko/
 **지속 학습**(continual learning)이라 하며, 평생 학습·점진적 학습이라고도 부릅니다. contilab은 실증 연구를
 위해 만들었습니다. 여러 시드·벤치마크·모델 크기에서 방법들을 공정하고 재현 가능하게 비교하는 것이 목표입니다.
 
-- **방법 12종을 같은 기준으로 평가합니다.**
-  - 순차 학습 방법: Naive 미세조정, Joint 학습, EWC, LwF, 경험 재생(ER), DER++, A-GEM, 태스크별 LoRA
-  - 태스크별 전문가를 학습한 뒤 합치는 방법: Task Arithmetic, TIES-Merging, 다중 교사 증류, 교사 → 학생 연속 증류
+- **방법 16종을 같은 기준으로 평가합니다.**
+  - 순차 학습 방법: Naive 미세조정, Joint 학습, EWC, LwF, 경험 재생(ER), ER-ACE, DER++, A-GEM, GEM, 태스크별 LoRA, O-LoRA
+  - 태스크별 전문가를 학습한 뒤 합치는 방법: Task Arithmetic, TIES-Merging, MagMax, 다중 교사 증류, 교사 → 학생 연속 증류
   - 모든 방법을 같은 지표로 평가합니다.
 - **지표 30여 종을 학습이 끝난 뒤 계산합니다.** 망각, 역방향·순방향 전이, 안정성 격차(stability gap), 선형
   프로브·CKA 표현 지표, 가소성 손실, 최근 태스크 편향, 보정(calibration), 소수 샷 회복, LLM 일반 능력 유지가
@@ -80,7 +80,7 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 | 영역 | 내용 |
 |---|---|
 | 시나리오 | 태스크 점진(Task-IL), 클래스 점진(Class-IL), 도메인 점진(Domain-IL) |
-| 방법 | Naive, Joint, EWC(online), LwF, 경험 재생, DER++, A-GEM, 태스크별 LoRA |
+| 방법 | Naive, Joint, EWC(online), LwF, 경험 재생, ER-ACE, DER++, A-GEM, GEM, 태스크별 LoRA, O-LoRA |
 | 병합·증류 | Task Arithmetic, TIES-Merging, 다중 교사 증류, 교사 → 학생 연속 증류, 더 작은 학생 모델 |
 | 벤치마크 | Split MNIST, Permuted MNIST, Split CIFAR-10, Split CIFAR-100, text5 (AG News → Yelp → Amazon → DBpedia → Yahoo Answers) |
 | 지표 | 지표 30여 종과 그림 (정확도 히트맵, 안정성 격차 곡선, CKA, t-SNE, 손실 장벽, 임계 차이 다이어그램) |

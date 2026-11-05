@@ -101,7 +101,7 @@ def _run_training(cfgs: list[RunConfig], rdirs: list[RunDir], exp_dir: Path, str
     joint = method == "joint"
     train_s = make_joint_stream(stream) if joint else stream
     strategy = build_strategy("naive" if joint else method, cfg.method.params, stream.modality)
-    optim = _lora_optim(cfg) if method == "lora_per_task" else cfg.optim
+    optim = _lora_optim(cfg) if method in ("lora_per_task", "olora") else cfg.optim
 
     def factory(seed: int):
         torch.manual_seed(seed)

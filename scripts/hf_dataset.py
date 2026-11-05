@@ -36,8 +36,9 @@ PRESETS = {"split_mnist_class": "Split MNIST (Class-IL)", "split_mnist_task": "S
            "permuted_mnist": "Permuted MNIST (Domain-IL)", "split_cifar10_class": "Split CIFAR-10 (Class-IL)",
            "split_cifar100_class": "Split CIFAR-100 (Class-IL)", "text5_class": "text5 + Pythia-70M (Class-IL)"}
 NAMES = {"naive": "Naive", "joint": "Joint (upper bound)", "ewc": "EWC", "lwf": "LwF", "er": "Experience Replay",
-         "derpp": "DER++", "agem": "A-GEM", "lora_per_task": "LoRA-per-task", "consolidate:ta": "Task Arithmetic",
-         "consolidate:ties": "TIES-Merging", "consolidate:distill": "Multi-teacher distillation",
+         "er_ace": "ER-ACE", "derpp": "DER++", "agem": "A-GEM", "gem": "GEM", "lora_per_task": "LoRA-per-task",
+         "olora": "O-LoRA", "consolidate:ta": "Task Arithmetic", "consolidate:ties": "TIES-Merging",
+         "consolidate:magmax": "MagMax", "consolidate:distill": "Multi-teacher distillation",
          "consolidate:continual_distill": "Continual distillation"}
 
 

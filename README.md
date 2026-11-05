@@ -40,8 +40,8 @@ stays at the Naive level in class-incremental learning. All 6 benchmarks: [Resul
 | Area | What you get |
 |---|---|
 | Scenarios | Task-incremental (Task-IL), class-incremental (Class-IL), domain-incremental (Domain-IL) |
-| Methods | Naive fine-tuning, Joint (upper bound), **EWC** (online), **LwF**, **Experience Replay (ER)**, **DER++**, **A-GEM**, **LoRA-per-task** |
-| Consolidation | **Task Arithmetic**, **TIES-Merging** (full weights or LoRA ΔW), **multi-teacher distillation** with full / buffer / proxy transfer data, **teacher → student continual distillation**, smaller student architectures |
+| Methods | Naive fine-tuning, Joint (upper bound), **EWC** (online), **LwF**, **Experience Replay (ER)**, **ER-ACE**, **DER++**, **A-GEM**, **GEM**, **LoRA-per-task**, **O-LoRA** |
+| Consolidation | **Task Arithmetic**, **TIES-Merging**, **MagMax** (full weights or LoRA ΔW), **multi-teacher distillation** with full / buffer / proxy transfer data, **teacher → student continual distillation**, smaller student architectures |
 | Benchmarks | Split MNIST, Permuted MNIST, Split CIFAR-10, Split CIFAR-100, **text5** (AG News → Yelp → Amazon → DBpedia → Yahoo Answers) with Hugging Face LMs (e.g. Pythia, Qwen2.5) |
 | Metrics | 30+ quantitative metrics + figures (accuracy heatmaps, stability-gap curves, confusion, CKA, drift, t-SNE/PCA, loss barriers, critical-difference diagrams) |
 | Statistics | Mean ± std over seeds, bootstrap 95 % CI, Wilcoxon / exact permutation tests, Friedman + Nemenyi CD, validation-based hyperparameter selection for sweeps |
@@ -78,11 +78,15 @@ pretrained language models come from the Hugging Face Hub.
 | EWC (online) | regularisation | Kirkpatrick et al., *PNAS* 2017; Schwarz et al., *ICML* 2018 |
 | LwF | distillation-based regularisation | Li & Hoiem, *TPAMI* 2017 |
 | ER (reservoir) | replay | Chaudhry et al., 2019 (*On Tiny Episodic Memories*); Vitter 1985 |
+| ER-ACE | replay with asymmetric cross-entropy | Caccia et al., *ICLR* 2022 |
 | DER++ | replay + logit distillation | Buzzega et al., *NeurIPS* 2020 |
 | A-GEM | gradient projection | Chaudhry et al., *ICLR* 2019 |
+| GEM | gradient projection (one constraint per task) | Lopez-Paz & Ranzato, *NeurIPS* 2017 |
 | LoRA-per-task | parameter isolation | Hu et al., *ICLR* 2022 |
+| O-LoRA | orthogonal LoRA subspaces | Wang et al., *Findings of EMNLP* 2023 |
 | Task Arithmetic | model merging | Ilharco et al., *ICLR* 2023 |
 | TIES-Merging | model merging | Yadav et al., *NeurIPS* 2023 |
+| MagMax | model merging (sequential fine-tuning, max-magnitude selection) | Marczak et al., *ECCV* 2024 |
 | Multi-teacher distillation | consolidation | Hinton et al., 2015 |
 | Teacher → student continual distillation | consolidation (KD + self-distillation on a replay buffer) | Hinton et al., 2015; Li & Hoiem, *TPAMI* 2017 |
 
@@ -198,11 +202,11 @@ resolves to the latest one; each release also has its own DOI, listed on the Zen
   - LLM 일반 능력 보존
 - **통계**: 부트스트랩 신뢰구간, 대응 검정, Friedman/Nemenyi 임계 차이를 제공합니다.
 - **증류·병합**: 태스크별 전문가 모델을 하나로 통합해 순차 학습과 비교합니다.
-  - 통합 방법: Task Arithmetic, TIES-Merging, 다중 교사 지식 증류, 교사→학생 연속 증류
+  - 통합 방법: Task Arithmetic, TIES-Merging, MagMax, 다중 교사 지식 증류, 교사→학생 연속 증류
   - 학생 모델은 교사보다 작은 아키텍처로도 지정할 수 있습니다.
 - **하이퍼파라미터 선택**: sweep 변형 중 하나를 검증 정확도로 자동 선택합니다(메서드별 그리드 지원).
 - **지원 범위**
-  - 메서드: EWC, LwF, ER, DER++, A-GEM, 태스크별 LoRA
+  - 메서드: EWC, LwF, ER, ER-ACE, DER++, A-GEM, GEM, 태스크별 LoRA, O-LoRA
   - 벤치마크: Split/Permuted MNIST, Split CIFAR, text5(AG News·Yelp·Amazon·DBpedia·Yahoo)
 
 - **CPU 실증 결과** (12개 메서드 × 6개 벤치마크, 324회: MNIST 벤치마크 6시드, 나머지 3시드): 자세한 내용은 [Results](docs/wiki/Results.md)를 참고하세요.

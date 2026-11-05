@@ -13,7 +13,7 @@ def test_smoke_all_under_60s(tmp_path, monkeypatch):
     assert main(["run", "configs/experiments/smoke_all.yaml", "--root", str(tmp_path)]) == 0
     elapsed = time.perf_counter() - t0
     df = pd.read_csv(tmp_path / "smoke_all" / "results.csv")
-    assert len(df) == 66 and set(df.status) == {"done"}, df[df.status != "done"][["run_id", "status"]]
+    assert len(df) == 90 and set(df.status) == {"done"}, df[df.status != "done"][["run_id", "status"]]
     # 60 s on a 4-core workstation (spec §1.5); shared CI runners set a looser budget
     assert elapsed < float(os.environ.get("CONTILAB_SMOKE_BUDGET_S", 60)), elapsed
     assert main(["report", str(tmp_path / "smoke_all")]) == 0

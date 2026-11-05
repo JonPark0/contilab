@@ -1,6 +1,6 @@
 ---
-title: "Model merging and distillation for continual learning: Task Arithmetic, TIES-Merging, multi-teacher and continual distillation"
-description: "Train one expert per task, then consolidate them into one model with Task Arithmetic, TIES-Merging, multi-teacher knowledge distillation or teacher-to-student continual distillation, optionally into a smaller student."
+title: "Model merging and distillation for continual learning: Task Arithmetic, TIES-Merging, MagMax, multi-teacher and continual distillation"
+description: "Train one expert per task, then consolidate them into one model with Task Arithmetic, TIES-Merging, MagMax, multi-teacher knowledge distillation or teacher-to-student continual distillation, optionally into a smaller student."
 nav_order: 6
 nav_title: "Merging and distillation"
 ---
@@ -13,11 +13,14 @@ all metrics are defined exactly as for sequential methods.
 
 ## Experts
 
-- Every expert starts from the same θ₀ (`consolidate.init_seed`), which merging requires.
+- Every expert starts from the same θ₀ (`consolidate.init_seed`), which merging requires. MagMax is the
+  exception: expert *t* starts from expert *t − 1* (sequential fine-tuning), and its task vectors are still taken
+  from θ₀.
 - Expert *t* trains only on task *t* (full fine-tuning, or a single LoRA adapter + head with
   `consolidate.experts_lora: true`).
 - Experts of equal-sized tasks train together in one `vmap` ensemble, up to `engine.max_E` members.
-- Experts are cached on disk by configuration hash, so TA, TIES and distillation reuse them.
+- Experts are cached on disk by configuration hash, so TA, TIES and distillation reuse them. Sequential experts
+  have their own cache entry.
 
 ## Merging
 
@@ -25,8 +28,10 @@ all metrics are defined exactly as for sequential methods.
 |---|---|---|
 | Task Arithmetic | `consolidate:ta` | θ = θ₀ + λ · Σ τᵢ, with τᵢ = θᵢ − θ₀ (Ilharco et al. 2023) |
 | TIES-Merging | `consolidate:ties` | trim each τᵢ to its top-k magnitudes (k = 20 %) → elect the sign of Σ τᵢ → average only the agreeing values → θ₀ + λ · τ (Yadav et al. 2023) |
+| MagMax | `consolidate:magmax` | sequentially fine-tuned experts; per entry, the τᵢ value of largest magnitude → θ₀ + λ · τ (Marczak et al. 2024) |
 
-- λ is chosen per seed from `{0.1, …, 1.0}` by validation accuracy on the tasks seen so far.
+- λ is chosen per seed from `{0.1, …, 1.0}` by validation accuracy on the tasks seen so far. (The MagMax paper
+  fixes λ = 0.5, which is on the grid.)
 - With LoRA experts the task vector is the adapter's `ΔW = (α/r)·B·A`, never A and B separately.
 - The classifier head is assembled row by row: each class takes the row of the expert of the task that owns it
   (Domain-IL averages heads). In Class-IL this leaves logit-scale mismatch between experts — a known limitation

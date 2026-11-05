@@ -74,3 +74,28 @@ def test_experts_split_by_max_E_match_grouped(tmp_path, monkeypatch):
     split = train_experts(s, smoke_cfg(**{"engine.max_E": 1}), [0, 1])
     for t in range(3):
         assert torch.allclose(grouped.tuned[t]["layers.0.weight"], split.tuned[t]["layers.0.weight"], atol=1e-5)
+
+
+def test_sequential_experts_start_from_the_previous_expert(tmp_path, monkeypatch):
+    from contilab.consolidate.experts import _expert_key, _train_group
+    from contilab.data.batching import TrainPool
+
+    monkeypatch.setenv("CONTILAB_CACHE", str(tmp_path))
+    s = build_synthetic(n_tasks=3)
+    cfg = smoke_cfg()
+    ind = train_experts(s, cfg, [0])
+    seq = train_experts(s, cfg, [0], sequential=True)
+    assert torch.allclose(seq.tuned[0]["layers.0.weight"], ind.tuned[0]["layers.0.weight"])  # both from θ₀
+    assert not torch.allclose(seq.tuned[1]["layers.0.weight"], ind.tuned[1]["layers.0.weight"])
+    ens, _, _ = _train_group(s, TrainPool.from_stream(s), [(1, 0)], cfg, torch.device("cpu"), seq.tuned[0])
+    assert torch.allclose(ens.params["layers.0.weight"], seq.tuned[1]["layers.0.weight"], atol=1e-6)
+    assert "sequential" not in _expert_key(s, cfg, [0]) and _expert_key(s, cfg, [0], True)["sequential"]
+
+
+def test_magmax_consolidation_runs(tmp_path, monkeypatch):
+    monkeypatch.setenv("CONTILAB_CACHE", str(tmp_path))
+    s = build_synthetic(n_tasks=3, scenario="task")
+    log = RawLog(tmp_path / "r")
+    run_consolidation_for_test(s, "consolidate:magmax", [0, 1], log)
+    rows = log.records("acc_matrix")
+    assert len(rows) == 3 and np.mean(rows[-1]["accs"]) > 0.4
