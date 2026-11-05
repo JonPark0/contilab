@@ -7,11 +7,12 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - v0.1: 전략 8종, TA/TIES/증류, vmap 앙상블, 러너·리포트·CLI
 - v0.2.0 릴리스: 지표 수정, 견고성, CI, 검증 기반 sweep 선택, 연속 증류, 작은 학생 모델
 - v0.3.0: M10–M12(bench 정밀도, 반복 계산 제거, vmap 폴백·OOM 분할 기록), compile 재컴파일 수정(배치 축 dynamic, 그래프 한도 = 태스크 수 + 8), 릴리스 워크플로(PyPI job은 변수로 꺼둠), Split CIFAR-100
-- CPU 연구: `cpu_main` 324런(6 벤치마크, MNIST 6시드), `cpu_tuned` 456런, `cpu_student` 12런, `cpu_text5_full` 36런(text5 설계 규모 2,000/500, 학습 19시간) → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
+- CPU 연구: `cpu_main` 432런(16 메서드, 6 벤치마크, MNIST 6시드), `cpu_tuned` 456런, `cpu_student` 12런, `cpu_text5_full` 36런(text5 설계 규모 2,000/500, 학습 19시간), `cpu_gem_margin` 12런(GEM margin 0) → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
+- 새 메서드 4종: GEM(태스크별 참조 기울기, 이중 QP 정확해), ER-ACE, O-LoRA, MagMax(순차 전문가) → cpu_main에 108런 추가(학습 약 9시간)
 - EWC 비전 기본 λ=30(튜닝 선택값), CIFAR 프리셋은 compile 없이 bf16 → CIFAR 72런·MNIST EWC 18런 재실행
 - EWC 강성 상한: SGD에서 Fisher를 max_stiffness/(lr·λ)로 clamp → 발산 0건(cpu_main EWC 24런·cpu_tuned EWC 72런 재실행)
 - 문서 사이트(Just the Docs): 한국어 홈, FAQ, 구조화 데이터, llms.txt, IndexNow; 차트·변경 이력 페이지는 `scripts/sync_docs.py`가 생성
-- 테스트 199 통과, 5 skip(네트워크)
+- 테스트 217 통과, 5 skip(네트워크)
 
 ## 남은 작업
 - Zenodo: concept DOI `10.5281/zenodo.23906803`(전체 버전), v0.3.1 `10.5281/zenodo.23906804`; 이후 릴리스 DOI는 release 워크플로가 노트에 자동 추가
@@ -26,13 +27,14 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - EWC λ=100: Permuted MNIST·CIFAR-10/100 전 시드 발산, λ=30도 CIFAR 후반 발산 → 원인은 SGD에서 lr·λ·F > 2(누적 Fisher가 계속 커짐), Fisher clamp로 해결
 - 증류 v0.1 기본값은 학습 부족 → ties·routed·10 epoch
 - 컨테이너 재시작 시 분리 실행도 종료 → 재실행하면 끝난 런은 건너뜀
+- cpu_main의 옛 런 일부는 v0.1 통합 기본값이 설정에 저장돼 있어 지금 config로 계산한 run id와 다름(결과에는 영향 없음) → config 그대로 돌리면 111런을 다시 돌리므로 새 메서드만 `"matrix.method.name=[...]"`로 실행
 
 ## 검증
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/pytest tests -q  # --run-network: 다운로드 포함
 .venv/bin/contilab run configs/experiments/smoke_all.yaml && .venv/bin/contilab report runs/smoke_all
-.venv/bin/contilab run configs/experiments/cpu_main.yaml   # 4코어 ~22시간, 재개 가능
+.venv/bin/contilab run configs/experiments/cpu_main.yaml   # 4코어 ~30시간, 재개 가능
 ```
 
 ## 주의

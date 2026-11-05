@@ -36,15 +36,19 @@ contilab expresses each scenario as a logit mask on one shared head ([Methods](M
 
 ## Which continual-learning method should I use?
 
-It depends on what you may store. In contilab's [CPU study](Results.md) of 12 methods on 6 benchmarks:
+It depends on what you may store. In contilab's [CPU study](Results.md) of 16 methods on 6 benchmarks:
 
-- **If you may keep a small replay buffer**, use DER++ or Experience Replay. After Joint training they have the
-  best average ranks (2.3 and 4.2), with 500 stored samples on the vision benchmarks.
+- **If you may keep a small replay buffer**, use DER++, ER-ACE or GEM. After Joint training they have the best
+  average ranks (3.3, 3.5 and 4.2), with 500 stored samples on the vision benchmarks. ER-ACE is the best choice
+  when the newest classes dominate the predictions, as on Split CIFAR-10 and CIFAR-100.
 - **If you can train one expert per task**, multi-teacher distillation into one student is not significantly
   different from DER++ on Split MNIST (class-incremental) once tuned. It costs the expert training.
 - **If you may store no data at all**, regularisation (EWC, LwF) does not solve class-incremental learning: it
   stays at the Naive level even after tuning. In the domain-incremental setting the gains are small: on
-  Permuted MNIST, LwF reaches 0.817 and EWC (λ = 30) 0.832, against 0.805 for Naive.
+  Permuted MNIST, LwF reaches 0.817 and EWC (λ = 30) 0.832, against 0.805 for Naive. MagMax, which merges
+  sequentially fine-tuned models, is the only method without stored samples that beats Naive on every class- and
+  domain-incremental benchmark (for example 0.836 on Permuted MNIST and 0.092 against 0.046 on Split CIFAR-100).
+  It needs a validation set to choose its scaling factor.
 
 The [Results](Results.md) page has every number, the tuned comparison and the limitations of a CPU-scale study.
 

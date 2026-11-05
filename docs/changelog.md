@@ -19,6 +19,11 @@ nav_title: "Changelog"
   figures were updated.
 - The tuned comparison (`cpu_tuned`) has 6 seeds, like the MNIST benchmarks of the main study. Its config pins the
   consolidation defaults it was run with, so its run ids stay those of the published results.
+- The main study includes GEM, ER-ACE, O-LoRA and MagMax: 108 new runs, 432 in all, with the other runs unchanged.
+  The Results page, its tables, ranks, paired tests, figures and findings, the README and the home pages are
+  updated. GEM leads on Split MNIST Class-IL (0.882) and ER-ACE on Split CIFAR-10 and CIFAR-100 (0.393, 0.103);
+  average ranks DER++ 3.3, ER-ACE 3.5, GEM 4.2. MagMax is the only method without stored samples above Naive on
+  every Class- and Domain-IL benchmark; O-LoRA stays at or below Naive there.
 
 ### Fixed
 - EWC no longer diverges on long task streams under SGD. A step multiplies a parameter's distance from its anchor
@@ -42,6 +47,9 @@ nav_title: "Changelog"
     largest-magnitude task-vector value. Sequential experts (`train_experts(..., sequential=True)`) have their
     own cache entry.
 - The smoke matrix covers the new methods (90 runs, about 40 s on 4 cores).
+- Experiment config `cpu_gem_margin`: GEM with margin 0 on the two MNIST benchmarks (12 runs, `cpu_gem_margin.csv`).
+  Per-task constraints alone lift Split MNIST Class-IL from A-GEM's 0.335 to 0.616, and the margin 0.5 adds the
+  rest (0.882); on Permuted MNIST the margin changes nothing.
 - Experiment config `cpu_text5_full`: text5 at the design scale (2,000 training and 500 test texts per task). Its
   36 runs are in `cpu_text5_full.csv` and on the Results page: the method order of the main study holds (rank
   correlation 0.97), and most methods gain 0.01–0.05.

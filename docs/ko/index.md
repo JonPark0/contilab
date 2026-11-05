@@ -41,17 +41,19 @@ permalink: /ko/
 
 ## 실험 결과 요약
 
-![Split MNIST(클래스 점진) 최종 정확도, 6시드 평균: Joint 0.950, DER++ 0.871, 다중 교사 증류 0.863, 경험 재생 0.858, 연속 증류 0.586, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.196, Naive 0.196, 태스크별 LoRA 0.184](../assets/results/split-mnist-class-acc.svg)
+![Split MNIST(클래스 점진) 최종 정확도, 6시드 평균: Joint 0.950, GEM 0.882, ER-ACE 0.875, DER++ 0.871, 다중 교사 증류 0.863, 경험 재생 0.858, 연속 증류 0.586, MagMax 0.572, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.196, Naive 0.196, O-LoRA 0.195, 태스크별 LoRA 0.184](../assets/results/split-mnist-class-acc.svg)
 
-CPU에서 방법 12종을 벤치마크 6종에 대해 실행했습니다. 모두 324회이며, 설정마다 시드 3~6개입니다.
+CPU에서 방법 16종을 벤치마크 6종에 대해 실행했습니다. 모두 432회이며, 설정마다 시드 3~6개입니다.
 
-- **리플레이 계열이 가장 우수합니다.** Joint 다음으로 DER++와 경험 재생의 평균 순위가 가장 높습니다(6개
-  벤치마크 평균 2.3, 4.2, Friedman p = 5.8·10⁻⁶).
+- **리플레이 계열이 가장 우수합니다.** Joint 다음으로 DER++, ER-ACE, GEM의 평균 순위가 가장 높습니다(6개
+  벤치마크 평균 3.3, 3.5, 4.2, Friedman p = 1.5·10⁻⁸). 두 CIFAR 벤치마크에서는 ER-ACE가 연속 학습 방법 중
+  가장 높습니다.
 - **다중 교사 증류는 튜닝이 필요했습니다.** 검증 정확도로 고른 설정에서 Split MNIST(클래스 점진) 정확도가
   0.223에서 0.871로 올랐습니다. 이 설정을 기본값으로 쓰면 6시드 평균 0.863으로, DER++(0.871)와 유의한 차이가
   없습니다.
 - **정규화 계열만으로는** 클래스 점진 학습에서 튜닝 후에도 Naive 수준에 머뭅니다. EWC 0.196, LwF 0.228,
-  Naive 0.196입니다.
+  Naive 0.196입니다. 샘플을 저장하지 않는 방법 중에서는 MagMax 병합만 모든 클래스·도메인 점진 벤치마크에서
+  Naive보다 높습니다.
 - **연속 증류는 전문가 모델을 저장하지 않습니다.** 2×100 크기의 작은 학생 모델이 0.34 MB로 Permuted MNIST에서
   원래 크기 모델 정확도의 98 %를 유지합니다.
 
@@ -67,7 +69,7 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/contilab run configs/experiments/smoke_all.yaml
 .venv/bin/contilab report runs/smoke_all          # runs/smoke_all/report.md, report.html
 
-# 실제 벤치마크 하나: Split MNIST 클래스 점진, 방법 12종
+# 실제 벤치마크 하나: Split MNIST 클래스 점진, 방법 16종
 .venv/bin/contilab run configs/experiments/cpu_main.yaml "matrix.preset=[split_mnist_class]"
 ```
 

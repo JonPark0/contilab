@@ -31,6 +31,7 @@ FILES = [  # (config name, description, experiment configs)
      "accuracy (`selected`)", "`cpu_tuned.yaml`"),
     ("cpu_student", "Teacher → smaller student: distillation into a 2×100 MLP", "`cpu_student.yaml`"),
     ("cpu_text5_full", "text5 at the design scale: 2,000 training and 500 test texts per task", "`cpu_text5_full.yaml`"),
+    ("cpu_gem_margin", "GEM without its margin (0 instead of 0.5) on the two MNIST benchmarks", "`cpu_gem_margin.yaml`"),
 ]
 PRESETS = {"split_mnist_class": "Split MNIST (Class-IL)", "split_mnist_task": "Split MNIST (Task-IL)",
            "permuted_mnist": "Permuted MNIST (Domain-IL)", "split_cifar10_class": "Split CIFAR-10 (Class-IL)",
@@ -98,7 +99,8 @@ configs:
 
 # contilab CPU study: continual learning results
 
-Per-run results of an empirical comparison of **12 continual-learning methods on 6 benchmarks**, produced with
+Per-run results of an empirical comparison of **{len({r['method'] for r in main})} continual-learning methods on
+{len({r['preset'] for r in main})} benchmarks**, produced with
 [contilab]({GITHUB}) {version}, a PyTorch framework for continual learning research. One row per run, with every
 scalar metric: final accuracy, forgetting, backward and forward transfer, the stability gap, task-recency bias,
 calibration, representation metrics, memory and wall time.

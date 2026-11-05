@@ -1,0 +1,13 @@
+# GEM without its margin. GEM differs from A-GEM in two ways: one constraint per previous task instead of one
+# averaged constraint, and the margin 0.5 of the reference code. Margin 0 separates the two on the MNIST benchmarks
+# of cpu_main, which has A-GEM and GEM with margin 0.5.
+name: cpu_gem_margin
+profile: cpu
+matrix:
+  preset: [split_mnist_class, permuted_mnist]
+  method.name: [gem]
+  seed: [0, 1, 2, 3, 4, 5]
+overrides:
+  method.params.margin: 0.0
+workers: 2
+threads_per_worker: 2
