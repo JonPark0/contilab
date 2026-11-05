@@ -42,17 +42,19 @@ fair, reproducible comparisons of methods across seeds, benchmarks and model siz
 
 ## Results at a glance
 
-![Final accuracy on Split MNIST (class-incremental), mean over 6 seeds: Joint 0.950, DER++ 0.871, multi-teacher distillation 0.863, Experience Replay 0.858, continual distillation 0.586, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.196, Naive 0.196, LoRA-per-task 0.184](assets/results/split-mnist-class-acc.svg)
+![Final accuracy on Split MNIST (class-incremental), mean over 6 seeds: Joint 0.950, GEM 0.882, ER-ACE 0.875, DER++ 0.871, multi-teacher distillation 0.863, Experience Replay 0.858, continual distillation 0.586, MagMax 0.572, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.196, Naive 0.196, O-LoRA 0.195, LoRA-per-task 0.184](assets/results/split-mnist-class-acc.svg)
 
-A CPU study ran 12 methods on 6 benchmarks: 324 runs, with 3 to 6 seeds each.
+A CPU study ran 16 methods on 6 benchmarks: 432 runs, with 3 to 6 seeds each.
 
-- **Replay leads.** After Joint training, DER++ and Experience Replay have the best average ranks across the 6
-  benchmarks: 2.3 and 4.2 (Friedman p = 5.8·10⁻⁶).
+- **Replay leads.** After Joint training, DER++, ER-ACE and GEM have the best average ranks across the 6
+  benchmarks: 3.3, 3.5 and 4.2 (Friedman p = 1.5·10⁻⁸). ER-ACE is the best continual method on both CIFAR
+  benchmarks.
 - **Multi-teacher distillation needed tuning.** Settings chosen on validation accuracy lifted it from 0.223 to
   0.871 on Split MNIST (class-incremental). With them as defaults it reaches 0.863 over 6 seeds, not
   significantly different from DER++ (0.871).
 - **Regularisation alone stays at the Naive level** in class-incremental learning, even after tuning: EWC
-  0.196 and LwF 0.228 against 0.196.
+  0.196 and LwF 0.228 against 0.196. Without stored samples, only MagMax merging beats Naive on every class- and
+  domain-incremental benchmark.
 - **Continual distillation stores no experts.** Its 2×100 student keeps 98 % of the full-size accuracy on
   Permuted MNIST in 0.34 MB.
 
@@ -68,7 +70,7 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/contilab run configs/experiments/smoke_all.yaml
 .venv/bin/contilab report runs/smoke_all          # runs/smoke_all/report.md and report.html
 
-# one real benchmark: Split MNIST, class-incremental, all 12 methods
+# one real benchmark: Split MNIST, class-incremental, all 16 methods
 .venv/bin/contilab run configs/experiments/cpu_main.yaml "matrix.preset=[split_mnist_class]"
 ```
 

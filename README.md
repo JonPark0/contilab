@@ -27,7 +27,7 @@ language (LLM) benchmarks — and is designed around three goals:
    **Task Arithmetic**, **TIES-Merging**, **multi-teacher knowledge distillation** or **teacher → student
    continual distillation** (optionally into a smaller student).
 
-![Final accuracy on Split MNIST (class-incremental), mean over 6 seeds: Joint 0.950, DER++ 0.871, multi-teacher distillation 0.863, Experience Replay 0.858, continual distillation 0.586, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.196, Naive 0.196, LoRA-per-task 0.184](docs/assets/results/split-mnist-class-acc.svg)
+![Final accuracy on Split MNIST (class-incremental), mean over 6 seeds: Joint 0.950, GEM 0.882, ER-ACE 0.875, DER++ 0.871, multi-teacher distillation 0.863, Experience Replay 0.858, continual distillation 0.586, MagMax 0.572, TIES-Merging 0.561, Task Arithmetic 0.531, A-GEM 0.335, LwF 0.228, EWC 0.196, Naive 0.196, O-LoRA 0.195, LoRA-per-task 0.184](docs/assets/results/split-mnist-class-acc.svg)
 
 Replay (DER++, Experience Replay) and tuned multi-teacher distillation lead; regularisation alone (EWC, LwF)
 stays at the Naive level in class-incremental learning. All 6 benchmarks: [Results](#results).
@@ -57,7 +57,7 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/contilab run configs/experiments/smoke_all.yaml
 .venv/bin/contilab report runs/smoke_all          # runs/smoke_all/report.md + report.html
 
-# the CPU study: 12 methods × Split/Permuted MNIST, Split CIFAR-10/100, text5 (resumable; about 22 h)
+# the CPU study: 16 methods × Split/Permuted MNIST, Split CIFAR-10/100, text5 (resumable; about 30 h)
 .venv/bin/contilab run configs/experiments/cpu_main.yaml
 .venv/bin/contilab run configs/experiments/cpu_main.yaml "matrix.preset=[split_mnist_class]" train.epochs=2
 
@@ -122,7 +122,7 @@ Each benchmark preset selects its fastest configuration. Details: [Performance](
 
 ## Results
 
-A CPU study of 12 methods on 6 benchmarks (324 runs: 6 seeds on the MNIST benchmarks, 3 on the others). Final
+A CPU study of 16 methods on 6 benchmarks (432 runs: 6 seeds on the MNIST benchmarks, 3 on the others). Final
 average accuracy (mean over seeds):
 
 | Method | Split MNIST Class-IL | Split MNIST Task-IL | Permuted MNIST | Split CIFAR-10 Class-IL | Split CIFAR-100 Class-IL | text5 + Pythia-70M |
@@ -131,26 +131,39 @@ average accuracy (mean over seeds):
 | Joint (upper bound) | 0.950 | 0.993 | 0.909 | 0.462 | 0.120 | 0.529 |
 | EWC | 0.196 | 0.981 | 0.832 | 0.159 | 0.041 | 0.105 |
 | LwF | 0.228 | 0.990 | 0.817 | 0.171 | 0.047 | 0.105 |
-| ER | 0.858 | 0.983 | 0.869 | **0.290** | 0.057 | 0.329 |
-| DER++ | **0.871** | **0.991** | **0.902** | 0.285 | **0.063** | 0.397 |
+| ER | 0.858 | 0.983 | 0.869 | 0.290 | 0.057 | 0.329 |
+| ER-ACE | 0.875 | 0.986 | 0.883 | **0.393** | **0.103** | 0.377 |
+| DER++ | 0.871 | **0.991** | **0.902** | 0.285 | 0.063 | 0.397 |
 | A-GEM | 0.335 | 0.984 | 0.864 | 0.180 | 0.044 | 0.100 |
+| GEM | **0.882** | 0.986 | 0.874 | 0.262 | 0.071 | 0.384 |
 | LoRA-per-task | 0.184 | 0.986 | 0.619 | 0.129 | 0.015 | 0.024 |
+| O-LoRA | 0.195 | 0.970 | 0.607 | 0.152 | 0.040 | 0.029 |
 | Task Arithmetic | 0.531 | 0.979 | 0.570 | 0.151 | 0.011 | 0.034 |
 | TIES-Merging | 0.561 | 0.983 | 0.677 | 0.160 | 0.013 | 0.033 |
+| MagMax | 0.572 | 0.982 | 0.836 | 0.207 | 0.092 | 0.126 |
 | Multi-teacher distillation | 0.863 | 0.986 | 0.773 | 0.267 | 0.040 | **0.452** |
 | Teacher → student continual distillation | 0.586 | 0.980 | 0.818 | 0.229 | 0.030 | 0.331 |
 
-- **Ranking.** Replay (DER++, ER) and multi-teacher distillation rank best after Joint (average ranks 2.3, 4.2
-  and 5.2; Friedman p = 5.8·10⁻⁶). On Split MNIST Class-IL, multi-teacher distillation and DER++ do not differ
+- **Ranking.** Replay methods rank best after Joint: DER++ 3.3, ER-ACE 3.5 and GEM 4.2 (average ranks; Friedman
+  p = 1.5·10⁻⁸). On Split MNIST Class-IL, GEM, ER-ACE, DER++ and multi-teacher distillation do not differ
   significantly over 6 seeds.
+- **ER-ACE** is the best continual method on both CIFAR benchmarks (0.393 and 0.103 vs 0.290 and 0.057 for ER):
+  its asymmetric loss cuts the bias towards the newest classes (0.70 → 0.24 on Split CIFAR-10).
+- **GEM vs A-GEM.** One constraint per past task instead of A-GEM's averaged one lifts Split MNIST Class-IL from
+  0.335 to 0.616; the margin of the reference code adds the rest, up to 0.882.
 - **Distillation needed tuning.** It needed validation-tuned defaults: a TIES-merged student and targets routed
   to each sample's teacher. With the v0.1 defaults it ranked last.
 - **Continual distillation** stores no experts and still beats Naive on every Class- and Domain-IL benchmark
   except Split CIFAR-100.
 - **Regularisation** stays at the Naive level in Class-IL even after tuning. EWC (λ = 30 on vision, chosen on
   validation accuracy, with its stiffness bounded under SGD) no longer diverges, but stays below Naive on CIFAR.
-- **Split CIFAR-100** at 2 CPU epochs is a floor test: Joint reaches only 0.120, and DER++ and ER are the only
-  continual methods clearly above Naive.
+- **Merging.** MagMax, which merges sequentially fine-tuned models, is the only method without stored samples
+  above Naive on every Class- and Domain-IL benchmark. Merging independently trained experts (Task Arithmetic,
+  TIES) is not.
+- **O-LoRA** does not lift LoRA above Naive in Class-IL: the shared classifier head still predicts only the newest
+  classes.
+- **Split CIFAR-100** at 2 CPU epochs is a floor test: Joint reaches only 0.120, and ER-ACE (0.103) and MagMax
+  (0.092) come closest.
 - **Language models.** LoRA-per-task keeps the language model's general ability (perplexity +186 vs +7,481 for
   Naive) but learns little. At the design scale of text5 (2,000 / 500 texts per task instead of 1,000 / 200) the
   method order holds (rank correlation 0.97), and multi-teacher distillation reaches 0.477.
@@ -209,11 +222,14 @@ resolves to the latest one; each release also has its own DOI, listed on the Zen
   - 메서드: EWC, LwF, ER, ER-ACE, DER++, A-GEM, GEM, 태스크별 LoRA, O-LoRA
   - 벤치마크: Split/Permuted MNIST, Split CIFAR, text5(AG News·Yelp·Amazon·DBpedia·Yahoo)
 
-- **CPU 실증 결과** (12개 메서드 × 6개 벤치마크, 324회: MNIST 벤치마크 6시드, 나머지 3시드): 자세한 내용은 [Results](docs/wiki/Results.md)를 참고하세요.
-  - Joint 다음으로 리플레이(DER++, ER)와, 검증으로 튜닝한 다중 교사 증류가 가장 우수했습니다.
+- **CPU 실증 결과** (16개 메서드 × 6개 벤치마크, 432회: MNIST 벤치마크 6시드, 나머지 3시드): 자세한 내용은 [Results](docs/wiki/Results.md)를 참고하세요.
+  - Joint 다음으로 리플레이 계열(DER++, ER-ACE, GEM)의 평균 순위가 가장 높았습니다(3.3, 3.5, 4.2).
+  - ER-ACE는 두 CIFAR 벤치마크에서 연속 학습 방법 중 가장 높았습니다. 최신 클래스로 쏠리는 예측이 크게 줄었습니다.
+  - GEM은 A-GEM의 평균 제약 하나 대신 이전 태스크마다 제약을 둡니다. 이것만으로 Split MNIST Class-IL이 0.335에서 0.616으로 올랐고, 참조 코드의 margin을 더하면 0.882입니다.
+  - MagMax(순차 미세조정 모델 병합)는 샘플을 저장하지 않는 방법 중 유일하게 모든 Class-IL·Domain-IL 벤치마크에서 Naive보다 높았습니다. O-LoRA는 Class-IL에서 LoRA를 Naive 위로 올리지 못했습니다.
   - 교사→학생 연속 증류는 전문가 모델을 저장하지 않고도 Split CIFAR-100을 제외한 Class-IL·Domain-IL 벤치마크에서 Naive보다 높았습니다.
   - 정규화 계열(EWC, LwF)은 튜닝 후에도 Class-IL에서 Naive 수준에 머물렀습니다.
-  - Split CIFAR-100(CPU 2 epoch)은 Joint도 0.120에 그쳤고, 연속 학습 방법 중에서는 리플레이(DER++, ER)만 Naive를 뚜렷이 넘었습니다.
+  - Split CIFAR-100(CPU 2 epoch)은 Joint도 0.120에 그쳤고, ER-ACE(0.103)와 MagMax(0.092)가 가장 가까웠습니다.
   - text5를 설계 규모(태스크당 학습 2,000·테스트 500개)로 다시 돌려도 메서드 순위는 거의 같았습니다(순위 상관 0.97).
 
 자세한 문서는 [문서 사이트](https://jonpark0.github.io/contilab/ko/)와 [위키](https://github.com/JonPark0/contilab/wiki)를 참고하세요.

@@ -5,8 +5,8 @@ name: cpu_main
 profile: cpu
 matrix:
   preset: [split_mnist_class, split_mnist_task, permuted_mnist]
-  method.name: [naive, joint, ewc, lwf, er, derpp, agem, lora_per_task, 'consolidate:ta', 'consolidate:ties', 'consolidate:distill',
-                'consolidate:continual_distill']
+  method.name: [naive, joint, ewc, lwf, er, er_ace, derpp, agem, gem, lora_per_task, olora, 'consolidate:ta', 'consolidate:ties',
+                'consolidate:magmax', 'consolidate:distill', 'consolidate:continual_distill']
   seed: [3, 4, 5]
 workers: 2
 threads_per_worker: 2
