@@ -7,6 +7,8 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 - v0.1: 전략 8종, TA/TIES/증류, vmap 앙상블, 러너·리포트·CLI
 - v0.2.0 릴리스: 지표 수정, 견고성, CI, 검증 기반 sweep 선택, 연속 증류, 작은 학생 모델
 - v0.3.0: M10–M12(bench 정밀도, 반복 계산 제거, vmap 폴백·OOM 분할 기록), compile 재컴파일 수정(배치 축 dynamic, 그래프 한도 = 태스크 수 + 8), 릴리스 워크플로(PyPI job은 변수로 꺼둠), Split CIFAR-100
+- v0.3.1: 문서 사이트(첫 Zenodo DOI)
+- v0.4.0: 새 메서드 4종, EWC 강성 상한·λ=30, CIFAR compile 끔, text5 설계 규모·GEM margin 실험, HF 데이터셋(아래 항목들)
 - CPU 연구: `cpu_main` 432런(16 메서드, 6 벤치마크, MNIST 6시드), `cpu_tuned` 456런, `cpu_student` 12런, `cpu_text5_full` 36런(text5 설계 규모 2,000/500, 학습 19시간), `cpu_gem_margin` 12런(GEM margin 0) → `docs/wiki/Results.md`, CSV는 `docs/assets/results/data/`
 - 새 메서드 4종: GEM(태스크별 참조 기울기, 이중 QP 정확해), ER-ACE, O-LoRA, MagMax(순차 전문가) → cpu_main에 108런 추가(학습 약 9시간)
 - EWC 비전 기본 λ=30(튜닝 선택값), CIFAR 프리셋은 compile 없이 bf16 → CIFAR 72런·MNIST EWC 18런 재실행
@@ -16,7 +18,8 @@ contilab: 비전·LLM 지속 학습 실증 프레임워크(벤치마크, 증류�
 
 ## 남은 작업
 - Zenodo: concept DOI `10.5281/zenodo.23906803`(전체 버전), v0.3.1 `10.5281/zenodo.23906804`; 이후 릴리스 DOI는 release 워크플로가 노트에 자동 추가
-- 사용자 설정: PyPI pending publisher + 변수 `PUBLISH_PYPI=true`, Search Console 인증, 소셜 미리보기 업로드(`RELEASING.md`)
+- v0.4.0 릴리스: 릴리스 PR 머지 후 태그 `v0.4.0` push 또는 Actions → Release 수동 실행(이 세션은 태그 push 불가)
+- 사용자 설정: PyPI pending publisher + 변수 `PUBLISH_PYPI=true`, Search Console 사이트맵(`sitemap.xml`으로 재제출), 소셜 미리보기 업로드(`RELEASING.md`)
 - 미검증: `configs/profiles/gpu.yaml`(GPU 없음)
 - main의 옛 작성자 커밋: 이력 재작성은 force push 필요(사용자)
 
