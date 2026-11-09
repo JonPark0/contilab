@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- `gpu` profile: continual evaluation every 20 steps on the vision presets instead of 50, so windowed forgetting is
+  defined on Split MNIST and Split CIFAR-100 (its window, 10 % of a task, is about 34 and 42 steps there), and
+  text5 trains one seed at a time (one 1.5B-parameter member with its AdamW state takes about 25 GB). A test
+  resolves every method on every preset of the profile.
+- The Results and Benchmarks pages note that text5's continual evaluation in the `cpu` profile has 2–3 points per
+  task, and that windowed forgetting is undefined there and on Split CIFAR-100.
+
+### Fixed
+- LoRA-per-task and O-LoRA stay compiled on 10-task streams when several seeds train together. Each task's adapter
+  takes one graph, and under `vmap` the task's last, partial batch takes a second, so 10 tasks need 20 graphs; the
+  per-function limit was tasks + 8 = 18, and the last task ran eagerly. The limit is now 2 × tasks + 8. Only
+  compiled runs were affected (the `gpu` profile, not the `cpu` study).
+- LoRA-per-task and O-LoRA on convolutional models train their seeds together under bf16. The adapter's delta
+  weight came out of autocast in bf16 while `vmap`'s convolution kept the fp32 input, so the group failed and fell
+  back to one seed at a time. The CPU study trained CIFAR one seed at a time and was not affected.
+- `engine.compile: off` without quotes (or the override `engine.compile=off`) turns compilation off. YAML reads it
+  as `false`, and only the string `"off"` disabled compilation, so it compiled. Other values than `auto`, `on` and
+  `off` are rejected.
+
 ## 0.4.0 — 2026-11-09
 
 ### Added

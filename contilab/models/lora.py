@@ -60,7 +60,9 @@ class LoRAConv2d(_LoRABase):
     def forward(self, x: Tensor) -> Tensor:
         y = self.base(x)
         if self.active:
-            dw = sum(self.delta(t) for t in self.active).view_as(self.base.weight)
+            # under autocast the delta (a matmul) is bf16; vmap's convolution does not recast the fp32 input, so
+            # match the input's dtype (without vmap, autocast casts both back to bf16 and nothing changes)
+            dw = sum(self.delta(t) for t in self.active).view_as(self.base.weight).to(x.dtype)
             c = self.base
             y = y + (self.scale * self.member_scale) * F.conv2d(x, dw, None, c.stride, c.padding, c.dilation)
         return y

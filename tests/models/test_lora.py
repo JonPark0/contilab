@@ -51,3 +51,25 @@ def test_text_targets_and_param_names():
     assert names and all("query_key_value" in n for n in names)
     assert all("lora_" in n and ".t1" in n for n in lora_param_names(m, 1))
     assert len(lora_param_names(m, 1)) == 2 * len(names)
+
+
+def test_lora_conv_runs_under_vmap_with_bf16_autocast():
+    # Seeds trained together run the model under vmap; with bf16 autocast the adapter's delta weight (a matmul)
+    # came out in bf16 while vmap's convolution saw the fp32 input, and the group fell back to one seed at a time.
+    from torch.func import functional_call, stack_module_state, vmap
+
+    torch.manual_seed(0)
+    convs = [LoRAConv2d(nn.Conv2d(3, 4, 3, padding=1), r=2, alpha=4, n_adapters=1) for _ in range(2)]
+    for c in convs:
+        c.active = [0]
+    params, buffers = stack_module_state(convs)
+    x = torch.randn(2, 5, 3, 8, 8)
+
+    def run(p, b, xi):
+        return functional_call(convs[0], (p, b), (xi,))
+
+    with torch.autocast("cpu", dtype=torch.bfloat16):
+        y = vmap(run)(params, buffers, x)
+        ref = torch.stack([convs[e](x[e]) for e in range(2)])
+    assert y.shape == (2, 5, 4, 8, 8)
+    assert torch.allclose(y.float(), ref.float(), atol=0.05)

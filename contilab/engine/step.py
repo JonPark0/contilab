@@ -88,8 +88,10 @@ class TrainStep:
         self.frozen = ens.template.frozen_names()
         self.autocast_dtype, self.precision_reason = select_precision(engine_cfg.precision, ens.device)
         self._eager = (self._batched_loss, self._batched_ref)
-        # one graph per task is the most a built-in strategy needs (LoRA-per-task), plus replay/state variants
-        limit = len(stream.tasks) + 8
+        # one graph per task is the most a built-in strategy needs (LoRA's active adapters), plus replay/state
+        # variants. With several seeds under vmap the batch size is specialised, so a task's last, partial batch
+        # takes a second graph: 2 per task.
+        limit = 2 * len(stream.tasks) + 8
         fwd, self.compile_decision = maybe_compile(self._batched_loss, engine_cfg.compile, limit)
         ref, _ = maybe_compile(self._batched_ref, engine_cfg.compile, limit)
         self._fwd, self._ref = fwd, ref

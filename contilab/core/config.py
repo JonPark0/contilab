@@ -59,6 +59,14 @@ class EngineConfig:
     precision: str = "auto"
     max_E: int = 8
 
+    def __post_init__(self) -> None:
+        # YAML reads unquoted on/off as booleans, and `compile: off` (or the override `engine.compile=off`) used to
+        # compile, because only the string "off" turned compilation off
+        if isinstance(self.compile, bool):
+            self.compile = "on" if self.compile else "off"
+        if self.compile not in ("auto", "on", "off"):
+            raise ValueError(f"engine.compile must be auto, on or off, not {self.compile!r}")
+
 
 @dataclass
 class MethodConfig:
