@@ -625,6 +625,9 @@ almost all of it from bf16, so the CIFAR presets train in bf16 without compile.
   use the defaults, including the distillation defaults chosen on MNIST. GEM, ER-ACE, O-LoRA and MagMax were not
   tuned: they use the defaults of their papers or reference code, and MagMax chooses λ on validation accuracy
   like TA and TIES (the paper fixes λ = 0.5).
+- **Continual-evaluation density:** accuracy on the seen tasks is measured every ρ = 50 steps on CIFAR and text5.
+  A text5 task is only 57 steps long, so text5's stability gap and min-ACC rest on 2–3 points per task, and
+  windowed forgetting is undefined on text5 and Split CIFAR-100 (its window is shorter than ρ).
 - **Head assembly in merging:** Class-IL merging assembles classifier rows from different experts, leaving
   logit-scale mismatch between tasks.
 - **Distillation cost:** both distillation methods first train one expert per task. Their wall time and FLOPs

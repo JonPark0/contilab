@@ -8,6 +8,16 @@ nav_title: "Changelog"
 
 # Changelog
 
+## Unreleased
+
+### Changed
+- `gpu` profile: continual evaluation every 20 steps on the vision presets instead of 50, so windowed forgetting is
+  defined on Split MNIST and Split CIFAR-100 (its window, 10 % of a task, is about 34 and 42 steps there), and
+  text5 trains one seed at a time (one 1.5B-parameter member with its AdamW state takes about 25 GB). A test
+  resolves every method on every preset of the profile.
+- The Results and Benchmarks pages note that text5's continual evaluation in the `cpu` profile has 2–3 points per
+  task, and that windowed forgetting is undefined there and on Split CIFAR-100.
+
 ## 0.4.0 — 2026-11-09
 
 ### Added

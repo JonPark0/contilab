@@ -47,6 +47,19 @@ def test_cpu_profile_presets():
     assert c.model.name == "resnet18r" and c.train.epochs == 2 and c.engine.max_E == 1
 
 
+def test_gpu_profile_presets(tmp_path):
+    exp = tmp_path / "gpu_main.yaml"
+    exp.write_text(CPU.read_text().replace("profile: cpu", f"profile: {Path('configs/profiles/gpu.yaml').resolve()}"))
+    runs = expand(load_experiment(exp, []))
+    assert len(runs) == 6 * 16 * 3  # every method resolves on every preset
+    by = {r.preset: r for r in runs if r.method.name == "naive"}
+    t = by["text5_class"]
+    assert t.model.hf_name == "Qwen/Qwen2.5-1.5B" and t.benchmark.n_train is None and t.engine.max_E == 1
+    # continual evaluation every ρ steps must fit in the windowed-forgetting window (10 % of the shortest task)
+    assert all(r.metrics.rho == 20 for p, r in by.items() if p != "text5_class") and t.metrics.rho == 50
+    assert by["split_cifar100_class"].train.epochs == 3 and by["permuted_mnist"].benchmark.n_train is None
+
+
 def test_sweep_expands_grid(tmp_path):
     p = tmp_path / "experiments" / "s.yaml"
     p.parent.mkdir()

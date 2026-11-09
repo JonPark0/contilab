@@ -4,7 +4,9 @@ defaults:
   model: {name: mlp, hidden: 400, depth: 2}
   optim: {name: sgd, lr: 0.03}
   train: {epochs: 1, batch_size: 32, eval_batch_size: 1024}
-  metrics: {tier: extended}
+  # ρ ≤ the windowed-forgetting window Δ (10 % of a task): Δ ≈ 34 steps on Split MNIST and ≈ 42 on Split CIFAR-100
+  # at 3 epochs, so the default ρ = 50 would leave windowed forgetting undefined there
+  metrics: {tier: extended, rho: 20}
   consolidate: {M: 500}
 presets:
   split_mnist_class:
@@ -27,4 +29,7 @@ presets:
     model: {name: hf, hf_name: Qwen/Qwen2.5-1.5B}
     optim: {name: adamw, lr: 0.00002}
     train: {batch_size: 16, eval_batch_size: 64}
+    # one 1.5B-parameter member with its AdamW state takes about 25 GB, so seeds run one at a time
+    engine: {max_E: 1}
+    metrics: {rho: 50}  # Δ ≈ 650 steps at 115k texts per task
     consolidate: {M: 200}
