@@ -1,30 +1,6 @@
 # Changelog
 
-## Unreleased
-
-### Changed
-- EWC's default λ on vision is 30, the value selected on validation accuracy in the tuned comparison, instead of
-  100. With λ = 100 every seed diverged on Permuted MNIST; with λ = 30 it reaches 0.832 (Naive 0.805).
-- The Split CIFAR-10 and CIFAR-100 presets of the `cpu` profile train in bf16 without `torch.compile`: compile added
-  no throughput at steady state and took about 50 s per graph.
-- The main study's CIFAR runs and MNIST EWC runs were re-run with these defaults, and the results, tables and
-  figures were updated.
-- The tuned comparison (`cpu_tuned`) has 6 seeds, like the MNIST benchmarks of the main study. Its config pins the
-  consolidation defaults it was run with, so its run ids stay those of the published results.
-- The main study includes GEM, ER-ACE, O-LoRA and MagMax: 108 new runs, 432 in all, with the other runs unchanged.
-  The Results page, its tables, ranks, paired tests, figures and findings, the README and the home pages are
-  updated. GEM leads on Split MNIST Class-IL (0.882) and ER-ACE on Split CIFAR-10 and CIFAR-100 (0.393, 0.103);
-  average ranks DER++ 3.3, ER-ACE 3.5, GEM 4.2. MagMax is the only method without stored samples above Naive on
-  every Class- and Domain-IL benchmark; O-LoRA stays at or below Naive there.
-
-### Fixed
-- EWC no longer diverges on long task streams under SGD. A step multiplies a parameter's distance from its anchor
-  by (1 − lr·λ·F), and the online Fisher only grows, so once lr·λ·F exceeded 2 the run diverged: with λ = 30, late
-  in the stream on Split CIFAR-10 (1 of 3 seeds) and CIFAR-100 (3 of 3). The stored Fisher is now clamped at
-  `max_stiffness / (lr·λ)` (`method.params.max_stiffness`, default 1, `null` turns it off) when the optimiser is
-  SGD; Adam-type optimisers are not clamped. No run of the main study or the tuned EWC sweep diverges any more; the
-  MNIST results are unchanged, and on CIFAR EWC is stable but below Naive. The EWC runs of both studies were
-  re-run.
+## 0.4.0 — 2026-11-09
 
 ### Added
 - Four methods:
@@ -39,16 +15,40 @@
     largest-magnitude task-vector value. Sequential experts (`train_experts(..., sequential=True)`) have their
     own cache entry.
 - The smoke matrix covers the new methods (90 runs, about 40 s on 4 cores).
-- Experiment config `cpu_gem_margin`: GEM with margin 0 on the two MNIST benchmarks (12 runs, `cpu_gem_margin.csv`).
-  Per-task constraints alone lift Split MNIST Class-IL from A-GEM's 0.335 to 0.616, and the margin 0.5 adds the
-  rest (0.882); on Permuted MNIST the margin changes nothing.
-- Experiment config `cpu_text5_full`: text5 at the design scale (2,000 training and 500 test texts per task). Its
-  36 runs are in `cpu_text5_full.csv` and on the Results page: the method order of the main study holds (rank
-  correlation 0.97), and most methods gain 0.01–0.05.
-- Zenodo DOI `10.5281/zenodo.23906803` (all versions): a badge in the README, `doi` in `CITATION.cff` and the BibTeX entries,
-  and the site's structured data. Version 0.3.1 is `10.5281/zenodo.23906804`.
-- The per-run results are a Hugging Face dataset, [jonpark0/contilab-cpu-study](https://huggingface.co/datasets/jonpark0/contilab-cpu-study), republished by the
+- Experiment configs:
+  - `cpu_text5_full`: text5 at the design scale (2,000 training and 500 test texts per task, 36 runs). The method
+    order of the main study holds (rank correlation 0.97), and most methods gain 0.01–0.05.
+  - `cpu_gem_margin`: GEM with margin 0 on the two MNIST benchmarks (12 runs). Per-task constraints alone lift
+    Split MNIST Class-IL from A-GEM's 0.335 to 0.616, and the margin 0.5 adds the rest (0.882); on Permuted MNIST
+    the margin changes nothing.
+- Zenodo DOI `10.5281/zenodo.23906803` (all versions): a badge in the README, `doi` in `CITATION.cff` and the
+  BibTeX entries, and the site's structured data. Version 0.3.1 is `10.5281/zenodo.23906804`.
+- The per-run results are a Hugging Face dataset,
+  [jonpark0/contilab-cpu-study](https://huggingface.co/datasets/jonpark0/contilab-cpu-study), republished by the
   `hf-dataset` workflow when the CSVs change; the site, README and `llms.txt` link to it.
+
+### Changed
+- EWC's default λ on vision is 30 instead of 100, the value selected on validation accuracy in the tuned comparison
+  (Permuted MNIST 0.832, against 0.817 with λ = 100 and 0.805 for Naive).
+- The Split CIFAR-10 and CIFAR-100 presets of the `cpu` profile train in bf16 without `torch.compile`: compile added
+  no throughput at steady state and took about 50 s per graph.
+- Results of the CPU study:
+  - The main study has 16 methods and 432 runs. GEM, ER-ACE, O-LoRA and MagMax add 108 runs; the CIFAR runs and
+    the EWC runs were re-run with the new defaults and the EWC fix below, and every other run is unchanged.
+  - GEM leads on Split MNIST Class-IL (0.882) and ER-ACE on Split CIFAR-10 and CIFAR-100 (0.393, 0.103). Average
+    ranks: DER++ 3.3, ER-ACE 3.5, GEM 4.2.
+  - MagMax is the only method without stored samples above Naive on every Class- and Domain-IL benchmark; O-LoRA
+    stays at or below Naive there.
+  - The tuned comparison (`cpu_tuned`) has 6 seeds, like the MNIST benchmarks of the main study. Its config pins
+    the consolidation defaults it was run with, so its run ids stay those of the published results.
+
+### Fixed
+- EWC no longer diverges on long task streams under SGD. A step multiplies a parameter's distance from its anchor
+  by (1 − lr·λ·F), and the online Fisher only grows, so once lr·λ·F exceeded 2 the run diverged: with λ = 30, late
+  in the stream on Split CIFAR-10 (1 of 3 seeds) and CIFAR-100 (3 of 3). The stored Fisher is now clamped at
+  `max_stiffness / (lr·λ)` (`method.params.max_stiffness`, default 1, `null` turns it off) when the optimiser is
+  SGD; Adam-type optimisers are not clamped. No run of the main study or the tuned EWC sweep diverges any more; the
+  MNIST results are unchanged, and on CIFAR EWC is stable but below Naive.
 
 ## 0.3.1 — 2026-11-03
 

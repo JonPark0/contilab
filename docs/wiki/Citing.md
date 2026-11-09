@@ -12,7 +12,7 @@ nav_title: "Citing"
   author  = {Park, Yeochoon},
   title   = {contilab: a performance-first framework for continual learning benchmarking, distillation and model merging},
   year    = {2026},
-  version = {0.3.1},
+  version = {0.4.0},
   doi     = {10.5281/zenodo.23906803},
   url     = {https://github.com/JonPark0/contilab}
 }
