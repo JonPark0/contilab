@@ -18,6 +18,12 @@ nav_title: "Changelog"
 - The Results and Benchmarks pages note that text5's continual evaluation in the `cpu` profile has 2–3 points per
   task, and that windowed forgetting is undefined there and on Split CIFAR-100.
 
+### Fixed
+- LoRA-per-task and O-LoRA stay compiled on 10-task streams when several seeds train together. Each task's adapter
+  takes one graph, and under `vmap` the task's last, partial batch takes a second, so 10 tasks need 20 graphs; the
+  per-function limit was tasks + 8 = 18, and the last task ran eagerly. The limit is now 2 × tasks + 8. Only
+  compiled runs were affected (the `gpu` profile, not the `cpu` study).
+
 ## 0.4.0 — 2026-11-09
 
 ### Added

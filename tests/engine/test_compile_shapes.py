@@ -64,3 +64,11 @@ def test_lora_compiles_every_task_beyond_eight():
     s = build_synthetic(n_tasks=10, n_train=40)
     train_on(s, LoRAPerTask(), [0], compile="on")
     assert graphs() >= 10  # one graph per task's adapter; eager after 8 tasks before the limit was raised
+
+
+def test_lora_compiles_every_task_and_batch_size_with_vmapped_seeds():
+    # With several seeds under vmap the batch size is specialised, so each task's adapter takes one graph for full
+    # batches and one for the task's last, partial batch: 20 graphs for 10 tasks, more than tasks + 8 (= 18).
+    s = build_synthetic(n_tasks=10, n_train=40)
+    train_on(s, LoRAPerTask(), [0, 1], compile="on")
+    assert graphs() >= 20
