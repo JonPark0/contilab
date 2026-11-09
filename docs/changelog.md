@@ -23,6 +23,12 @@ nav_title: "Changelog"
   takes one graph, and under `vmap` the task's last, partial batch takes a second, so 10 tasks need 20 graphs; the
   per-function limit was tasks + 8 = 18, and the last task ran eagerly. The limit is now 2 × tasks + 8. Only
   compiled runs were affected (the `gpu` profile, not the `cpu` study).
+- LoRA-per-task and O-LoRA on convolutional models train their seeds together under bf16. The adapter's delta
+  weight came out of autocast in bf16 while `vmap`'s convolution kept the fp32 input, so the group failed and fell
+  back to one seed at a time. The CPU study trained CIFAR one seed at a time and was not affected.
+- `engine.compile: off` without quotes (or the override `engine.compile=off`) turns compilation off. YAML reads it
+  as `false`, and only the string `"off"` disabled compilation, so it compiled. Other values than `auto`, `on` and
+  `off` are rejected.
 
 ## 0.4.0 — 2026-11-09
 

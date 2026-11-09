@@ -83,3 +83,12 @@ def test_method_sweep_expands_per_method(tmp_path):
     for r in runs:
         by.setdefault(r.method.name, []).append(r.method.params)
     assert by["naive"] == [{}] and sorted(d["lam"] for d in by["ewc"]) == [1, 10] and len(by["derpp"]) == 4
+
+
+def test_unquoted_compile_off_turns_compilation_off():
+    # YAML reads `off` as false; it used to compile, since only the string "off" disabled compilation
+    r = expand(load_experiment(SMOKE, ["engine.compile=off"]))[0]
+    assert r.engine.compile == "off"
+    assert expand(load_experiment(SMOKE, ["engine.compile=on"]))[0].engine.compile == "on"
+    with pytest.raises(ValueError, match="engine.compile"):
+        expand(load_experiment(SMOKE, ["engine.compile=fast"]))
